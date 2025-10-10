@@ -238,7 +238,7 @@ export type Database = {
           is_anonymous?: boolean | null
           likes_count?: number | null
           portfolio_data?: Json | null
-          user_id?: never
+          user_id?: string | null
         }
         Update: {
           content?: string | null
@@ -247,7 +247,7 @@ export type Database = {
           is_anonymous?: boolean | null
           likes_count?: number | null
           portfolio_data?: Json | null
-          user_id?: never
+          user_id?: string | null
         }
         Relationships: []
       }
