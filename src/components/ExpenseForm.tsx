@@ -25,7 +25,8 @@ export const ExpenseForm = ({ onAdd }: ExpenseFormProps) => {
     description: "",
     amount: "",
     type: "Expense" as "Income" | "Expense",
-    recurrence: "None" as "None" | "Weekly" | "Monthly",
+    recurring: false,
+    recurrenceType: "monthly" as "weekly" | "monthly" | "yearly",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -38,7 +39,8 @@ export const ExpenseForm = ({ onAdd }: ExpenseFormProps) => {
       description: formData.description,
       amount: parseFloat(formData.amount),
       type: formData.type,
-      recurrence: formData.recurrence,
+      recurring: formData.recurring,
+      recurrenceType: formData.recurring ? formData.recurrenceType : undefined,
     });
 
     setFormData({
@@ -47,7 +49,8 @@ export const ExpenseForm = ({ onAdd }: ExpenseFormProps) => {
       description: "",
       amount: "",
       type: "Expense",
-      recurrence: "None",
+      recurring: false,
+      recurrenceType: "monthly",
     });
   };
 
@@ -142,21 +145,25 @@ export const ExpenseForm = ({ onAdd }: ExpenseFormProps) => {
         </div>
 
         <div>
-          <Label htmlFor="recurrence">Recurrence</Label>
+          <Label htmlFor="recurring">Recurrence</Label>
           <Select
-            value={formData.recurrence}
-            onValueChange={(value) =>
-              setFormData({ ...formData, recurrence: value as "None" | "Weekly" | "Monthly" })
-            }
+            value={formData.recurring ? formData.recurrenceType : "none"}
+            onValueChange={(value) => {
+              if (value === "none") {
+                setFormData({ ...formData, recurring: false });
+              } else {
+                setFormData({ ...formData, recurring: true, recurrenceType: value as "weekly" | "monthly" | "yearly" });
+              }
+            }}
           >
             <SelectTrigger className="mt-1">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="None">One-time</SelectItem>
-              <SelectItem value="Weekly">Weekly</SelectItem>
-              <SelectItem value="Monthly">Monthly</SelectItem>
-            </SelectContent>
+              <SelectContent>
+                <SelectItem value="none">One-time</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+              </SelectContent>
           </Select>
         </div>
 

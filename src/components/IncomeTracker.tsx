@@ -19,10 +19,10 @@ export const IncomeTracker = ({ expenses }: IncomeTrackerProps) => {
     .reduce((sum, e) => sum + e.amount, 0);
 
   const recurringIncome = incomeTransactions
-    .filter((e) => e.recurrence && e.recurrence !== "None")
+    .filter((e) => e.recurring && e.recurrenceType)
     .reduce((sum, e) => {
-      if (e.recurrence === "Monthly") return sum + e.amount;
-      if (e.recurrence === "Weekly") return sum + e.amount * 4.33;
+      if (e.recurrenceType === "monthly") return sum + e.amount;
+      if (e.recurrenceType === "weekly") return sum + e.amount * 4.33;
       return sum;
     }, 0);
 

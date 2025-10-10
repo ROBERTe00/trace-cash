@@ -21,7 +21,7 @@ export const NetWorthTracker = ({ expenses, investments }: NetWorthTrackerProps)
 
   // Liabilities (assuming negative recurring expenses as debts/loans)
   const monthlyLiabilities = expenses
-    .filter((e) => e.type === "Expense" && e.recurrence === "Monthly")
+    .filter((e) => e.type === "Expense" && e.recurring && e.recurrenceType === "monthly")
     .reduce((sum, e) => sum + e.amount, 0);
 
   // Net Worth

@@ -1,5 +1,10 @@
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, Info } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface KPICardProps {
   title: string;
@@ -7,6 +12,7 @@ interface KPICardProps {
   change?: string;
   changeType?: "positive" | "negative" | "neutral";
   icon: LucideIcon;
+  tooltip?: string;
 }
 
 export const KPICard = ({
@@ -15,14 +21,27 @@ export const KPICard = ({
   change,
   changeType = "neutral",
   icon: Icon,
+  tooltip,
 }: KPICardProps) => {
   return (
     <Card className="glass-card p-6 hover-lift animate-fade-in border-2 border-primary/10 hover:border-primary/30 group">
       <div className="flex items-start justify-between">
         <div className="space-y-2 flex-1">
-          <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider">
-            {title}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider">
+              {title}
+            </p>
+            {tooltip && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="h-3 w-3 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">{tooltip}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
           <p className="text-3xl font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text transition-all duration-300 group-hover:scale-105">
             {value}
           </p>

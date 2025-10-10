@@ -8,16 +8,14 @@ interface RecurringExpensesProps {
 }
 
 export const RecurringExpenses = ({ expenses }: RecurringExpensesProps) => {
-  const recurringExpenses = expenses.filter(
-    (e) => e.recurrence && e.recurrence !== "None"
-  );
+  const recurringExpenses = expenses.filter((e) => e.recurring && e.recurrenceType);
 
   const monthlyRecurring = recurringExpenses
-    .filter((e) => e.recurrence === "Monthly")
+    .filter((e) => e.recurrenceType === "monthly")
     .reduce((sum, e) => sum + (e.type === "Expense" ? e.amount : -e.amount), 0);
 
   const weeklyRecurring = recurringExpenses
-    .filter((e) => e.recurrence === "Weekly")
+    .filter((e) => e.recurrenceType === "weekly")
     .reduce((sum, e) => sum + (e.type === "Expense" ? e.amount : -e.amount), 0);
 
   const monthlyFromWeekly = weeklyRecurring * 4.33; // Average weeks per month
@@ -56,8 +54,8 @@ export const RecurringExpenses = ({ expenses }: RecurringExpensesProps) => {
           <div className="text-sm text-muted-foreground mb-1">Active Recurring</div>
           <div className="text-2xl font-bold">{recurringExpenses.length}</div>
           <div className="text-xs text-muted-foreground mt-1">
-            {recurringExpenses.filter((e) => e.recurrence === "Weekly").length} weekly,{" "}
-            {recurringExpenses.filter((e) => e.recurrence === "Monthly").length} monthly
+            {recurringExpenses.filter((e) => e.recurrenceType === "weekly").length} weekly,{" "}
+            {recurringExpenses.filter((e) => e.recurrenceType === "monthly").length} monthly
           </div>
         </div>
       </div>
@@ -74,12 +72,12 @@ export const RecurringExpenses = ({ expenses }: RecurringExpensesProps) => {
             </div>
             <div className="flex items-center gap-3">
               <Badge variant="outline" className="font-mono">
-                {expense.recurrence}
+                {expense.recurrenceType}
               </Badge>
               <div className="text-right">
                 <div className="font-semibold">€{expense.amount.toFixed(2)}</div>
                 <div className="text-xs text-muted-foreground">
-                  {expense.recurrence === "Weekly"
+                  {expense.recurrenceType === "weekly"
                     ? `~€${(expense.amount * 4.33).toFixed(0)}/mo`
                     : "per month"}
                 </div>

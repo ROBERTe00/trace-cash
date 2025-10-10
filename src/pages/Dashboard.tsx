@@ -6,6 +6,14 @@ import { ExpenseForm } from "@/components/ExpenseForm";
 import { InvestmentForm } from "@/components/InvestmentForm";
 import { TransactionTable } from "@/components/TransactionTable";
 import { InvestmentTable } from "@/components/InvestmentTable";
+import { BankStatementUpload } from "@/components/BankStatementUpload";
+import { ExpenseTimeSelector } from "@/components/ExpenseTimeSelector";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { PortfolioChart } from "@/components/PortfolioChart";
 import { ExpenseChart } from "@/components/ExpenseChart";
 import { TrendChart } from "@/components/TrendChart";
@@ -66,6 +74,14 @@ export default function Dashboard() {
     setExpenses(updated);
     saveExpenses(updated);
     toast.success("Transaction added successfully!");
+  };
+
+  const handleBulkAddExpenses = (newExpenses: Omit<Expense, "id">[]) => {
+    const withIds = newExpenses.map(e => ({ ...e, id: crypto.randomUUID() }));
+    const updated = [...expenses, ...withIds];
+    setExpenses(updated);
+    saveExpenses(updated);
+    toast.success(`${newExpenses.length} transactions added!`);
   };
 
   const handleDeleteExpense = (id: string) => {
@@ -163,8 +179,9 @@ export default function Dashboard() {
   }
 
   return (
-    <Layout onLogout={handleLogout}>
-      <div className="space-y-8">
+    <TooltipProvider>
+      <Layout onLogout={handleLogout}>
+        <div className="space-y-8">
         {/* Header with Export */}
         <div className="flex items-center justify-between animate-fade-in">
           <div className="space-y-2">
@@ -260,6 +277,12 @@ export default function Dashboard() {
           <BudgetTracker expenses={expenses} />
         </div>
 
+        {/* Bank Statement Upload */}
+        <BankStatementUpload onTransactionsExtracted={handleBulkAddExpenses} />
+
+        {/* Expense Time Analysis */}
+        <ExpenseTimeSelector expenses={expenses} />
+
         {/* Recurring Expenses */}
         <RecurringExpenses expenses={expenses} />
 
@@ -281,7 +304,8 @@ export default function Dashboard() {
             onUpdatePrice={handleUpdateInvestmentPrice}
           />
         </div>
-      </div>
-    </Layout>
+        </div>
+      </Layout>
+    </TooltipProvider>
   );
 }

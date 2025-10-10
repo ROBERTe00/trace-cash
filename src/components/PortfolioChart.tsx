@@ -25,10 +25,10 @@ export const PortfolioChart = ({ investments }: PortfolioChartProps) => {
   // Group investments by category
   const categoryData = investments.reduce((acc, inv) => {
     const value = inv.quantity * inv.currentPrice;
-    if (acc[inv.category]) {
-      acc[inv.category] += value;
+    if (acc[inv.type]) {
+      acc[inv.type] += value;
     } else {
-      acc[inv.category] = value;
+      acc[inv.type] = value;
     }
     return acc;
   }, {} as Record<string, number>);

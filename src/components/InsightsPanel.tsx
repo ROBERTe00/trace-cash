@@ -23,7 +23,7 @@ export const InsightsPanel = ({ investments, expenses }: InsightsPanelProps) => 
     const totalValue = investments.reduce((sum, inv) => sum + inv.quantity * inv.currentPrice, 0);
     const categoryData = investments.reduce((acc, inv) => {
       const value = inv.quantity * inv.currentPrice;
-      acc[inv.category] = (acc[inv.category] || 0) + value;
+      acc[inv.type] = (acc[inv.type] || 0) + value;
       return acc;
     }, {} as Record<string, number>);
 
@@ -80,7 +80,7 @@ export const InsightsPanel = ({ investments, expenses }: InsightsPanelProps) => 
     }
 
     // No ETF check
-    const hasETF = investments.some((inv) => inv.category === "ETF");
+    const hasETF = investments.some((inv) => inv.type === "ETF");
     if (!hasETF && investments.length > 0) {
       insights.push({
         type: "tip",
@@ -92,7 +92,7 @@ export const InsightsPanel = ({ investments, expenses }: InsightsPanelProps) => 
 
     // Budget check
     const monthlyExpenses = expenses
-      .filter((e) => e.type === "Expense" && e.recurrence === "Monthly")
+      .filter((e) => e.type === "Expense" && e.recurring && e.recurrenceType === "monthly")
       .reduce((sum, e) => sum + e.amount, 0);
 
     if (monthlyExpenses > totalIncome * 0.5 && totalIncome > 0) {

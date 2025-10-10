@@ -20,7 +20,7 @@ interface InvestmentFormProps {
 
 export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
   const [formData, setFormData] = useState({
-    category: "ETF" as Investment["category"],
+    type: "ETF" as Investment["type"],
     name: "",
     quantity: "",
     purchasePrice: "",
@@ -40,18 +40,18 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
       return;
 
     onAdd({
-      category: formData.category,
+      type: formData.type,
       name: formData.name,
       quantity: parseFloat(formData.quantity),
       purchasePrice: parseFloat(formData.purchasePrice),
       currentPrice: parseFloat(formData.currentPrice),
       symbol: formData.symbol || undefined,
       liveTracking: formData.liveTracking,
-      date: new Date().toISOString().split("T")[0],
+      purchaseDate: new Date().toISOString().split("T")[0],
     });
 
     setFormData({
-      category: "ETF",
+      type: "ETF",
       name: "",
       quantity: "",
       purchasePrice: "",
@@ -72,9 +72,9 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
           <div>
             <Label htmlFor="inv-category">Category</Label>
             <Select
-              value={formData.category}
+              value={formData.type}
               onValueChange={(value) =>
-                setFormData({ ...formData, category: value as Investment["category"] })
+                setFormData({ ...formData, type: value as Investment["type"] })
               }
             >
               <SelectTrigger className="mt-1">

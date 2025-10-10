@@ -17,7 +17,7 @@ export const BudgetTracker = ({ expenses }: BudgetTrackerProps) => {
   
   // Calculate monthly income for 50/30/20 rule
   const monthlyIncome = expenses
-    .filter((e) => e.type === "Income" && e.recurrence === "Monthly")
+    .filter((e) => e.type === "Income" && e.recurring && e.recurrenceType === "monthly")
     .reduce((sum, e) => sum + e.amount, 0);
 
   const recommended5030020 = {

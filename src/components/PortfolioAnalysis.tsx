@@ -16,7 +16,7 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
 
   const categoryData = investments.reduce((acc, inv) => {
     const value = inv.quantity * inv.currentPrice;
-    acc[inv.category] = (acc[inv.category] || 0) + value;
+    acc[inv.type] = (acc[inv.type] || 0) + value;
     return acc;
   }, {} as Record<string, number>);
 

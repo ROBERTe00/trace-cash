@@ -40,7 +40,7 @@ export const InvestmentTable = ({
     }
 
     const prices = await fetchAllAssetPrices(
-      liveInvestments.map((inv) => ({ symbol: inv.symbol!, category: inv.category }))
+      liveInvestments.map((inv) => ({ symbol: inv.symbol!, category: inv.type }))
     );
 
     let updated = 0;
@@ -122,7 +122,7 @@ export const InvestmentTable = ({
 
                 return (
                   <TableRow key={investment.id}>
-                    <TableCell>{investment.category}</TableCell>
+                    <TableCell>{investment.type}</TableCell>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         {investment.name}
