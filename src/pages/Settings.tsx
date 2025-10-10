@@ -1,19 +1,31 @@
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import { MFASetup } from "@/components/MFASetup";
+import { AuditLogViewer } from "@/components/AuditLogViewer";
+import { OfflineModeToggle } from "@/components/OfflineModeToggle";
+import { ComplianceBadges } from "@/components/ComplianceBadges";
 import { Button } from "@/components/ui/button";
 import { clearUser, exportToCSV } from "@/lib/storage";
+import { supabase } from "@/integrations/supabase/client";
 import { Download, LogOut } from "lucide-react";
 import { toast } from "sonner";
+import { AuditLogger } from "@/lib/auditLogger";
 
 export default function Settings() {
-  const handleExport = () => {
+  const handleExport = async () => {
     exportToCSV();
+    await AuditLogger.logDataExport('csv');
     toast.success("Data exported successfully!");
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await AuditLogger.log({
+      action: 'user_logout',
+      resourceType: 'auth',
+    });
+    await supabase.auth.signOut();
     clearUser();
-    window.location.reload();
+    window.location.href = '/';
   };
 
   return (
@@ -25,9 +37,20 @@ export default function Settings() {
         </div>
       </div>
 
+      <div className="glass-card p-6">
+        <h3 className="text-xl font-bold mb-4">Security & Compliance</h3>
+        <ComplianceBadges />
+      </div>
+
       <SettingsPanel />
 
       <ThemeSwitcher />
+
+      <MFASetup />
+
+      <OfflineModeToggle />
+
+      <AuditLogViewer />
 
       <div className="glass-card p-6 space-y-4">
         <h3 className="text-xl font-bold">Data Management</h3>

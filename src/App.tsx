@@ -20,6 +20,7 @@ import Community from "./pages/Community";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import { OnboardingWizard } from "./components/OnboardingWizard";
+import { SecurityAlerts } from "./components/SecurityAlerts";
 import { useState, useEffect } from "react";
 import { getUser } from "./lib/storage";
 
@@ -85,6 +86,7 @@ function AppRoutes() {
           </main>
         </div>
       </div>
+      <SecurityAlerts />
     </SidebarProvider>
   );
 }
