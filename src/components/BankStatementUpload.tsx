@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, Loader2, CheckCircle2 } from "lucide-react";
+import { Upload, FileText, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Expense } from "@/lib/storage";
 import { z } from "zod";
+import { useUpload } from "@/contexts/UploadContext";
 
 const transactionSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
@@ -62,12 +62,17 @@ const categories = [
 ];
 
 export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUploadProps) => {
-  const [uploading, setUploading] = useState(false);
-  const [processing, setProcessing] = useState(false);
+  const { uploadFile, extractedTransactions, clearTransactions, isProcessing } = useUpload();
   const [dragActive, setDragActive] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
-  const [extractedTransactions, setExtractedTransactions] = useState<ExtractedTransaction[]>([]);
   const [editedTransactions, setEditedTransactions] = useState<ExtractedTransaction[]>([]);
+
+  useEffect(() => {
+    if (extractedTransactions.length > 0 && !showVerification) {
+      setEditedTransactions(extractedTransactions);
+      setShowVerification(true);
+    }
+  }, [extractedTransactions]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -98,92 +103,7 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
   };
 
   const handleFile = async (file: File) => {
-    if (file.type !== "application/pdf") {
-      toast.error("Please upload a PDF file");
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("File size must be less than 10MB");
-      return;
-    }
-
-    setUploading(true);
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("Please log in to upload bank statements");
-        return;
-      }
-
-      // Upload to storage
-      const filePath = `${user.id}/${Date.now()}_${file.name}`;
-      const { error: uploadError, data } = await supabase.storage
-        .from("bank-statements")
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // Generate short-lived signed URL (5 minutes)
-      const { data: signedData, error: signedError } = await supabase.storage
-        .from("bank-statements")
-        .createSignedUrl(filePath, 300);
-
-      if (signedError) throw signedError;
-
-      toast.success("File uploaded! Processing transactions...");
-      setUploading(false);
-      setProcessing(true);
-
-      // Add timeout for better UX
-      const timeoutId = setTimeout(() => {
-        toast.info("AI is analyzing your statement... This may take 30-60 seconds", {
-          duration: 5000,
-        });
-      }, 5000);
-
-      try {
-        // Process with AI
-        const { data: processData, error: processError } = await supabase.functions.invoke(
-          'process-bank-statement',
-          {
-            body: {
-              fileUrl: signedData.signedUrl,
-              fileName: file.name,
-            },
-          }
-        );
-
-        clearTimeout(timeoutId);
-
-        if (processError) throw processError;
-
-        const transactions = processData.transactions || [];
-        
-        if (transactions.length === 0) {
-          toast.error("No transactions found in the statement");
-          setProcessing(false);
-          return;
-        }
-
-        setExtractedTransactions(transactions);
-        setEditedTransactions(transactions);
-        setShowVerification(true);
-        setProcessing(false);
-
-        toast.success(`Extracted ${transactions.length} transactions`);
-      } catch (error) {
-        clearTimeout(timeoutId);
-        throw error;
-      }
-
-    } catch (error) {
-      console.error("File processing failed");
-      toast.error("Failed to process bank statement");
-      setUploading(false);
-      setProcessing(false);
-    }
+    await uploadFile(file);
   };
 
   const handleConfirm = () => {
@@ -219,8 +139,8 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
 
       onTransactionsExtracted(expenses);
       setShowVerification(false);
-      setExtractedTransactions([]);
       setEditedTransactions([]);
+      clearTransactions();
       toast.success("Transactions added successfully!");
     } catch (error) {
       if (error instanceof Error) {
@@ -260,37 +180,20 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
               accept=".pdf"
               onChange={handleFileInput}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              disabled={uploading || processing}
+              disabled={isProcessing}
             />
             
             <div className="flex flex-col items-center justify-center gap-4 text-center">
-                {uploading || processing ? (
-                <>
-                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                  <p className="text-lg font-medium">
-                    {uploading ? "Uploading..." : "Processing with AI..."}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {processing 
-                      ? "Analyzing your bank statement... This typically takes 30-60 seconds"
-                      : "This may take a few moments"
-                    }
-                  </p>
-                  {processing && (
-                    <div className="w-full max-w-xs bg-muted rounded-full h-2 overflow-hidden">
-                      <div className="h-full bg-primary animate-pulse" style={{ width: '100%' }}></div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  <Upload className="h-12 w-12 text-muted-foreground" />
-                  <div>
-                    <p className="text-lg font-medium">Drop your bank statement here</p>
-                    <p className="text-sm text-muted-foreground">or click to browse</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">PDF files only, max 10MB</p>
-                </>
+              <Upload className="h-12 w-12 text-muted-foreground" />
+              <div>
+                <p className="text-lg font-medium">Drop your bank statement here</p>
+                <p className="text-sm text-muted-foreground">or click to browse</p>
+              </div>
+              <p className="text-xs text-muted-foreground">PDF files only, max 10MB</p>
+              {isProcessing && (
+                <p className="text-xs text-primary font-medium">
+                  Processing in background... You can navigate to other pages
+                </p>
               )}
             </div>
           </div>

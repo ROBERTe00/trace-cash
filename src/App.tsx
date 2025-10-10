@@ -6,6 +6,7 @@ import { ThemeProvider } from "next-themes";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AppProvider } from "./contexts/AppContext";
+import { UploadProvider } from "./contexts/UploadContext";
 import Index from "./pages/Index";
 import DashboardHome from "./pages/DashboardHome";
 import Expenses from "./pages/Expenses";
@@ -93,12 +94,14 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
         <AppProvider>
-          <TooltipProvider>
-            <Toaster />
-            <BrowserRouter>
-              <AppRoutes />
-            </BrowserRouter>
-          </TooltipProvider>
+          <UploadProvider>
+            <TooltipProvider>
+              <Toaster />
+              <BrowserRouter>
+                <AppRoutes />
+              </BrowserRouter>
+            </TooltipProvider>
+          </UploadProvider>
         </AppProvider>
       </ThemeProvider>
     </QueryClientProvider>
