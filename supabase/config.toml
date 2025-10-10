@@ -5,6 +5,3 @@ verify_jwt = true
 
 [functions.ai-financial-advice]
 verify_jwt = true
-
-[functions.categorize-transactions]
-verify_jwt = true

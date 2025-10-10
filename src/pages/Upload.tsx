@@ -4,9 +4,7 @@ import { VoiceExpenseInput } from "@/components/VoiceExpenseInput";
 import { getExpenses, saveExpenses, Expense } from "@/lib/storage";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Mic, FileSpreadsheet } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { FileText, Mic } from "lucide-react";
 
 export default function Upload() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -41,12 +39,8 @@ export default function Upload() {
         </div>
       </div>
 
-      <Tabs defaultValue="csv" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="csv" className="flex items-center gap-2">
-            <FileSpreadsheet className="h-4 w-4" />
-            CSV / Excel
-          </TabsTrigger>
+      <Tabs defaultValue="pdf" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="pdf" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             PDF Statement
@@ -56,25 +50,6 @@ export default function Upload() {
             Voice Input
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="csv" className="space-y-4 mt-6">
-          <Card className="glass-card p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <FileSpreadsheet className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-semibold">CSV / Excel Import</h3>
-              <Badge variant="outline" className="ml-auto">Coming Soon</Badge>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Upload CSV or Excel files with automatic parsing and AI categorization
-            </p>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>• Auto column detection (date, description, amount)</p>
-              <p>• Duplicate transaction detection</p>
-              <p>• AI-powered smart categorization</p>
-              <p>• Local processing for privacy</p>
-            </div>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="pdf" className="space-y-4 mt-6">
           <BankStatementUpload onTransactionsExtracted={handleBulkAddExpenses} />
