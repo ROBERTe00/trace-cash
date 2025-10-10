@@ -3,9 +3,16 @@ import { InvestmentForm } from "@/components/InvestmentForm";
 import { InvestmentTable } from "@/components/InvestmentTable";
 import { PortfolioChart } from "@/components/PortfolioChart";
 import { PortfolioAnalysis } from "@/components/PortfolioAnalysis";
+import { BrokerIntegration } from "@/components/BrokerIntegration";
+import { PortfolioMetricsPanel } from "@/components/PortfolioMetricsPanel";
+import { InvestmentScenarioSimulator } from "@/components/InvestmentScenarioSimulator";
 import { Investment } from "@/lib/storage";
+import { Button } from "@/components/ui/button";
+import { Download, FileSpreadsheet } from "lucide-react";
+import { exportInvestmentReport, exportInvestmentCSV } from "@/lib/investmentExport";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Investments() {
   const [investments, setInvestments] = useState<Investment[]>([]);
@@ -133,6 +140,16 @@ export default function Investments() {
     }
   };
 
+  const handleExportPDF = () => {
+    exportInvestmentReport(investments);
+    toast.success("Report exported successfully!");
+  };
+
+  const handleExportCSV = () => {
+    exportInvestmentCSV(investments);
+    toast.success("Data exported successfully!");
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -143,27 +160,65 @@ export default function Investments() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-4xl font-bold gradient-text">Investments</h1>
-          <p className="text-muted-foreground">Track your portfolio performance</p>
+          <p className="text-muted-foreground">Advanced portfolio management and analytics</p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={handleExportCSV} variant="outline" size="sm">
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button onClick={handleExportPDF} variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            Export PDF
+          </Button>
         </div>
       </div>
 
-      <PortfolioAnalysis investments={investments} />
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="simulator">Simulator</TabsTrigger>
+          <TabsTrigger value="import">Import</TabsTrigger>
+        </TabsList>
 
-      <PortfolioChart investments={investments} />
+        <TabsContent value="overview" className="space-y-6">
+          <PortfolioAnalysis investments={investments} />
+          <PortfolioChart investments={investments} />
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <InvestmentForm onAdd={handleAddInvestment} />
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <InvestmentForm onAdd={handleAddInvestment} />
-        <div className="lg:col-span-1" />
-      </div>
+          <InvestmentTable
+            investments={investments}
+            onDelete={handleDeleteInvestment}
+            onUpdatePrice={handleUpdateInvestmentPrice}
+          />
+        </TabsContent>
 
-      <InvestmentTable
-        investments={investments}
-        onDelete={handleDeleteInvestment}
-        onUpdatePrice={handleUpdateInvestmentPrice}
-      />
+        <TabsContent value="analytics" className="space-y-6">
+          <PortfolioMetricsPanel />
+        </TabsContent>
+
+        <TabsContent value="simulator" className="space-y-6">
+          <InvestmentScenarioSimulator />
+        </TabsContent>
+
+        <TabsContent value="import" className="space-y-6">
+          <BrokerIntegration />
+          
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-6">
+            <h3 className="font-semibold mb-2">🚀 Coming Soon</h3>
+            <p className="text-sm text-muted-foreground">
+              More broker integrations including Interactive Brokers, Coinbase, and Binance
+            </p>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

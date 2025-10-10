@@ -14,3 +14,6 @@ verify_jwt = true
 
 [functions.send-notification]
 verify_jwt = true
+
+[functions.sync-broker-data]
+verify_jwt = true
