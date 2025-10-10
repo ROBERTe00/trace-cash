@@ -98,7 +98,9 @@ serve(async (req) => {
   } catch (error: any) {
     console.error("Broker sync error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: "Failed to sync broker data. Please verify your credentials and try again." 
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -12,6 +12,55 @@ serve(async (req) => {
 
   try {
     const { financialData } = await req.json();
+
+    // Input validation
+    if (!financialData || typeof financialData !== 'object') {
+      return new Response(
+        JSON.stringify({ error: 'Invalid financial data provided' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validate numeric fields
+    const numericFields = ['totalExpenses', 'totalIncome', 'portfolioValue', 'expenseCount', 'investmentCount'];
+    for (const field of numericFields) {
+      if (financialData[field] !== undefined && 
+          (typeof financialData[field] !== 'number' || 
+           financialData[field] < 0 || 
+           financialData[field] > 100000000)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid financial data values' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Sanitize category breakdown
+    const validCategories = [
+      'Food & Dining', 'Transportation', 'Shopping', 'Entertainment', 
+      'Healthcare', 'Bills & Utilities', 'Income', 'Other', 
+      'Salary', 'Food', 'Transport', 'Rent'
+    ];
+    
+    if (financialData.categoryBreakdown && typeof financialData.categoryBreakdown === 'object') {
+      const sanitizedBreakdown: Record<string, number> = {};
+      for (const [category, amount] of Object.entries(financialData.categoryBreakdown)) {
+        // Only allow predefined categories with string names under 50 chars
+        if (typeof category === 'string' && 
+            category.length <= 50 && 
+            typeof amount === 'number' && 
+            amount >= 0 && 
+            amount <= 1000000) {
+          // Limit to valid categories or truncate custom ones
+          const safeCategory = validCategories.includes(category) 
+            ? category 
+            : category.substring(0, 50);
+          sanitizedBreakdown[safeCategory] = amount;
+        }
+      }
+      financialData.categoryBreakdown = sanitizedBreakdown;
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (!LOVABLE_API_KEY) {
@@ -26,7 +75,7 @@ serve(async (req) => {
       expenseCount = 0,
       investmentCount = 0,
       goalsProgress = []
-    } = financialData || {};
+    } = financialData;
 
     const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome * 100).toFixed(1) : "0";
     
@@ -92,10 +141,15 @@ Focus on:
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error in ai-financial-advice:", error);
+    console.error('Error in generate-ai-advice function:', error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ 
+        error: 'Unable to generate financial advice at this time. Please try again later.' 
+      }), 
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
     );
   }
 });

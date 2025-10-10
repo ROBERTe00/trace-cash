@@ -28,7 +28,27 @@ serve(async (req) => {
     }
 
     const fileBuffer = await fileResponse.arrayBuffer();
-    const base64File = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
+    
+    // Validate file size (10MB limit)
+    const fileSizeInMB = fileBuffer.byteLength / (1024 * 1024);
+    if (fileSizeInMB > 10) {
+      return new Response(
+        JSON.stringify({ error: "File size exceeds 10MB limit" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate PDF magic bytes (%PDF-)
+    const uint8Array = new Uint8Array(fileBuffer);
+    if (uint8Array[0] !== 0x25 || uint8Array[1] !== 0x50 || 
+        uint8Array[2] !== 0x44 || uint8Array[3] !== 0x46) {
+      return new Response(
+        JSON.stringify({ error: "Invalid PDF file format" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const base64File = btoa(String.fromCharCode(...uint8Array));
 
     // Use Lovable AI to extract and categorize transactions with PDF content
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -134,10 +154,11 @@ IMPORTANT:
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Processing failed");
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("Processing failed:", error);
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ 
+        error: "Failed to process bank statement. Please try again or contact support if the issue persists." 
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
