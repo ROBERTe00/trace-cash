@@ -1,14 +1,19 @@
 import { useState, useEffect } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Avatar } from "@/components/ui/avatar";
-import { MessageSquare, Heart, Share2, Users } from "lucide-react";
+import { MessageSquare, Heart, Share2, Users, Trophy, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getInvestments } from "@/lib/storage";
+import { getInvestments, getExpenses } from "@/lib/storage";
+import { LeaderboardWidget } from "@/components/LeaderboardWidget";
+import { PrivacyConsent } from "@/components/PrivacyConsent";
+import { MotivationalInsights } from "@/components/MotivationalInsights";
+import { TemplateSharing } from "@/components/TemplateSharing";
 import { z } from "zod";
 
 const postSchema = z.object({
@@ -32,6 +37,20 @@ export default function Community() {
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [sharePortfolio, setSharePortfolio] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [hasConsented, setHasConsented] = useState(false);
+
+  // Calculate user metrics for leaderboard
+  const investments = getInvestments();
+  const expenses = getExpenses();
+  const portfolioValue = investments.reduce((sum, inv) => sum + inv.quantity * inv.currentPrice, 0);
+  const portfolioReturn = investments.length > 0
+    ? investments.reduce((sum, inv) => 
+        sum + ((inv.currentPrice - inv.purchasePrice) / inv.purchasePrice * 100), 0
+      ) / investments.length
+    : 0;
+  
+  // Mock percentile - in production this would be calculated from aggregated data
+  const userPercentile = portfolioValue > 100000 ? 15 : portfolioValue > 50000 ? 35 : portfolioValue > 25000 ? 55 : 75;
 
   const fetchPosts = async () => {
     const { data, error } = await supabase
@@ -125,24 +144,99 @@ export default function Community() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold gradient-text">Community Feed</h1>
-          <p className="text-muted-foreground">Share insights and learn from others</p>
+          <h1 className="text-4xl font-bold gradient-text">Community Hub</h1>
+          <p className="text-muted-foreground">Confronta, impara e cresci con la community</p>
         </div>
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Users className="h-5 w-5" />
-          <span>{posts.length} posts</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Users className="h-5 w-5" />
+            <span>12.5k utenti attivi</span>
+          </div>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Trophy className="h-5 w-5" />
+            <span>Top {userPercentile}%</span>
+          </div>
         </div>
       </div>
 
+      {/* Tabs */}
+      <Tabs defaultValue="leaderboard" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="leaderboard" className="gap-2">
+            <Trophy className="h-4 w-4" />
+            Classifica
+          </TabsTrigger>
+          <TabsTrigger value="insights" className="gap-2">
+            <MessageSquare className="h-4 w-4" />
+            Insight AI
+          </TabsTrigger>
+          <TabsTrigger value="templates" className="gap-2">
+            <Share2 className="h-4 w-4" />
+            Template
+          </TabsTrigger>
+          <TabsTrigger value="feed" className="gap-2">
+            <Users className="h-4 w-4" />
+            Feed ({posts.length})
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Leaderboard Tab */}
+        <TabsContent value="leaderboard" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <LeaderboardWidget
+                userPercentile={hasConsented ? userPercentile : undefined}
+                userPortfolio={hasConsented ? portfolioValue : undefined}
+                userReturn={hasConsented ? portfolioReturn : undefined}
+              />
+            </div>
+            <div>
+              <PrivacyConsent onConsentChange={setHasConsented} />
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Insights Tab */}
+        <TabsContent value="insights" className="space-y-6">
+          {hasConsented ? (
+            <MotivationalInsights
+              userPercentile={userPercentile}
+              userPortfolio={portfolioValue}
+              userReturn={portfolioReturn}
+            />
+          ) : (
+            <Card className="glass-card p-12 text-center">
+              <Shield className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-2xl font-bold mb-2">Consenso Richiesto</h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                Attiva la condivisione dati nella tab Classifica per ricevere insight personalizzati 
+                basati sui benchmark della community.
+              </p>
+              <Button onClick={() => document.querySelector('[value="leaderboard"]')?.dispatchEvent(new Event('click'))}>
+                Vai alle Impostazioni Privacy
+              </Button>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Templates Tab */}
+        <TabsContent value="templates" className="space-y-6">
+          <TemplateSharing />
+        </TabsContent>
+
+        {/* Feed Tab */}
+        <TabsContent value="feed" className="space-y-6">
+
       <Card className="glass-card">
         <CardHeader>
-          <CardTitle>Share Your Experience</CardTitle>
+          <CardTitle>Condividi la Tua Esperienza</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <Textarea
-            placeholder="Share your financial journey, tips, or ask for advice..."
+            placeholder="Condividi il tuo percorso finanziario, suggerimenti o chiedi consigli..."
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
             rows={4}
@@ -155,7 +249,7 @@ export default function Community() {
                   checked={isAnonymous}
                   onCheckedChange={setIsAnonymous}
                 />
-                <Label htmlFor="anonymous">Post anonymously</Label>
+                <Label htmlFor="anonymous">Pubblica in modo anonimo</Label>
               </div>
               <div className="flex items-center gap-2">
                 <Switch
@@ -163,69 +257,71 @@ export default function Community() {
                   checked={sharePortfolio}
                   onCheckedChange={setSharePortfolio}
                 />
-                <Label htmlFor="share-portfolio">Share masked portfolio stats</Label>
+                <Label htmlFor="share-portfolio">Condividi statistiche portfolio mascherate</Label>
               </div>
             </div>
             <Button onClick={handlePost} disabled={loading}>
               <Share2 className="h-4 w-4 mr-2" />
-              Post
+              Pubblica
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      <div className="space-y-4">
-        {posts.map((post) => (
-          <Card key={post.id} className="glass-card hover-lift">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-4">
-                <Avatar className="h-10 w-10 bg-primary/10">
-                  <div className="text-primary font-bold">
-                    {post.is_anonymous ? "?" : "U"}
-                  </div>
-                </Avatar>
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold">
-                      {post.is_anonymous ? "Anonymous User" : "Community Member"}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {new Date(post.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <p className="text-sm">{post.content}</p>
-                  {post.portfolio_data && (
-                    <div className="p-3 bg-primary/5 rounded-lg text-sm">
-                      <p className="font-medium mb-1">📊 Portfolio Stats:</p>
-                      <div className="flex gap-4">
-                        {post.portfolio_data.investments?.map((inv: any, i: number) => (
-                          <span key={i} className="text-muted-foreground">
-                            {inv.type}: {inv.profit}%
-                          </span>
-                        ))}
+          <div className="space-y-4">
+            {posts.map((post) => (
+              <Card key={post.id} className="glass-card hover-lift">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-4">
+                    <Avatar className="h-10 w-10 bg-primary/10">
+                      <div className="text-primary font-bold">
+                        {post.is_anonymous ? "?" : "U"}
+                      </div>
+                    </Avatar>
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold">
+                          {post.is_anonymous ? "Utente Anonimo" : "Membro Community"}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(post.created_at).toLocaleDateString('it-IT')}
+                        </span>
+                      </div>
+                      <p className="text-sm">{post.content}</p>
+                      {post.portfolio_data && (
+                        <div className="p-3 bg-primary/5 rounded-lg text-sm">
+                          <p className="font-medium mb-1">📊 Statistiche Portfolio:</p>
+                          <div className="flex gap-4">
+                            {post.portfolio_data.investments?.map((inv: any, i: number) => (
+                              <span key={i} className="text-muted-foreground">
+                                {inv.type}: {inv.profit}%
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-4 pt-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleLike(post.id)}
+                        >
+                          <Heart className="h-4 w-4 mr-1" />
+                          {post.likes_count}
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          Rispondi
+                        </Button>
                       </div>
                     </div>
-                  )}
-                  <div className="flex items-center gap-4 pt-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleLike(post.id)}
-                    >
-                      <Heart className="h-4 w-4 mr-1" />
-                      {post.likes_count}
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <MessageSquare className="h-4 w-4 mr-1" />
-                      Reply
-                    </Button>
                   </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
