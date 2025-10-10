@@ -40,7 +40,7 @@ export const InvestmentTable = ({
     }
 
     const prices = await fetchAllAssetPrices(
-      liveInvestments.map((inv) => ({ symbol: inv.symbol!, category: inv.type }))
+      liveInvestments.map((inv) => ({ symbol: inv.symbol!, type: inv.type }))
     );
 
     let updated = 0;

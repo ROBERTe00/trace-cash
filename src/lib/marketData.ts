@@ -110,10 +110,10 @@ export const fetchStockPrice = async (symbol: string): Promise<MarketPrice | nul
 };
 
 // Auto-detect and fetch price for any symbol
-export const fetchAssetPrice = async (symbol: string, category: string): Promise<MarketPrice | null> => {
-  if (category === "Crypto" || isCryptoSymbol(symbol)) {
+export const fetchAssetPrice = async (symbol: string, type: string): Promise<MarketPrice | null> => {
+  if (type === "Crypto" || isCryptoSymbol(symbol)) {
     return fetchCryptoPrice(symbol);
-  } else if (category === "ETF" || category === "Stocks") {
+  } else if (type === "ETF" || type === "Stock") {
     return fetchStockPrice(symbol);
   }
   return null;
@@ -121,7 +121,7 @@ export const fetchAssetPrice = async (symbol: string, category: string): Promise
 
 // Fetch all asset prices
 export const fetchAllAssetPrices = async (
-  assets: Array<{ symbol?: string; category: string }>
+  assets: Array<{ symbol?: string; type: string }>
 ): Promise<Record<string, MarketPrice>> => {
   const results: Record<string, MarketPrice> = {};
 
@@ -129,7 +129,7 @@ export const fetchAllAssetPrices = async (
     assets
       .filter((asset) => asset.symbol)
       .map(async (asset) => {
-        const price = await fetchAssetPrice(asset.symbol!, asset.category);
+        const price = await fetchAssetPrice(asset.symbol!, asset.type);
         if (price) {
           results[asset.symbol!.toUpperCase()] = price;
         }
