@@ -2,10 +2,16 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Trophy, Flame, Star, Target, TrendingUp, Award } from "lucide-react";
-import { getExpenses, getInvestments } from "@/lib/storage";
+import { Button } from "@/components/ui/button";
+import { Trophy, Flame, Star, Target, TrendingUp, Award, Download, Eye, EyeOff } from "lucide-react";
+import { getExpenses, getInvestments, getGoals, saveGoals, FinancialGoal } from "@/lib/storage";
 import { useApp } from "@/contexts/AppContext";
+import { FinancialGoals } from "@/components/FinancialGoals";
+import { TrendChart } from "@/components/TrendChart";
+import { AIAdvicePanel } from "@/components/AIAdvicePanel";
+import { useToast } from "@/hooks/use-toast";
 import confetti from "canvas-confetti";
+import jsPDF from "jspdf";
 
 interface Achievement {
   id: string;
@@ -19,14 +25,90 @@ interface Achievement {
 
 export default function ProgressHub() {
   const { formatCurrency } = useApp();
+  const { toast } = useToast();
   const [streak, setStreak] = useState(0);
   const [level, setLevel] = useState(1);
   const [xp, setXp] = useState(0);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [goals, setGoals] = useState<FinancialGoal[]>([]);
+  const [showAchievements, setShowAchievements] = useState(true);
 
   useEffect(() => {
     calculateProgress();
+    setGoals(getGoals());
   }, []);
+
+  const handleAddGoal = (goal: Omit<FinancialGoal, "id">) => {
+    const newGoal: FinancialGoal = {
+      ...goal,
+      id: crypto.randomUUID(),
+    };
+    const updatedGoals = [...goals, newGoal];
+    setGoals(updatedGoals);
+    saveGoals(updatedGoals);
+  };
+
+  const handleDeleteGoal = (id: string) => {
+    const updatedGoals = goals.filter(g => g.id !== id);
+    setGoals(updatedGoals);
+    saveGoals(updatedGoals);
+    toast({
+      title: "Goal Deleted",
+      description: "Your financial goal has been removed.",
+    });
+  };
+
+  const handleUpdateGoal = (id: string, currentAmount: number) => {
+    const updatedGoals = goals.map(g => 
+      g.id === id ? { ...g, currentAmount } : g
+    );
+    setGoals(updatedGoals);
+    saveGoals(updatedGoals);
+  };
+
+  const exportProgressToPDF = () => {
+    const doc = new jsPDF();
+    const expenses = getExpenses();
+    const investments = getInvestments();
+    
+    doc.setFontSize(20);
+    doc.text("Progress Hub Report", 20, 20);
+    
+    doc.setFontSize(12);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 30);
+    
+    // Stats
+    doc.text(`Current Streak: ${streak} days`, 20, 45);
+    doc.text(`Level: ${level} - ${getLevelTitle(level)}`, 20, 55);
+    doc.text(`XP Progress: ${xp}/100`, 20, 65);
+    
+    // Achievements
+    doc.text("Achievements:", 20, 80);
+    let yPos = 90;
+    achievements.forEach((ach, idx) => {
+      const status = ach.unlocked ? "✓" : "○";
+      doc.text(`${status} ${ach.title} (${ach.progress}/${ach.maxProgress})`, 25, yPos);
+      yPos += 10;
+    });
+    
+    // Goals
+    if (goals.length > 0) {
+      yPos += 10;
+      doc.text("Financial Goals:", 20, yPos);
+      yPos += 10;
+      goals.forEach(goal => {
+        const progress = ((goal.currentAmount / goal.targetAmount) * 100).toFixed(1);
+        doc.text(`${goal.name}: ${progress}% (€${goal.currentAmount}/€${goal.targetAmount})`, 25, yPos);
+        yPos += 10;
+      });
+    }
+    
+    doc.save("progress-hub-report.pdf");
+    toast({
+      title: "Export Complete",
+      description: "Your progress report has been downloaded.",
+    });
+  };
 
   const calculateProgress = () => {
     const expenses = getExpenses();
@@ -129,13 +211,20 @@ export default function ProgressHub() {
     return "Wealth Master";
   };
 
+  const expenses = getExpenses();
+  const investments = getInvestments();
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold gradient-text">Progress Hub</h1>
-          <p className="text-muted-foreground">Track your financial journey</p>
+          <p className="text-muted-foreground">Track your financial journey and achieve your goals</p>
         </div>
+        <Button onClick={exportProgressToPDF} className="gap-2">
+          <Download className="h-4 w-4" />
+          Export PDF
+        </Button>
       </div>
 
       {/* Stats Overview */}
@@ -180,13 +269,48 @@ export default function ProgressHub() {
         </Card>
       </div>
 
+      {/* Financial Goals */}
+      <FinancialGoals
+        goals={goals}
+        onAdd={handleAddGoal}
+        onDelete={handleDeleteGoal}
+        onUpdate={handleUpdateGoal}
+      />
+
+      {/* Trend Chart */}
+      <TrendChart expenses={expenses} />
+
+      {/* AI Insights */}
+      <AIAdvicePanel expenses={expenses} investments={investments} goals={goals} />
+
       {/* Achievements */}
       <Card className="glass-card p-6">
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-          <Award className="h-6 w-6" />
-          Achievements
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Award className="h-6 w-6" />
+            Achievements
+          </h2>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAchievements(!showAchievements)}
+            className="gap-2"
+          >
+            {showAchievements ? (
+              <>
+                <EyeOff className="h-4 w-4" />
+                Hide
+              </>
+            ) : (
+              <>
+                <Eye className="h-4 w-4" />
+                Show
+              </>
+            )}
+          </Button>
+        </div>
+        {showAchievements && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {achievements.map((achievement) => {
             const Icon = achievement.icon;
             const progressPercent = (achievement.progress / achievement.maxProgress) * 100;
@@ -235,21 +359,40 @@ export default function ProgressHub() {
               </Card>
             );
           })}
-        </div>
+          </div>
+        )}
       </Card>
 
-      {/* Daily Tips */}
-      <Card className="glass-card p-6 bg-gradient-to-br from-blue-500/10 to-purple-500/10">
-        <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
-          <Flame className="h-5 w-5 text-orange-500" />
-          Daily Motivation
-        </h3>
-        <p className="text-muted-foreground">
-          {streak > 0 
-            ? `Amazing! You're on a ${streak}-day streak. Keep tracking your finances daily! 🎉`
-            : "Start your streak today by adding a transaction! 💪"
-          }
-        </p>
+      {/* Motivational Card */}
+      <Card className="glass-card p-6 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
+        <div className="flex items-start gap-4">
+          <div className="p-3 rounded-xl bg-green-500/20">
+            <Flame className="h-6 w-6 text-green-500" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold mb-2">Daily Motivation</h3>
+            <p className="text-muted-foreground mb-3">
+              {streak > 0 
+                ? `Amazing! You're on a ${streak}-day streak. Keep tracking your finances daily! 🎉`
+                : "Start your streak today by adding a transaction! 💪"
+              }
+            </p>
+            {goals.length > 0 && goals.some(g => g.currentAmount < g.targetAmount) && (
+              <div className="mt-3 p-3 rounded-lg bg-background/50">
+                <p className="text-sm font-medium mb-1">Next Milestone:</p>
+                <p className="text-xs text-muted-foreground">
+                  {(() => {
+                    const nextGoal = goals.find(g => g.currentAmount < g.targetAmount);
+                    if (!nextGoal) return null;
+                    const remaining = nextGoal.targetAmount - nextGoal.currentAmount;
+                    const daysLeft = Math.ceil((new Date(nextGoal.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                    return `Save €${remaining.toFixed(2)} more for "${nextGoal.name}" in ${daysLeft} days`;
+                  })()}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </Card>
     </div>
   );
