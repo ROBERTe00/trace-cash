@@ -1,0 +1,48 @@
+import { SettingsPanel } from "@/components/SettingsPanel";
+import { Button } from "@/components/ui/button";
+import { clearUser, exportToCSV } from "@/lib/storage";
+import { Download, LogOut } from "lucide-react";
+import { toast } from "sonner";
+
+export default function Settings() {
+  const handleExport = () => {
+    exportToCSV();
+    toast.success("Data exported successfully!");
+  };
+
+  const handleLogout = () => {
+    clearUser();
+    window.location.reload();
+  };
+
+  return (
+    <div className="space-y-6 max-w-4xl mx-auto">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-bold gradient-text">Settings</h1>
+          <p className="text-muted-foreground">Manage your preferences</p>
+        </div>
+      </div>
+
+      <SettingsPanel />
+
+      <div className="glass-card p-6 space-y-4">
+        <h3 className="text-xl font-bold">Data Management</h3>
+        <div className="flex gap-4">
+          <Button onClick={handleExport} variant="outline" className="gap-2">
+            <Download className="h-4 w-4" />
+            Export Data
+          </Button>
+          <Button
+            onClick={handleLogout}
+            variant="destructive"
+            className="gap-2"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
