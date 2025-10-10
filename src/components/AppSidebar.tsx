@@ -7,6 +7,7 @@ import {
   Settings,
   Upload,
   Trophy,
+  Users,
 } from "lucide-react";
 import {
   Sidebar,
@@ -26,6 +27,7 @@ const navigationItems = [
   { title: "Investments", url: "/investments", icon: TrendingUp },
   { title: "Future Planner", url: "/future-planner", icon: Lightbulb },
   { title: "Progress Hub", url: "/progress", icon: Trophy },
+  { title: "Community", url: "/community", icon: Users },
   { title: "Upload", url: "/upload", icon: Upload },
   { title: "Settings", url: "/settings", icon: Settings },
 ];

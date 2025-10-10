@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { KPICard } from "@/components/KPICard";
 import { IncomeTracker } from "@/components/IncomeTracker";
 import { FinancialGoals } from "@/components/FinancialGoals";
+import { AIAdvicePanel } from "@/components/AIAdvicePanel";
 import {
   Wallet,
   TrendingUp,
@@ -113,6 +114,13 @@ export default function DashboardHome() {
           onAdd={handleAddGoal}
           onDelete={handleDeleteGoal}
           onUpdate={handleUpdateGoal}
+        />
+
+        {/* AI Advice Panel */}
+        <AIAdvicePanel 
+          expenses={expenses}
+          investments={investments}
+          goals={goals}
         />
 
         {/* KPI Cards */}

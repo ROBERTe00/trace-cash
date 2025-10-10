@@ -1,4 +1,5 @@
 import { SettingsPanel } from "@/components/SettingsPanel";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { Button } from "@/components/ui/button";
 import { clearUser, exportToCSV } from "@/lib/storage";
 import { Download, LogOut } from "lucide-react";
@@ -25,6 +26,8 @@ export default function Settings() {
       </div>
 
       <SettingsPanel />
+
+      <ThemeSwitcher />
 
       <div className="glass-card p-6 space-y-4">
         <h3 className="text-xl font-bold">Data Management</h3>

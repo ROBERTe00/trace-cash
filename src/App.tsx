@@ -15,8 +15,10 @@ import FuturePlanner from "./pages/FuturePlanner";
 import ProgressHub from "./pages/ProgressHub";
 import Upload from "./pages/Upload";
 import Settings from "./pages/Settings";
+import Community from "./pages/Community";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
+import { OnboardingWizard } from "./components/OnboardingWizard";
 import { useState, useEffect } from "react";
 import { getUser } from "./lib/storage";
 
@@ -25,12 +27,25 @@ const queryClient = new QueryClient();
 function AppRoutes() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     const user = getUser();
     setIsAuthenticated(!!user);
+    
+    // Check if onboarding was completed
+    const onboardingCompleted = localStorage.getItem("onboarding_completed");
+    if (user && !onboardingCompleted) {
+      setShowOnboarding(true);
+    }
+    
     setLoading(false);
   }, []);
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem("onboarding_completed", "true");
+    setShowOnboarding(false);
+  };
 
   if (loading) {
     return (
@@ -46,6 +61,7 @@ function AppRoutes() {
 
   return (
     <SidebarProvider>
+      <OnboardingWizard isOpen={showOnboarding} onComplete={handleOnboardingComplete} />
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
@@ -60,6 +76,7 @@ function AppRoutes() {
               <Route path="/insights" element={<Insights />} />
               <Route path="/future-planner" element={<FuturePlanner />} />
               <Route path="/progress" element={<ProgressHub />} />
+              <Route path="/community" element={<Community />} />
               <Route path="/upload" element={<Upload />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<NotFound />} />

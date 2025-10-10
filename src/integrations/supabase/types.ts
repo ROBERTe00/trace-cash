@@ -44,6 +44,100 @@ export type Database = {
         }
         Relationships: []
       }
+      community_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          is_anonymous: boolean | null
+          post_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          post_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          post_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_posts: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          is_anonymous: boolean | null
+          likes_count: number | null
+          portfolio_data: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          likes_count?: number | null
+          portfolio_data?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          likes_count?: number | null
+          portfolio_data?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
