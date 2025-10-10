@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { ExpenseTimeSelector } from "@/components/ExpenseTimeSelector";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ExpensesSummary } from "@/components/ExpensesSummary";
+import { ExpenseInsights } from "@/components/ExpenseInsights";
+import { ExpenseBadges } from "@/components/ExpenseBadges";
+import { BudgetLimitsManager } from "@/components/BudgetLimitsManager";
 import { TransactionTable } from "@/components/TransactionTable";
 import { ExpenseForm } from "@/components/ExpenseForm";
-import { ExpenseChart } from "@/components/ExpenseChart";
-import { TrendChart } from "@/components/TrendChart";
-import { BudgetTracker } from "@/components/BudgetTracker";
+import { CategoryManager } from "@/components/CategoryManager";
 import { getExpenses, saveExpenses, Expense } from "@/lib/storage";
 import { toast } from "sonner";
 
@@ -21,37 +22,54 @@ export default function Expenses() {
     const updated = [...expenses, newExpense];
     setExpenses(updated);
     saveExpenses(updated);
-    toast.success("Transaction added successfully!");
+    toast.success("Transazione aggiunta con successo!");
   };
 
   const handleDeleteExpense = (id: string) => {
     const updated = expenses.filter((e) => e.id !== id);
     setExpenses(updated);
     saveExpenses(updated);
-    toast.success("Transaction deleted");
+    toast.success("Transazione eliminata");
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold gradient-text">Expenses</h1>
-          <p className="text-muted-foreground">Track and manage your spending</p>
+          <h1 className="text-4xl font-bold gradient-text">Spese</h1>
+          <p className="text-muted-foreground">
+            Gestisci e analizza le tue spese in modo intelligente
+          </p>
         </div>
       </div>
 
-      <ExpenseTimeSelector expenses={expenses} />
+      <Tabs defaultValue="riepilogo" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="riepilogo">Riepilogo</TabsTrigger>
+          <TabsTrigger value="dettagli">Dettagli</TabsTrigger>
+          <TabsTrigger value="insight">Insight</TabsTrigger>
+          <TabsTrigger value="impostazioni">Impostazioni</TabsTrigger>
+        </TabsList>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ExpenseChart expenses={expenses} />
-        <TrendChart expenses={expenses} />
-      </div>
+        <TabsContent value="riepilogo" className="space-y-6">
+          <ExpensesSummary expenses={expenses} />
+          <ExpenseBadges expenses={expenses} />
+        </TabsContent>
 
-      <BudgetTracker expenses={expenses} />
+        <TabsContent value="dettagli" className="space-y-6">
+          <ExpenseForm onAdd={handleAddExpense} />
+          <TransactionTable transactions={expenses} onDelete={handleDeleteExpense} />
+        </TabsContent>
 
-      <ExpenseForm onAdd={handleAddExpense} />
+        <TabsContent value="insight" className="space-y-6">
+          <ExpenseInsights expenses={expenses} />
+        </TabsContent>
 
-      <TransactionTable transactions={expenses} onDelete={handleDeleteExpense} />
+        <TabsContent value="impostazioni" className="space-y-6">
+          <BudgetLimitsManager expenses={expenses} />
+          <CategoryManager />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
