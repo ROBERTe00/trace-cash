@@ -136,33 +136,47 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
       setUploading(false);
       setProcessing(true);
 
-      // Process with AI
-      const { data: processData, error: processError } = await supabase.functions.invoke(
-        'process-bank-statement',
-        {
-          body: {
-            fileUrl: signedData.signedUrl,
-            fileName: file.name,
-          },
+      // Add timeout for better UX
+      const timeoutId = setTimeout(() => {
+        toast.info("AI is analyzing your statement... This may take 30-60 seconds", {
+          duration: 5000,
+        });
+      }, 5000);
+
+      try {
+        // Process with AI
+        const { data: processData, error: processError } = await supabase.functions.invoke(
+          'process-bank-statement',
+          {
+            body: {
+              fileUrl: signedData.signedUrl,
+              fileName: file.name,
+            },
+          }
+        );
+
+        clearTimeout(timeoutId);
+
+        if (processError) throw processError;
+
+        const transactions = processData.transactions || [];
+        
+        if (transactions.length === 0) {
+          toast.error("No transactions found in the statement");
+          setProcessing(false);
+          return;
         }
-      );
 
-      if (processError) throw processError;
-
-      const transactions = processData.transactions || [];
-      
-      if (transactions.length === 0) {
-        toast.error("No transactions found in the statement");
+        setExtractedTransactions(transactions);
+        setEditedTransactions(transactions);
+        setShowVerification(true);
         setProcessing(false);
-        return;
+
+        toast.success(`Extracted ${transactions.length} transactions`);
+      } catch (error) {
+        clearTimeout(timeoutId);
+        throw error;
       }
-
-      setExtractedTransactions(transactions);
-      setEditedTransactions(transactions);
-      setShowVerification(true);
-      setProcessing(false);
-
-      toast.success(`Extracted ${transactions.length} transactions`);
 
     } catch (error) {
       console.error("File processing failed");
@@ -250,15 +264,23 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
             />
             
             <div className="flex flex-col items-center justify-center gap-4 text-center">
-              {uploading || processing ? (
+                {uploading || processing ? (
                 <>
                   <Loader2 className="h-12 w-12 animate-spin text-primary" />
                   <p className="text-lg font-medium">
                     {uploading ? "Uploading..." : "Processing with AI..."}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    This may take a few moments
+                    {processing 
+                      ? "Analyzing your bank statement... This typically takes 30-60 seconds"
+                      : "This may take a few moments"
+                    }
                   </p>
+                  {processing && (
+                    <div className="w-full max-w-xs bg-muted rounded-full h-2 overflow-hidden">
+                      <div className="h-full bg-primary animate-pulse" style={{ width: '100%' }}></div>
+                    </div>
+                  )}
                 </>
               ) : (
                 <>

@@ -12,6 +12,7 @@ interface VoiceExpenseInputProps {
 export const VoiceExpenseInput = ({ onExpenseDetected }: VoiceExpenseInputProps) => {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [detectedExpense, setDetectedExpense] = useState<Omit<Expense, "id"> | null>(null);
 
   const parseVoiceCommand = (text: string): Omit<Expense, "id"> | null => {
     // Simple parsing logic for voice commands
@@ -84,8 +85,8 @@ export const VoiceExpenseInput = ({ onExpenseDetected }: VoiceExpenseInputProps)
       
       const expense = parseVoiceCommand(text);
       if (expense) {
-        onExpenseDetected(expense);
-        toast.success(`Got it! ${expense.amount}€ on ${expense.category} 🎉`);
+        setDetectedExpense(expense);
+        toast.success("Expense detected! Review and confirm below");
       } else {
         toast.error("Couldn't understand the command. Try: 'Add 50 euros food expense'");
       }
@@ -104,33 +105,79 @@ export const VoiceExpenseInput = ({ onExpenseDetected }: VoiceExpenseInputProps)
     recognition.start();
   };
 
+  const handleConfirm = () => {
+    if (detectedExpense) {
+      onExpenseDetected(detectedExpense);
+      toast.success(`Added ${detectedExpense.amount}€ to ${detectedExpense.category}!`);
+      setDetectedExpense(null);
+      setTranscript("");
+    }
+  };
+
+  const handleCancel = () => {
+    setDetectedExpense(null);
+    setTranscript("");
+  };
+
   return (
     <Card className="glass-card p-4">
-      <div className="flex items-center gap-4">
-        <Button
-          onClick={startListening}
-          disabled={isListening}
-          variant={isListening ? "default" : "outline"}
-          size="lg"
-          className="gap-2"
-        >
-          {isListening ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              Listening...
-            </>
-          ) : (
-            <>
-              <Mic className="h-5 w-5" />
-              Voice Input
-            </>
-          )}
-        </Button>
-        <div className="flex-1">
-          <p className="text-sm text-muted-foreground">
-            {transcript || "Try: 'Add 50 euros food expense' or 'Spent 30 on transport'"}
-          </p>
+      <div className="space-y-4">
+        <div className="flex items-center gap-4">
+          <Button
+            onClick={startListening}
+            disabled={isListening}
+            variant={isListening ? "default" : "outline"}
+            size="lg"
+            className="gap-2"
+          >
+            {isListening ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Listening...
+              </>
+            ) : (
+              <>
+                <Mic className="h-5 w-5" />
+                Voice Input
+              </>
+            )}
+          </Button>
+          <div className="flex-1">
+            <p className="text-sm text-muted-foreground">
+              {transcript || "Try: 'Add 50 euros food expense' or 'Spent 30 on transport'"}
+            </p>
+          </div>
         </div>
+
+        {detectedExpense && (
+          <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-semibold">Detected Expense</h4>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Amount:</span>
+                <span className="font-medium">{detectedExpense.amount}€</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Category:</span>
+                <span className="font-medium">{detectedExpense.category}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Description:</span>
+                <span className="font-medium">{detectedExpense.description}</span>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <Button onClick={handleConfirm} size="sm" className="flex-1">
+                Confirm & Add
+              </Button>
+              <Button onClick={handleCancel} variant="outline" size="sm" className="flex-1">
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </Card>
   );

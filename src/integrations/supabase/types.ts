@@ -152,6 +152,51 @@ export type Database = {
         }
         Relationships: []
       }
+      investments: {
+        Row: {
+          created_at: string | null
+          current_price: number
+          id: string
+          live_tracking: boolean | null
+          name: string
+          purchase_date: string | null
+          purchase_price: number
+          quantity: number
+          symbol: string | null
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_price: number
+          id?: string
+          live_tracking?: boolean | null
+          name: string
+          purchase_date?: string | null
+          purchase_price: number
+          quantity: number
+          symbol?: string | null
+          type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_price?: number
+          id?: string
+          live_tracking?: boolean | null
+          name?: string
+          purchase_date?: string | null
+          purchase_price?: number
+          quantity?: number
+          symbol?: string | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       community_likes_count: {
