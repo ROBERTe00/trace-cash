@@ -83,10 +83,12 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
   }
 
   return (
-    <Card className="glass-card p-6">
-      <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-        <Target className="h-5 w-5 text-primary" />
-        Portfolio Analysis
+    <Card className="glass-card p-6 animate-fade-in hover-lift border-2 border-primary/10">
+      <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
+        <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5">
+          <Target className="h-6 w-6 text-primary" />
+        </div>
+        <span className="gradient-text">Portfolio Analysis</span>
       </h3>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

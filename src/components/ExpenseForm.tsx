@@ -52,8 +52,11 @@ export const ExpenseForm = ({ onAdd }: ExpenseFormProps) => {
   };
 
   return (
-    <Card className="glass-card p-6">
-      <h3 className="text-lg font-semibold mb-4">Add Transaction</h3>
+    <Card className="glass-card p-6 animate-fade-in hover-lift border-2 border-primary/10">
+      <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+        <div className="h-2 w-2 bg-primary rounded-full animate-pulse" />
+        Add Transaction
+      </h3>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>

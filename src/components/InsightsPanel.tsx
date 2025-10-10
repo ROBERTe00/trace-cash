@@ -124,10 +124,12 @@ export const InsightsPanel = ({ investments, expenses }: InsightsPanelProps) => 
   }
 
   return (
-    <Card className="glass-card p-6">
-      <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-        <Lightbulb className="h-5 w-5 text-primary" />
-        Smart Insights
+    <Card className="glass-card p-6 animate-fade-in hover-lift border-2 border-primary/10">
+      <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
+        <div className="p-2 rounded-xl bg-gradient-to-br from-yellow-500/20 to-yellow-500/5">
+          <Lightbulb className="h-6 w-6 text-yellow-500" />
+        </div>
+        <span className="bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent">Smart Insights</span>
       </h3>
 
       <div className="space-y-4">

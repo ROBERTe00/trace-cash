@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { LoadingDashboard } from "@/components/LoadingDashboard";
 import { Layout } from "@/components/Layout";
 import { KPICard } from "@/components/KPICard";
 import { ExpenseForm } from "@/components/ExpenseForm";
@@ -47,11 +48,16 @@ export default function Dashboard() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [goals, setGoals] = useState<FinancialGoal[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setExpenses(getExpenses());
-    setInvestments(getInvestments());
-    setGoals(getGoals());
+    // Simulate loading for smooth experience
+    setTimeout(() => {
+      setExpenses(getExpenses());
+      setInvestments(getInvestments());
+      setGoals(getGoals());
+      setLoading(false);
+    }, 800);
   }, []);
 
   const handleAddExpense = (expense: Omit<Expense, "id">) => {
@@ -148,35 +154,52 @@ export default function Dashboard() {
         }, 0) / investments.length
       : 0;
 
+  if (loading) {
+    return (
+      <Layout onLogout={handleLogout}>
+        <LoadingDashboard />
+      </Layout>
+    );
+  }
+
   return (
     <Layout onLogout={handleLogout}>
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Header with Export */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              MyFinance Pro
-            </h2>
-            <p className="text-muted-foreground mt-1">
+        <div className="flex items-center justify-between animate-fade-in">
+          <div className="space-y-2">
+            <h1 className="text-5xl md:text-6xl font-black tracking-tight">
+              <span className="gradient-text animate-float">MyFinance</span>
+              <span className="text-foreground/80"> Pro</span>
+            </h1>
+            <p className="text-muted-foreground text-lg flex items-center gap-2">
+              <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               Professional Financial Planning & Investment Tracking
             </p>
           </div>
-          <Button onClick={handleExport} variant="outline" size="lg">
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
+          <Button 
+            onClick={handleExport} 
+            variant="outline" 
+            size="lg"
+            className="hover-lift group border-2"
+          >
+            <Download className="h-5 w-5 mr-2 group-hover:animate-bounce" />
+            Export Data
           </Button>
         </div>
 
         {/* Financial Goals Section */}
-        <FinancialGoals
-          goals={goals}
-          onAdd={handleAddGoal}
-          onDelete={handleDeleteGoal}
-          onUpdate={handleUpdateGoal}
-        />
+        <div className="animate-fade-in" style={{ animationDelay: "200ms" }}>
+          <FinancialGoals
+            goals={goals}
+            onAdd={handleAddGoal}
+            onDelete={handleDeleteGoal}
+            onUpdate={handleUpdateGoal}
+          />
+        </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in" style={{ animationDelay: "300ms" }}>
           <KPICard
             title="Total Portfolio"
             value={formatCurrency(portfolioValue)}
