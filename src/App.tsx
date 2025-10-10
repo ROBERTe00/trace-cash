@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { GlobalSearch } from "@/components/GlobalSearch";
 import { AppProvider } from "./contexts/AppContext";
 import { UploadProvider } from "./contexts/UploadContext";
 import Index from "./pages/Index";
@@ -19,7 +20,7 @@ import Settings from "./pages/Settings";
 import Community from "./pages/Community";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
-import { OnboardingWizard } from "./components/OnboardingWizard";
+import { ImprovedOnboardingWizard } from "./components/ImprovedOnboardingWizard";
 import { SecurityAlerts } from "./components/SecurityAlerts";
 import { useState, useEffect } from "react";
 import { getUser } from "./lib/storage";
@@ -63,12 +64,13 @@ function AppRoutes() {
 
   return (
     <SidebarProvider>
-      <OnboardingWizard isOpen={showOnboarding} onComplete={handleOnboardingComplete} />
+      <ImprovedOnboardingWizard isOpen={showOnboarding} onComplete={handleOnboardingComplete} />
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
-          <header className="h-14 flex items-center border-b px-4 sticky top-0 bg-background/95 backdrop-blur z-10">
+          <header className="h-14 flex items-center border-b px-4 sticky top-0 bg-background/95 backdrop-blur z-10 gap-4">
             <SidebarTrigger />
+            <GlobalSearch />
           </header>
           <main className="flex-1 p-6 overflow-auto">
             <Routes>
