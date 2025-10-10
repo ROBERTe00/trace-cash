@@ -7,6 +7,7 @@ import { BudgetLimitsManager } from "@/components/BudgetLimitsManager";
 import { TransactionTable } from "@/components/TransactionTable";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import { CategoryManager } from "@/components/CategoryManager";
+import { LanguageCurrencySettings } from "@/components/LanguageCurrencySettings";
 import { getExpenses, saveExpenses, Expense } from "@/lib/storage";
 import { toast } from "sonner";
 
@@ -66,6 +67,7 @@ export default function Expenses() {
         </TabsContent>
 
         <TabsContent value="impostazioni" className="space-y-6">
+          <LanguageCurrencySettings />
           <BudgetLimitsManager expenses={expenses} />
           <CategoryManager />
         </TabsContent>
