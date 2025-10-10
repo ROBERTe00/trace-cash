@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.parse-csv-excel]
 verify_jwt = true
+
+[functions.generate-insights]
+verify_jwt = true

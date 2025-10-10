@@ -3,13 +3,18 @@ import { Link } from "react-router-dom";
 import { KPICard } from "@/components/KPICard";
 import { IncomeTracker } from "@/components/IncomeTracker";
 import { FinancialGoals } from "@/components/FinancialGoals";
-import { AIAdvicePanel } from "@/components/AIAdvicePanel";
+import { InteractiveExpenseChart } from "@/components/InteractiveExpenseChart";
+import { InteractiveInvestmentChart } from "@/components/InteractiveInvestmentChart";
+import { EnhancedAIInsights } from "@/components/EnhancedAIInsights";
+import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
 import {
   Wallet,
   TrendingUp,
   TrendingDown,
   PiggyBank,
   ArrowRight,
+  Download,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -91,6 +96,26 @@ export default function DashboardHome() {
         }, 0) / investments.length
       : 0;
 
+  const handleExportCSV = () => {
+    exportToCSV({
+      expenses,
+      investments,
+      goals,
+      summary: { totalIncome, totalExpenses, netBalance, portfolioValue },
+    });
+    toast.success("CSV exported successfully!");
+  };
+
+  const handleExportPDF = () => {
+    exportToPDF({
+      expenses,
+      investments,
+      goals,
+      summary: { totalIncome, totalExpenses, netBalance, portfolioValue },
+    });
+    toast.success("PDF report generated!");
+  };
+
   return (
     <TooltipProvider>
       <div className="space-y-6">
@@ -106,6 +131,16 @@ export default function DashboardHome() {
               Professional Financial Dashboard
             </p>
           </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleExportCSV}>
+              <FileText className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleExportPDF}>
+              <Download className="h-4 w-4 mr-2" />
+              Export PDF
+            </Button>
+          </div>
         </div>
 
         {/* Financial Goals */}
@@ -116,11 +151,10 @@ export default function DashboardHome() {
           onUpdate={handleUpdateGoal}
         />
 
-        {/* AI Advice Panel */}
-        <AIAdvicePanel 
+        {/* Enhanced AI Insights */}
+        <EnhancedAIInsights 
           expenses={expenses}
           investments={investments}
-          goals={goals}
         />
 
         {/* KPI Cards */}
@@ -163,6 +197,12 @@ export default function DashboardHome() {
             changeType="negative"
             tooltip="All your expenses"
           />
+        </div>
+
+        {/* Interactive Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <InteractiveExpenseChart expenses={expenses} />
+          <InteractiveInvestmentChart investments={investments} />
         </div>
 
         {/* Income Tracker */}
