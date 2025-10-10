@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -30,11 +29,16 @@ const navigationItems = [
 ];
 
 export function AppSidebar() {
-  const { open } = useSidebar();
+  const { open, setOpenMobile } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
 
   const isActive = (path: string) => currentPath === path;
+
+  const handleLinkClick = () => {
+    // Close sidebar on mobile when clicking a link
+    setOpenMobile(false);
+  };
 
   return (
     <Sidebar collapsible="icon" className={open ? "w-60" : "w-14"}>
@@ -52,7 +56,7 @@ export function AppSidebar() {
                     isActive={isActive(item.url)}
                     tooltip={item.title}
                   >
-                    <NavLink to={item.url} end>
+                    <NavLink to={item.url} end onClick={handleLinkClick}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </NavLink>
