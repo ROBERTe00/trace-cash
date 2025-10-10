@@ -30,7 +30,7 @@ serve(async (req) => {
     const fileBuffer = await fileResponse.arrayBuffer();
     const base64File = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
 
-    // Use Lovable AI to extract and categorize transactions
+    // Use Lovable AI to extract and categorize transactions with PDF content
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -41,10 +41,13 @@ serve(async (req) => {
         model: "google/gemini-2.5-flash",
         messages: [
           {
-            role: "system",
-            content: `You are a bank statement analyzer. Extract transactions and categorize them.
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `Analyze this bank statement PDF and extract all transactions.
 
-Categories:
+Categories to use:
 - Food & Dining
 - Transportation
 - Shopping
@@ -56,7 +59,7 @@ Categories:
 
 For each transaction, extract:
 1. Date (format: YYYY-MM-DD)
-2. Description (brief)
+2. Description (brief, max 100 chars)
 3. Amount (positive for income, negative for expenses)
 4. Category (from list above)
 5. Payee (merchant/company name)
@@ -72,16 +75,20 @@ Return ONLY a valid JSON array with this exact structure:
   }
 ]
 
-Important:
-- Return ONLY the JSON array, no other text
+IMPORTANT:
+- Return ONLY the JSON array, no markdown, no explanations
 - Use negative amounts for expenses
-- Use positive amounts for income
-- If you cannot extract transactions, return an empty array: []`,
-          },
-          {
-            role: "user",
-            content: `Please analyze this bank statement PDF and extract all transactions: ${fileName}`,
-          },
+- Use positive amounts for income/deposits
+- If no transactions found, return empty array: []`
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:application/pdf;base64,${base64File}`
+                }
+              }
+            ]
+          }
         ],
       }),
     });
