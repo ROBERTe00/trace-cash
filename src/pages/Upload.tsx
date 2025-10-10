@@ -1,18 +1,15 @@
 import { useState, useEffect } from "react";
 import { BankStatementUpload } from "@/components/BankStatementUpload";
 import { VoiceExpenseInput } from "@/components/VoiceExpenseInput";
-import { CSVExcelUpload } from "@/components/CSVExcelUpload";
-import { TransactionPreview } from "@/components/TransactionPreview";
 import { getExpenses, saveExpenses, Expense } from "@/lib/storage";
-import { ParseResult } from "@/lib/csvParser";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, FileSpreadsheet, Mic } from "lucide-react";
+import { FileText, Mic, FileSpreadsheet } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default function Upload() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [parseResult, setParseResult] = useState<ParseResult | null>(null);
-  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     setExpenses(getExpenses());
@@ -32,46 +29,6 @@ export default function Upload() {
     setExpenses(updated);
     saveExpenses(updated);
   };
-
-  const handleCSVParsed = (result: ParseResult) => {
-    setParseResult(result);
-    setShowPreview(true);
-  };
-
-  const handlePreviewConfirm = (newExpenses: Omit<Expense, "id">[]) => {
-    const withIds = newExpenses.map((e) => ({ ...e, id: crypto.randomUUID() }));
-    const updated = [...expenses, ...withIds];
-    setExpenses(updated);
-    saveExpenses(updated);
-    toast.success(`${newExpenses.length} transactions imported!`, {
-      description: 'Transactions have been added to your expenses'
-    });
-    setShowPreview(false);
-    setParseResult(null);
-  };
-
-  const handlePreviewCancel = () => {
-    setShowPreview(false);
-    setParseResult(null);
-  };
-
-  if (showPreview && parseResult) {
-    return (
-      <div className="space-y-6 max-w-6xl mx-auto">
-        <div>
-          <h1 className="text-4xl font-bold gradient-text">Review Import</h1>
-          <p className="text-muted-foreground">
-            Verify and edit transactions before importing
-          </p>
-        </div>
-        <TransactionPreview
-          parseResult={parseResult}
-          onConfirm={handlePreviewConfirm}
-          onCancel={handlePreviewCancel}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -101,52 +58,22 @@ export default function Upload() {
         </TabsList>
 
         <TabsContent value="csv" className="space-y-4 mt-6">
-          <CSVExcelUpload
-            existingExpenses={expenses}
-            onTransactionsParsed={handleCSVParsed}
-          />
-
-          <div className="glass-card p-6 space-y-4">
-            <h3 className="text-lg font-semibold">✨ Smart Features</h3>
-            
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="font-medium mb-1 flex items-center gap-2">
-                  <span className="text-primary">•</span> Auto Column Detection
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                  Automatically finds date, description, and amount columns in your file
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-medium mb-1 flex items-center gap-2">
-                  <span className="text-primary">•</span> AI Categorization
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                  AI analyzes descriptions to categorize transactions automatically
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-medium mb-1 flex items-center gap-2">
-                  <span className="text-primary">•</span> Duplicate Detection
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                  Identifies and flags duplicate transactions to prevent double-counting
-                </p>
-              </div>
-
-              <div>
-                <h4 className="font-medium mb-1 flex items-center gap-2">
-                  <span className="text-primary">•</span> Local Processing
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                  Files are parsed in your browser for maximum privacy and security
-                </p>
-              </div>
+          <Card className="glass-card p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <FileSpreadsheet className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-semibold">CSV / Excel Import</h3>
+              <Badge variant="outline" className="ml-auto">Coming Soon</Badge>
             </div>
-          </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Upload CSV or Excel files with automatic parsing and AI categorization
+            </p>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>• Auto column detection (date, description, amount)</p>
+              <p>• Duplicate transaction detection</p>
+              <p>• AI-powered smart categorization</p>
+              <p>• Local processing for privacy</p>
+            </div>
+          </Card>
         </TabsContent>
 
         <TabsContent value="pdf" className="space-y-4 mt-6">
