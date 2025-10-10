@@ -6,6 +6,7 @@ import {
   Lightbulb,
   Settings,
   Upload,
+  Trophy,
 } from "lucide-react";
 import {
   Sidebar,
@@ -23,7 +24,8 @@ const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Expenses", url: "/expenses", icon: Wallet },
   { title: "Investments", url: "/investments", icon: TrendingUp },
-  { title: "Insights", url: "/insights", icon: Lightbulb },
+  { title: "Future Planner", url: "/future-planner", icon: Lightbulb },
+  { title: "Progress Hub", url: "/progress", icon: Trophy },
   { title: "Upload", url: "/upload", icon: Upload },
   { title: "Settings", url: "/settings", icon: Settings },
 ];

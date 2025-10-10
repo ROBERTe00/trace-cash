@@ -11,6 +11,8 @@ import DashboardHome from "./pages/DashboardHome";
 import Expenses from "./pages/Expenses";
 import Investments from "./pages/Investments";
 import Insights from "./pages/Insights";
+import FuturePlanner from "./pages/FuturePlanner";
+import ProgressHub from "./pages/ProgressHub";
 import Upload from "./pages/Upload";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -56,6 +58,8 @@ function AppRoutes() {
               <Route path="/expenses" element={<Expenses />} />
               <Route path="/investments" element={<Investments />} />
               <Route path="/insights" element={<Insights />} />
+              <Route path="/future-planner" element={<FuturePlanner />} />
+              <Route path="/progress" element={<ProgressHub />} />
               <Route path="/upload" element={<Upload />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<NotFound />} />
