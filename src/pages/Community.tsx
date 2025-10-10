@@ -9,6 +9,13 @@ import { MessageSquare, Heart, Share2, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getInvestments } from "@/lib/storage";
+import { z } from "zod";
+
+const postSchema = z.object({
+  content: z.string().min(1, "Post cannot be empty").max(1000, "Post is too long (max 1000 characters)").trim(),
+  is_anonymous: z.boolean(),
+  portfolio_data: z.any().nullable(),
+});
 
 interface Post {
   id: string;
@@ -28,13 +35,14 @@ export default function Community() {
 
   const fetchPosts = async () => {
     const { data, error } = await supabase
-      .from("community_posts")
+      .from("community_posts_public")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(20);
 
     if (error) {
       console.error("Error fetching posts:", error);
+      toast.error("Failed to load posts");
       return;
     }
 
@@ -46,16 +54,12 @@ export default function Community() {
   }, []);
 
   const handlePost = async () => {
-    if (!newPost.trim()) {
-      toast.error("Please write something");
-      return;
-    }
-
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Please sign in to post");
+        setLoading(false);
         return;
       }
 
@@ -66,11 +70,24 @@ export default function Community() {
         })),
       } : null;
 
-      const { error } = await supabase.from("community_posts").insert({
-        user_id: user.id,
+      // Validate input
+      const validation = postSchema.safeParse({
         content: newPost,
         is_anonymous: isAnonymous,
         portfolio_data: portfolioData,
+      });
+
+      if (!validation.success) {
+        toast.error(validation.error.errors[0].message);
+        setLoading(false);
+        return;
+      }
+
+      const { error } = await supabase.from("community_posts").insert({
+        user_id: user.id,
+        content: validation.data.content,
+        is_anonymous: validation.data.is_anonymous,
+        portfolio_data: validation.data.portfolio_data,
       });
 
       if (error) throw error;

@@ -3,40 +3,100 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { saveUser } from "@/lib/storage";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { z } from "zod";
+import { useNavigate } from "react-router-dom";
+
+const authSchema = z.object({
+  email: z.string().email("Invalid email address").max(255),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  name: z.string().max(100).optional(),
+});
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
   });
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
-    if (!formData.email || !formData.password) {
-      toast.error("Please fill in all fields");
-      return;
+    try {
+      // Validate input
+      const validation = authSchema.safeParse({
+        email: formData.email.trim(),
+        password: formData.password,
+        name: formData.name.trim(),
+      });
+
+      if (!validation.success) {
+        toast.error(validation.error.errors[0].message);
+        setLoading(false);
+        return;
+      }
+
+      if (isLogin) {
+        // Sign in with Supabase
+        const { error } = await supabase.auth.signInWithPassword({
+          email: formData.email.trim(),
+          password: formData.password,
+        });
+
+        if (error) {
+          if (error.message.includes("Invalid login credentials")) {
+            toast.error("Invalid email or password");
+          } else {
+            toast.error(error.message);
+          }
+          setLoading(false);
+          return;
+        }
+
+        toast.success("Welcome back!");
+        navigate("/");
+      } else {
+        // Sign up with Supabase
+        if (!formData.name.trim()) {
+          toast.error("Please enter your name");
+          setLoading(false);
+          return;
+        }
+
+        const { error } = await supabase.auth.signUp({
+          email: formData.email.trim(),
+          password: formData.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`,
+            data: {
+              name: formData.name.trim(),
+            },
+          },
+        });
+
+        if (error) {
+          if (error.message.includes("already registered")) {
+            toast.error("Email already registered. Please sign in.");
+          } else {
+            toast.error(error.message);
+          }
+          setLoading(false);
+          return;
+        }
+
+        toast.success("Account created successfully!");
+        navigate("/");
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+      setLoading(false);
     }
-
-    if (!isLogin && !formData.name) {
-      toast.error("Please enter your name");
-      return;
-    }
-
-    // Simple auth - in production, this would verify credentials
-    const user = {
-      id: crypto.randomUUID(),
-      email: formData.email,
-      name: isLogin ? formData.email.split("@")[0] : formData.name,
-    };
-
-    saveUser(user);
-    toast.success(isLogin ? "Welcome back!" : "Account created successfully!");
-    window.location.reload();
   };
 
   return (
@@ -97,8 +157,8 @@ export default function Auth() {
             />
           </div>
 
-          <Button type="submit" className="w-full">
-            {isLogin ? "Sign In" : "Sign Up"}
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
           </Button>
         </form>
 

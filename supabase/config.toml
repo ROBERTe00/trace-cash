@@ -1,7 +1,7 @@
 project_id = "bexsbrlwjelfgmcvnmrf"
 
 [functions.process-bank-statement]
-verify_jwt = false
+verify_jwt = true
 
 [functions.ai-financial-advice]
-verify_jwt = false
+verify_jwt = true

@@ -5,6 +5,14 @@ import { Upload, FileText, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Expense } from "@/lib/storage";
+import { z } from "zod";
+
+const transactionSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+  description: z.string().max(200, "Description is too long").trim(),
+  amount: z.number().min(-999999).max(999999),
+  category: z.string(),
+});
 import {
   Dialog,
   DialogContent,
@@ -117,10 +125,12 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
+      // Generate short-lived signed URL (5 minutes)
+      const { data: signedData, error: signedError } = await supabase.storage
         .from("bank-statements")
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 300);
+
+      if (signedError) throw signedError;
 
       toast.success("File uploaded! Processing transactions...");
       setUploading(false);
@@ -131,7 +141,7 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
         'process-bank-statement',
         {
           body: {
-            fileUrl: publicUrl,
+            fileUrl: signedData.signedUrl,
             fileName: file.name,
           },
         }
@@ -163,34 +173,48 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
   };
 
   const handleConfirm = () => {
-    const expenses: Omit<Expense, "id">[] = editedTransactions.map((t) => {
-      // Map AI categories to valid Expense categories
-      const categoryMap: Record<string, Expense["category"]> = {
-        "Food & Dining": "Food & Dining",
-        "Transportation": "Transportation",
-        "Shopping": "Shopping",
-        "Entertainment": "Entertainment",
-        "Healthcare": "Healthcare",
-        "Bills & Utilities": "Bills & Utilities",
-        "Income": "Income",
-        "Other": "Other"
-      };
-      
-      return {
-        type: t.amount > 0 ? "Income" : "Expense",
-        amount: Math.abs(t.amount),
-        category: categoryMap[t.category] || "Other",
-        description: t.description,
-        date: t.date,
-        recurring: false,
-      };
-    });
+    try {
+      const expenses: Omit<Expense, "id">[] = editedTransactions.map((t) => {
+        // Validate transaction
+        const validation = transactionSchema.safeParse(t);
+        if (!validation.success) {
+          throw new Error(`Invalid transaction: ${validation.error.errors[0].message}`);
+        }
 
-    onTransactionsExtracted(expenses);
-    setShowVerification(false);
-    setExtractedTransactions([]);
-    setEditedTransactions([]);
-    toast.success("Transactions added successfully!");
+        // Map AI categories to valid Expense categories
+        const categoryMap: Record<string, Expense["category"]> = {
+          "Food & Dining": "Food & Dining",
+          "Transportation": "Transportation",
+          "Shopping": "Shopping",
+          "Entertainment": "Entertainment",
+          "Healthcare": "Healthcare",
+          "Bills & Utilities": "Bills & Utilities",
+          "Income": "Income",
+          "Other": "Other"
+        };
+        
+        return {
+          type: t.amount > 0 ? "Income" : "Expense",
+          amount: Math.abs(t.amount),
+          category: categoryMap[t.category] || "Other",
+          description: t.description,
+          date: t.date,
+          recurring: false,
+        };
+      });
+
+      onTransactionsExtracted(expenses);
+      setShowVerification(false);
+      setExtractedTransactions([]);
+      setEditedTransactions([]);
+      toast.success("Transactions added successfully!");
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to validate transactions");
+      }
+    }
   };
 
   const updateTransaction = (index: number, field: keyof ExtractedTransaction, value: string | number) => {

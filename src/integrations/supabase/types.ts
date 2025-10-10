@@ -77,6 +77,13 @@ export type Database = {
             referencedRelation: "community_posts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "community_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       community_likes: {
@@ -104,6 +111,13 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts_public"
             referencedColumns: ["id"]
           },
         ]
@@ -140,7 +154,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      community_posts_public: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: string | null
+          is_anonymous: boolean | null
+          likes_count: number | null
+          portfolio_data: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_anonymous?: boolean | null
+          likes_count?: number | null
+          portfolio_data?: Json | null
+          user_id?: never
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_anonymous?: boolean | null
+          likes_count?: number | null
+          portfolio_data?: Json | null
+          user_id?: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
