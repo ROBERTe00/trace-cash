@@ -10,6 +10,10 @@ import { ExpenseChart } from "@/components/ExpenseChart";
 import { TrendChart } from "@/components/TrendChart";
 import { BudgetTracker } from "@/components/BudgetTracker";
 import { RecurringExpenses } from "@/components/RecurringExpenses";
+import { FinancialGoals } from "@/components/FinancialGoals";
+import { NetWorthTracker } from "@/components/NetWorthTracker";
+import { FinancialHealthScore } from "@/components/FinancialHealthScore";
+import { EmergencyFundTracker } from "@/components/EmergencyFundTracker";
 import { Button } from "@/components/ui/button";
 import {
   Wallet,
@@ -23,10 +27,13 @@ import {
   saveExpenses,
   getInvestments,
   saveInvestments,
+  getGoals,
+  saveGoals,
   clearUser,
   exportToCSV,
   Expense,
   Investment,
+  FinancialGoal,
   calculatePortfolioValue,
 } from "@/lib/storage";
 import { toast } from "sonner";
@@ -34,10 +41,12 @@ import { toast } from "sonner";
 export default function Dashboard() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [investments, setInvestments] = useState<Investment[]>([]);
+  const [goals, setGoals] = useState<FinancialGoal[]>([]);
 
   useEffect(() => {
     setExpenses(getExpenses());
     setInvestments(getInvestments());
+    setGoals(getGoals());
   }, []);
 
   const handleAddExpense = (expense: Omit<Expense, "id">) => {
@@ -68,6 +77,30 @@ export default function Dashboard() {
     setInvestments(updated);
     saveInvestments(updated);
     toast.success("Investment deleted");
+  };
+
+  const handleAddGoal = (goal: Omit<FinancialGoal, "id">) => {
+    const newGoal = { ...goal, id: crypto.randomUUID() };
+    const updated = [...goals, newGoal];
+    setGoals(updated);
+    saveGoals(updated);
+    toast.success("Goal created successfully!");
+  };
+
+  const handleDeleteGoal = (id: string) => {
+    const updated = goals.filter((g) => g.id !== id);
+    setGoals(updated);
+    saveGoals(updated);
+    toast.success("Goal deleted");
+  };
+
+  const handleUpdateGoal = (id: string, currentAmount: number) => {
+    const updated = goals.map((g) =>
+      g.id === id ? { ...g, currentAmount } : g
+    );
+    setGoals(updated);
+    saveGoals(updated);
+    toast.success("Goal updated!");
   };
 
   const handleLogout = () => {
@@ -108,16 +141,26 @@ export default function Dashboard() {
         {/* Header with Export */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold">Dashboard</h2>
-            <p className="text-muted-foreground">
-              Track your finances and investments
+            <h2 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              MyFinance Pro
+            </h2>
+            <p className="text-muted-foreground mt-1">
+              Professional Financial Planning & Investment Tracking
             </p>
           </div>
-          <Button onClick={handleExport} variant="outline">
+          <Button onClick={handleExport} variant="outline" size="lg">
             <Download className="h-4 w-4 mr-2" />
             Export CSV
           </Button>
         </div>
+
+        {/* Financial Goals Section */}
+        <FinancialGoals
+          goals={goals}
+          onAdd={handleAddGoal}
+          onDelete={handleDeleteGoal}
+          onUpdate={handleUpdateGoal}
+        />
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -150,6 +193,19 @@ export default function Dashboard() {
             changeType="negative"
           />
         </div>
+
+        {/* Financial Overview Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <NetWorthTracker expenses={expenses} investments={investments} />
+          </div>
+          <div className="space-y-6">
+            <EmergencyFundTracker expenses={expenses} />
+          </div>
+        </div>
+
+        {/* Financial Health */}
+        <FinancialHealthScore expenses={expenses} investments={investments} />
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

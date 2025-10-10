@@ -38,12 +38,23 @@ export interface PortfolioHistory {
   value: number;
 }
 
+export interface FinancialGoal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline: string;
+  category: "Investment" | "Savings" | "Purchase" | "Emergency" | "Retirement" | "Other";
+  priority: "Low" | "Medium" | "High";
+}
+
 const STORAGE_KEYS = {
   USER: "myfinance_user",
   EXPENSES: "myfinance_expenses",
   INCOMES: "myfinance_incomes",
   INVESTMENTS: "myfinance_investments",
   PORTFOLIO_HISTORY: "myfinance_portfolio_history",
+  GOALS: "myfinance_goals",
 };
 
 // User management
@@ -98,6 +109,16 @@ export const savePortfolioHistory = (history: PortfolioHistory[]) => {
 export const getPortfolioHistory = (): PortfolioHistory[] => {
   const history = localStorage.getItem(STORAGE_KEYS.PORTFOLIO_HISTORY);
   return history ? JSON.parse(history) : [];
+};
+
+// Financial Goals
+export const saveGoals = (goals: FinancialGoal[]) => {
+  localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(goals));
+};
+
+export const getGoals = (): FinancialGoal[] => {
+  const goals = localStorage.getItem(STORAGE_KEYS.GOALS);
+  return goals ? JSON.parse(goals) : [];
 };
 
 // Calculate portfolio value from investments
