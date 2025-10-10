@@ -25,6 +25,7 @@ export const ExpenseForm = ({ onAdd }: ExpenseFormProps) => {
     description: "",
     amount: "",
     type: "Expense" as "Income" | "Expense",
+    recurrence: "None" as "None" | "Weekly" | "Monthly",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -37,6 +38,7 @@ export const ExpenseForm = ({ onAdd }: ExpenseFormProps) => {
       description: formData.description,
       amount: parseFloat(formData.amount),
       type: formData.type,
+      recurrence: formData.recurrence,
     });
 
     setFormData({
@@ -45,6 +47,7 @@ export const ExpenseForm = ({ onAdd }: ExpenseFormProps) => {
       description: "",
       amount: "",
       type: "Expense",
+      recurrence: "None",
     });
   };
 
@@ -133,6 +136,25 @@ export const ExpenseForm = ({ onAdd }: ExpenseFormProps) => {
               </Label>
             </div>
           </RadioGroup>
+        </div>
+
+        <div>
+          <Label htmlFor="recurrence">Recurrence</Label>
+          <Select
+            value={formData.recurrence}
+            onValueChange={(value) =>
+              setFormData({ ...formData, recurrence: value as "None" | "Weekly" | "Monthly" })
+            }
+          >
+            <SelectTrigger className="mt-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="None">One-time</SelectItem>
+              <SelectItem value="Weekly">Weekly</SelectItem>
+              <SelectItem value="Monthly">Monthly</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <Button type="submit" className="w-full">

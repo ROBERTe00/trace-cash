@@ -6,6 +6,10 @@ import { InvestmentForm } from "@/components/InvestmentForm";
 import { TransactionTable } from "@/components/TransactionTable";
 import { InvestmentTable } from "@/components/InvestmentTable";
 import { PortfolioChart } from "@/components/PortfolioChart";
+import { ExpenseChart } from "@/components/ExpenseChart";
+import { TrendChart } from "@/components/TrendChart";
+import { BudgetTracker } from "@/components/BudgetTracker";
+import { RecurringExpenses } from "@/components/RecurringExpenses";
 import { Button } from "@/components/ui/button";
 import {
   Wallet,
@@ -150,7 +154,13 @@ export default function Dashboard() {
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <PortfolioChart investments={investments} />
+          <ExpenseChart expenses={expenses} />
+          <TrendChart expenses={expenses} />
+          <BudgetTracker expenses={expenses} />
         </div>
+
+        {/* Recurring Expenses */}
+        <RecurringExpenses expenses={expenses} />
 
         {/* Forms */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

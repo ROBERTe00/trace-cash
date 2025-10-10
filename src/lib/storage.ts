@@ -13,6 +13,7 @@ export interface Expense {
   description: string;
   amount: number;
   type: "Income" | "Expense";
+  recurrence?: "None" | "Weekly" | "Monthly";
 }
 
 export interface Income {
