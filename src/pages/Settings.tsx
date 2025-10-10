@@ -6,6 +6,7 @@ import { OfflineModeToggle } from "@/components/OfflineModeToggle";
 import { ComplianceBadges } from "@/components/ComplianceBadges";
 import { CategoryManager } from "@/components/CategoryManager";
 import { NotificationSettings } from "@/components/NotificationSettings";
+import { LanguageCurrencySettings } from "@/components/LanguageCurrencySettings";
 import { Button } from "@/components/ui/button";
 import { clearUser, exportToCSV } from "@/lib/storage";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,7 +45,7 @@ export default function Settings() {
         <ComplianceBadges />
       </div>
 
-      <SettingsPanel />
+      <LanguageCurrencySettings />
 
       <ThemeSwitcher />
 
