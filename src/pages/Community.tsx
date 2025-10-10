@@ -97,7 +97,7 @@ export default function Community() {
       setSharePortfolio(false);
       fetchPosts();
     } catch (error) {
-      console.error("Error posting:", error);
+      console.error("Failed to post");
       toast.error("Failed to post. Please try again.");
     } finally {
       setLoading(false);

@@ -165,7 +165,7 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
       toast.success(`Extracted ${transactions.length} transactions`);
 
     } catch (error) {
-      console.error("Error uploading file:", error);
+      console.error("File processing failed");
       toast.error("Failed to process bank statement");
       setUploading(false);
       setProcessing(false);

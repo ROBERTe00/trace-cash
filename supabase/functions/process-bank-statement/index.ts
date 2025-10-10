@@ -18,7 +18,8 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log("Processing bank statement:", fileName);
+    // Log processing start (no sensitive data)
+    console.log("Processing bank statement upload");
 
     // Fetch the PDF file
     const fileResponse = await fetch(fileUrl);
@@ -33,7 +34,7 @@ serve(async (req) => {
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -41,7 +42,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a bank statement analyzer. Extract transactions from the PDF and categorize them.
+            content: `You are a bank statement analyzer. Extract transactions and categorize them.
 
 Categories:
 - Food & Dining
@@ -55,7 +56,7 @@ Categories:
 
 For each transaction, extract:
 1. Date (format: YYYY-MM-DD)
-2. Description
+2. Description (brief)
 3. Amount (positive for income, negative for expenses)
 4. Category (from list above)
 5. Payee (merchant/company name)
@@ -98,13 +99,13 @@ Important:
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      throw new Error(`AI API error: ${aiResponse.status}`);
+      throw new Error(`AI service error: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
     const content = aiData.choices?.[0]?.message?.content || "[]";
-
-    console.log("AI response content:", content);
+    
+    // AI response received (no sensitive data logged)
 
     // Parse the JSON response
     let transactions = [];
@@ -117,7 +118,7 @@ Important:
         transactions = JSON.parse(content);
       }
     } catch (e) {
-      console.error("Failed to parse AI response:", e);
+      console.error("Failed to parse AI response");
       transactions = [];
     }
 
@@ -126,7 +127,7 @@ Important:
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error processing bank statement:", error);
+    console.error("Processing failed");
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({ error: errorMessage }),

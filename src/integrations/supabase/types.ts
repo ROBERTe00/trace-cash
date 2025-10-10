@@ -154,6 +154,28 @@ export type Database = {
       }
     }
     Views: {
+      community_likes_count: {
+        Row: {
+          likes_count: number | null
+          post_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_posts_public: {
         Row: {
           content: string | null
