@@ -30,6 +30,9 @@ export interface Investment {
   quantity: number;
   purchasePrice: number;
   currentPrice: number;
+  symbol?: string;
+  liveTracking?: boolean;
+  date?: string;
 }
 
 export interface PortfolioHistory {

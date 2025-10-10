@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Expense, Investment } from "@/lib/storage";
-import { Activity, AlertCircle, CheckCircle2, TrendingUp } from "lucide-react";
+import { Activity, AlertCircle, CheckCircle2, TrendingUp, Info } from "lucide-react";
 
 interface FinancialHealthScoreProps {
   expenses: Expense[];
@@ -87,9 +87,18 @@ export const FinancialHealthScore = ({
 
   return (
     <Card className="glass-card p-6">
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex items-center gap-2 mb-4">
         <Activity className="h-6 w-6 text-primary" />
         <h2 className="text-2xl font-bold">Financial Health Score</h2>
+      </div>
+
+      <div className="mb-6 p-3 rounded-lg bg-info/10 border border-info/20 flex items-start gap-2">
+        <Info className="h-4 w-4 text-info mt-0.5 flex-shrink-0" />
+        <p className="text-xs text-muted-foreground">
+          Your financial health score is calculated based on three key metrics: how much you save (Savings Rate), 
+          how much you invest (Investment Ratio), and how well you control expenses (Expense Control). 
+          A score of 80+ is excellent, 60-79 is good, 40-59 is fair.
+        </p>
       </div>
 
       <div className="text-center mb-8">

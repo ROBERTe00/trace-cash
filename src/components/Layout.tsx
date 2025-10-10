@@ -2,6 +2,7 @@ import { Moon, Sun, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { SettingsPanel } from "@/components/SettingsPanel";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -32,6 +33,7 @@ export const Layout = ({ children, onLogout }: LayoutProps) => {
           </div>
           
           <div className="flex items-center gap-2">
+            <SettingsPanel />
             <Button
               variant="ghost"
               size="icon"

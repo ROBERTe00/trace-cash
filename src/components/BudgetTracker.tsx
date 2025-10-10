@@ -5,13 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Expense } from "@/lib/storage";
-import { Target, Edit2, Check, X } from "lucide-react";
+import { Target, Edit2, Check, X, Info } from "lucide-react";
+import { useApp } from "@/contexts/AppContext";
 
 interface BudgetTrackerProps {
   expenses: Expense[];
 }
 
 export const BudgetTracker = ({ expenses }: BudgetTrackerProps) => {
+  const { formatCurrency } = useApp();
   const [budgets, setBudgets] = useState<Record<string, number>>({
     Food: 500,
     Transport: 200,
@@ -54,9 +56,18 @@ export const BudgetTracker = ({ expenses }: BudgetTrackerProps) => {
 
   return (
     <Card className="glass-card p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Target className="h-5 w-5 text-primary" />
-        <h3 className="text-lg font-semibold">Monthly Budget Tracker</h3>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Target className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold">Monthly Budget Control</h3>
+        </div>
+      </div>
+      
+      <div className="mb-4 p-3 rounded-lg bg-info/10 border border-info/20 flex items-start gap-2">
+        <Info className="h-4 w-4 text-info mt-0.5 flex-shrink-0" />
+        <p className="text-xs text-muted-foreground">
+          Set monthly spending limits for each category. Track your actual expenses versus your budget targets. Click edit to adjust limits.
+        </p>
       </div>
       <div className="space-y-4">
         {categories.map((category) => {
@@ -100,11 +111,11 @@ export const BudgetTracker = ({ expenses }: BudgetTrackerProps) => {
                   ) : (
                     <>
                       <span
-                        className={`text-sm ${
+                        className={`text-sm font-semibold ${
                           isOverBudget ? "text-destructive" : "text-muted-foreground"
                         }`}
                       >
-                        €{spent.toFixed(0)} / €{budget}
+                        {formatCurrency(spent)} / {formatCurrency(budget)}
                       </span>
                       <Button
                         size="sm"

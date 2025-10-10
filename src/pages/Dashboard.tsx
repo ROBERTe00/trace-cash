@@ -14,6 +14,7 @@ import { FinancialGoals } from "@/components/FinancialGoals";
 import { NetWorthTracker } from "@/components/NetWorthTracker";
 import { FinancialHealthScore } from "@/components/FinancialHealthScore";
 import { EmergencyFundTracker } from "@/components/EmergencyFundTracker";
+import { IncomeTracker } from "@/components/IncomeTracker";
 import { Button } from "@/components/ui/button";
 import {
   Wallet,
@@ -37,8 +38,10 @@ import {
   calculatePortfolioValue,
 } from "@/lib/storage";
 import { toast } from "sonner";
+import { useApp } from "@/contexts/AppContext";
 
 export default function Dashboard() {
+  const { formatCurrency } = useApp();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [goals, setGoals] = useState<FinancialGoal[]>([]);
@@ -77,6 +80,14 @@ export default function Dashboard() {
     setInvestments(updated);
     saveInvestments(updated);
     toast.success("Investment deleted");
+  };
+
+  const handleUpdateInvestmentPrice = (id: string, newPrice: number) => {
+    const updated = investments.map((i) =>
+      i.id === id ? { ...i, currentPrice: newPrice } : i
+    );
+    setInvestments(updated);
+    saveInvestments(updated);
   };
 
   const handleAddGoal = (goal: Omit<FinancialGoal, "id">) => {
@@ -166,33 +177,36 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard
             title="Total Portfolio"
-            value={`€${portfolioValue.toFixed(2)}`}
+            value={formatCurrency(portfolioValue)}
             icon={PiggyBank}
             change={`${averageYield >= 0 ? "+" : ""}${averageYield.toFixed(2)}% avg`}
             changeType={averageYield >= 0 ? "positive" : "negative"}
           />
           <KPICard
             title="Net Balance"
-            value={`€${netBalance.toFixed(2)}`}
+            value={formatCurrency(netBalance)}
             icon={Wallet}
             change={`${netBalance >= 0 ? "Positive" : "Negative"} balance`}
             changeType={netBalance >= 0 ? "positive" : "negative"}
           />
           <KPICard
             title="Total Income"
-            value={`€${totalIncome.toFixed(2)}`}
+            value={formatCurrency(totalIncome)}
             icon={TrendingUp}
             change={`${expenses.filter((e) => e.type === "Income").length} transactions`}
             changeType="positive"
           />
           <KPICard
             title="Total Expenses"
-            value={`€${totalExpenses.toFixed(2)}`}
+            value={formatCurrency(totalExpenses)}
             icon={TrendingDown}
             change={`${expenses.filter((e) => e.type === "Expense").length} transactions`}
             changeType="negative"
           />
         </div>
+
+        {/* Income Tracker Section */}
+        <IncomeTracker expenses={expenses} />
 
         {/* Financial Overview Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -233,6 +247,7 @@ export default function Dashboard() {
           <InvestmentTable
             investments={investments}
             onDelete={handleDeleteInvestment}
+            onUpdatePrice={handleUpdateInvestmentPrice}
           />
         </div>
       </div>

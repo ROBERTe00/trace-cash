@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -8,18 +9,52 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2, TrendingUp, TrendingDown } from "lucide-react";
+import { Trash2, TrendingUp, TrendingDown, Zap, RefreshCw } from "lucide-react";
 import { Investment } from "@/lib/storage";
+import { useApp } from "@/contexts/AppContext";
+import { useState, useEffect } from "react";
+import { fetchCryptoPrice } from "@/lib/marketData";
+import { toast } from "sonner";
 
 interface InvestmentTableProps {
   investments: Investment[];
   onDelete: (id: string) => void;
+  onUpdatePrice?: (id: string, newPrice: number) => void;
 }
 
 export const InvestmentTable = ({
   investments,
   onDelete,
+  onUpdatePrice,
 }: InvestmentTableProps) => {
+  const { formatCurrency } = useApp();
+  const [updating, setUpdating] = useState(false);
+
+  const updateLivePrices = async () => {
+    setUpdating(true);
+    const liveInvestments = investments.filter(inv => inv.liveTracking && inv.symbol);
+    
+    for (const inv of liveInvestments) {
+      if (inv.symbol) {
+        const priceData = await fetchCryptoPrice(inv.symbol);
+        if (priceData && onUpdatePrice) {
+          onUpdatePrice(inv.id, priceData.price);
+        }
+      }
+    }
+    
+    setUpdating(false);
+    toast.success("Live prices updated!");
+  };
+
+  useEffect(() => {
+    const hasLiveTracking = investments.some(inv => inv.liveTracking && inv.symbol);
+    if (hasLiveTracking) {
+      updateLivePrices();
+      const interval = setInterval(updateLivePrices, 60000); // Update every minute
+      return () => clearInterval(interval);
+    }
+  }, [investments.length]);
   const calculateYield = (investment: Investment) => {
     const initial = investment.quantity * investment.purchasePrice;
     const current = investment.quantity * investment.currentPrice;
@@ -28,7 +63,20 @@ export const InvestmentTable = ({
 
   return (
     <Card className="glass-card p-6">
-      <h3 className="text-lg font-semibold mb-4">Investment Portfolio</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold">Investment Portfolio</h3>
+        {investments.some(inv => inv.liveTracking) && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={updateLivePrices}
+            disabled={updating}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${updating ? 'animate-spin' : ''}`} />
+            Update Live Prices
+          </Button>
+        )}
+      </div>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -65,22 +113,33 @@ export const InvestmentTable = ({
                   <TableRow key={investment.id}>
                     <TableCell>{investment.category}</TableCell>
                     <TableCell className="font-medium">
-                      {investment.name}
+                      <div className="flex items-center gap-2">
+                        {investment.name}
+                        {investment.liveTracking && (
+                          <Badge variant="outline" className="text-xs gap-1">
+                            <Zap className="h-3 w-3 text-primary" />
+                            Live
+                          </Badge>
+                        )}
+                      </div>
+                      {investment.symbol && (
+                        <div className="text-xs text-muted-foreground">{investment.symbol}</div>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       {investment.quantity}
                     </TableCell>
                     <TableCell className="text-right">
-                      €{investment.purchasePrice.toFixed(2)}
+                      {formatCurrency(investment.purchasePrice)}
                     </TableCell>
                     <TableCell className="text-right">
-                      €{investment.currentPrice.toFixed(2)}
+                      {formatCurrency(investment.currentPrice)}
                     </TableCell>
                     <TableCell className="text-right">
-                      €{initialValue.toFixed(2)}
+                      {formatCurrency(initialValue)}
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      €{currentValue.toFixed(2)}
+                      {formatCurrency(currentValue)}
                     </TableCell>
                     <TableCell className="text-right">
                       <div

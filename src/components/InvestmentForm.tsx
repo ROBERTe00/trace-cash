@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -10,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, Zap } from "lucide-react";
 import { Investment } from "@/lib/storage";
 
 interface InvestmentFormProps {
@@ -24,6 +25,8 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
     quantity: "",
     purchasePrice: "",
     currentPrice: "",
+    symbol: "",
+    liveTracking: false,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -42,6 +45,9 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
       quantity: parseFloat(formData.quantity),
       purchasePrice: parseFloat(formData.purchasePrice),
       currentPrice: parseFloat(formData.currentPrice),
+      symbol: formData.symbol || undefined,
+      liveTracking: formData.liveTracking,
+      date: new Date().toISOString().split("T")[0],
     });
 
     setFormData({
@@ -50,6 +56,8 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
       quantity: "",
       purchasePrice: "",
       currentPrice: "",
+      symbol: "",
+      liveTracking: false,
     });
   };
 
@@ -119,7 +127,7 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
             />
           </div>
 
-          <div className="md:col-span-2">
+          <div>
             <Label htmlFor="current-price">Current Price (€)</Label>
             <Input
               id="current-price"
@@ -133,6 +141,36 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
               placeholder="0.00"
               className="mt-1"
             />
+          </div>
+
+          <div>
+            <Label htmlFor="symbol">Symbol (Optional)</Label>
+            <Input
+              id="symbol"
+              value={formData.symbol}
+              onChange={(e) => setFormData({ ...formData, symbol: e.target.value.toUpperCase() })}
+              placeholder="e.g., BTC, ETH, SPY"
+              className="mt-1"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2 p-3 rounded-lg bg-primary/5 border border-primary/10">
+          <Checkbox
+            id="live-tracking"
+            checked={formData.liveTracking}
+            onCheckedChange={(checked) =>
+              setFormData({ ...formData, liveTracking: checked as boolean })
+            }
+          />
+          <div className="flex items-center gap-2">
+            <Zap className="h-4 w-4 text-primary" />
+            <Label
+              htmlFor="live-tracking"
+              className="text-sm font-normal cursor-pointer"
+            >
+              Enable live price tracking for crypto (updates automatically from market)
+            </Label>
           </div>
         </div>
 
