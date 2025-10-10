@@ -52,38 +52,41 @@ export const PortfolioChart = ({ investments }: PortfolioChartProps) => {
   return (
     <Card className="glass-card p-6">
       <h3 className="text-lg font-semibold mb-4">Portfolio Allocation</h3>
-      <ResponsiveContainer width="100%" height={300}>
-        <PieChart>
-          <Pie
-            data={chartData}
-            cx="50%"
-            cy="50%"
-            labelLine={false}
-            label={({ name, percent }) =>
-              `${name} ${(percent * 100).toFixed(0)}%`
-            }
-            outerRadius={80}
-            fill="#8884d8"
-            dataKey="value"
-          >
-            {chartData.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={COLORS[index % COLORS.length]}
-              />
-            ))}
-          </Pie>
-          <Tooltip
-            formatter={(value: number) => `€${value.toFixed(2)}`}
-            contentStyle={{
-              backgroundColor: "hsl(var(--card))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "8px",
-            }}
-          />
-          <Legend />
-        </PieChart>
-      </ResponsiveContainer>
+      <div className="w-full overflow-hidden">
+        <ResponsiveContainer width="100%" height={300}>
+          <PieChart margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+            <Pie
+              data={chartData}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              label={false}
+              outerRadius={70}
+              fill="#8884d8"
+              dataKey="value"
+            >
+              {chartData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={COLORS[index % COLORS.length]}
+                />
+              ))}
+            </Pie>
+            <Tooltip
+              formatter={(value: number) => `€${value.toFixed(2)}`}
+              contentStyle={{
+                backgroundColor: "hsl(var(--card))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: "8px",
+              }}
+            />
+            <Legend 
+              wrapperStyle={{ paddingTop: '10px' }}
+              iconSize={10}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
     </Card>
   );
 };

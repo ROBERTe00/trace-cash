@@ -223,8 +223,8 @@ export const InteractiveInvestmentChart = ({ investments }: InteractiveInvestmen
 
       {/* Individual Investments Performance */}
       <div className="mt-6 space-y-2">
-        <h4 className="font-semibold text-sm">Individual Assets</h4>
-        <div className="grid gap-2">
+        <h4 className="font-semibold text-sm">Individual Assets ({investments.length})</h4>
+        <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2 scrollbar-thin">
           {investments.map((inv) => {
             const value = inv.quantity * inv.currentPrice;
             const cost = inv.quantity * inv.purchasePrice;
@@ -236,13 +236,13 @@ export const InteractiveInvestmentChart = ({ investments }: InteractiveInvestmen
                 key={inv.id}
                 className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/50 transition-all"
               >
-                <div>
-                  <p className="font-medium text-sm">{inv.name}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-sm truncate">{inv.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {inv.quantity} shares @ {formatCurrency(inv.currentPrice)}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="text-right ml-4 flex-shrink-0">
                   <p className="font-bold text-sm">{formatCurrency(value)}</p>
                   <p className={`text-xs ${gain >= 0 ? 'text-green-500' : 'text-destructive'}`}>
                     {gain >= 0 ? '+' : ''}{gainPercent.toFixed(2)}%
