@@ -11,34 +11,45 @@ serve(async (req) => {
   }
 
   try {
-    const { expenses, investments, goals } = await req.json();
+    const { financialData } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Calculate totals
-    const totalExpenses = expenses.filter((e: any) => e.type === "Expense")
-      .reduce((sum: number, e: any) => sum + e.amount, 0);
-    const totalIncome = expenses.filter((e: any) => e.type === "Income")
-      .reduce((sum: number, e: any) => sum + e.amount, 0);
-    const portfolioValue = investments.reduce((sum: any, inv: any) => 
-      sum + (inv.quantity * inv.currentPrice), 0);
+    const {
+      totalExpenses = 0,
+      totalIncome = 0,
+      portfolioValue = 0,
+      categoryBreakdown = {},
+      expenseCount = 0,
+      investmentCount = 0,
+      goalsProgress = []
+    } = financialData || {};
+
+    const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome * 100).toFixed(1) : "0";
+    
+    const topCategories = Object.entries(categoryBreakdown)
+      .sort((a: any, b: any) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([cat, amount]) => `${cat}: €${amount}`)
+      .join(", ");
 
     const systemPrompt = `You are a professional financial advisor. Analyze the user's financial data and provide 3 personalized, actionable advice cards. Keep each advice concise (max 2 sentences) and practical.
 
 User's Financial Data:
-- Monthly Income: €${totalIncome}
-- Monthly Expenses: €${totalExpenses}
-- Savings Rate: ${((totalIncome - totalExpenses) / totalIncome * 100).toFixed(1)}%
-- Portfolio Value: €${portfolioValue}
-- Active Goals: ${goals.length}
+- Monthly Income: €${totalIncome.toFixed(2)}
+- Monthly Expenses: €${totalExpenses.toFixed(2)}
+- Savings Rate: ${savingsRate}%
+- Portfolio Value: €${portfolioValue.toFixed(2)}
+- Active Goals: ${goalsProgress.length}
+- Top Spending: ${topCategories || "N/A"}
 
 Focus on:
-1. Budget optimization
-2. Investment strategy
-3. Goal achievement`;
+1. Budget optimization based on spending patterns
+2. Investment diversification strategy
+3. Goal achievement acceleration tips`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
