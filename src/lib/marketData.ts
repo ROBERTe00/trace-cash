@@ -1,6 +1,7 @@
 // Market data API integration for live crypto and stock prices
 
 const COINGECKO_API = "https://api.coingecko.com/api/v3";
+const YAHOO_FINANCE_PROXY = "https://query1.finance.yahoo.com/v8/finance/chart";
 
 export interface MarketPrice {
   symbol: string;
@@ -76,4 +77,64 @@ export const fetchMultipleCryptoPrices = async (
 export const isCryptoSymbol = (symbol: string): boolean => {
   const upperSymbol = symbol.toUpperCase();
   return upperSymbol in cryptoIdMap || symbol.length <= 5;
+};
+
+// Fetch stock/ETF price from Yahoo Finance
+export const fetchStockPrice = async (symbol: string): Promise<MarketPrice | null> => {
+  try {
+    const response = await fetch(
+      `${YAHOO_FINANCE_PROXY}/${symbol}?interval=1d&range=1d`
+    );
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const result = data.chart?.result?.[0];
+
+    if (!result) return null;
+
+    const price = result.meta?.regularMarketPrice;
+    const previousClose = result.meta?.chartPreviousClose;
+    const change24h = previousClose ? ((price - previousClose) / previousClose) * 100 : 0;
+
+    return {
+      symbol: symbol.toUpperCase(),
+      price: price || 0,
+      change24h,
+      lastUpdate: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error("Error fetching stock price:", error);
+    return null;
+  }
+};
+
+// Auto-detect and fetch price for any symbol
+export const fetchAssetPrice = async (symbol: string, category: string): Promise<MarketPrice | null> => {
+  if (category === "Crypto" || isCryptoSymbol(symbol)) {
+    return fetchCryptoPrice(symbol);
+  } else if (category === "ETF" || category === "Stocks") {
+    return fetchStockPrice(symbol);
+  }
+  return null;
+};
+
+// Fetch all asset prices
+export const fetchAllAssetPrices = async (
+  assets: Array<{ symbol?: string; category: string }>
+): Promise<Record<string, MarketPrice>> => {
+  const results: Record<string, MarketPrice> = {};
+
+  await Promise.all(
+    assets
+      .filter((asset) => asset.symbol)
+      .map(async (asset) => {
+        const price = await fetchAssetPrice(asset.symbol!, asset.category);
+        if (price) {
+          results[asset.symbol!.toUpperCase()] = price;
+        }
+      })
+  );
+
+  return results;
 };

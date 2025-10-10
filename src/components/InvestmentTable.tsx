@@ -13,7 +13,7 @@ import { Trash2, TrendingUp, TrendingDown, Zap, RefreshCw } from "lucide-react";
 import { Investment } from "@/lib/storage";
 import { useApp } from "@/contexts/AppContext";
 import { useState, useEffect } from "react";
-import { fetchCryptoPrice } from "@/lib/marketData";
+import { fetchAllAssetPrices } from "@/lib/marketData";
 import { toast } from "sonner";
 
 interface InvestmentTableProps {
@@ -34,17 +34,27 @@ export const InvestmentTable = ({
     setUpdating(true);
     const liveInvestments = investments.filter(inv => inv.liveTracking && inv.symbol);
     
+    if (liveInvestments.length === 0) {
+      setUpdating(false);
+      return;
+    }
+
+    const prices = await fetchAllAssetPrices(
+      liveInvestments.map((inv) => ({ symbol: inv.symbol!, category: inv.category }))
+    );
+
+    let updated = 0;
     for (const inv of liveInvestments) {
-      if (inv.symbol) {
-        const priceData = await fetchCryptoPrice(inv.symbol);
-        if (priceData && onUpdatePrice) {
-          onUpdatePrice(inv.id, priceData.price);
-        }
+      if (inv.symbol && prices[inv.symbol.toUpperCase()] && onUpdatePrice) {
+        onUpdatePrice(inv.id, prices[inv.symbol.toUpperCase()].price);
+        updated++;
       }
     }
     
     setUpdating(false);
-    toast.success("Live prices updated!");
+    if (updated > 0) {
+      toast.success(`Updated ${updated} asset${updated !== 1 ? "s" : ""}!`);
+    }
   };
 
   useEffect(() => {
@@ -71,9 +81,10 @@ export const InvestmentTable = ({
             size="sm"
             onClick={updateLivePrices}
             disabled={updating}
+            className="gap-2"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${updating ? 'animate-spin' : ''}`} />
-            Update Live Prices
+            <Zap className={`h-4 w-4 ${updating ? 'animate-spin' : ''}`} />
+            Sync All Prices
           </Button>
         )}
       </div>

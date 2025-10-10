@@ -15,6 +15,8 @@ import { NetWorthTracker } from "@/components/NetWorthTracker";
 import { FinancialHealthScore } from "@/components/FinancialHealthScore";
 import { EmergencyFundTracker } from "@/components/EmergencyFundTracker";
 import { IncomeTracker } from "@/components/IncomeTracker";
+import { PortfolioAnalysis } from "@/components/PortfolioAnalysis";
+import { InsightsPanel } from "@/components/InsightsPanel";
 import { Button } from "@/components/ui/button";
 import {
   Wallet,
@@ -220,6 +222,12 @@ export default function Dashboard() {
 
         {/* Financial Health */}
         <FinancialHealthScore expenses={expenses} investments={investments} />
+
+        {/* Portfolio Analysis */}
+        <PortfolioAnalysis investments={investments} />
+
+        {/* Smart Insights */}
+        <InsightsPanel investments={investments} expenses={expenses} />
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
