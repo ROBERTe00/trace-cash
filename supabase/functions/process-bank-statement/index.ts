@@ -18,19 +18,24 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Log processing start (no sensitive data)
-    console.log("Processing bank statement upload");
+    console.log("Starting bank statement processing:", fileName);
 
     // Fetch the PDF file
     const fileResponse = await fetch(fileUrl);
     if (!fileResponse.ok) {
+      console.error("Failed to fetch file, status:", fileResponse.status);
       throw new Error("Failed to fetch file");
     }
 
+    console.log("File fetched successfully");
+
     const fileBuffer = await fileResponse.arrayBuffer();
+    console.log("File buffer size (bytes):", fileBuffer.byteLength);
     
     // Validate file size (10MB limit)
     const fileSizeInMB = fileBuffer.byteLength / (1024 * 1024);
+    console.log("File size (MB):", fileSizeInMB.toFixed(2));
+    
     if (fileSizeInMB > 10) {
       return new Response(
         JSON.stringify({ error: "File size exceeds 10MB limit" }),
@@ -42,15 +47,20 @@ serve(async (req) => {
     const uint8Array = new Uint8Array(fileBuffer);
     if (uint8Array[0] !== 0x25 || uint8Array[1] !== 0x50 || 
         uint8Array[2] !== 0x44 || uint8Array[3] !== 0x46) {
+      console.error("Invalid PDF magic bytes:", uint8Array.slice(0, 4));
       return new Response(
         JSON.stringify({ error: "Invalid PDF file format" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    console.log("PDF validation passed, converting to base64...");
     const base64File = btoa(String.fromCharCode(...uint8Array));
+    console.log("Base64 conversion complete, length:", base64File.length);
 
     // Use Lovable AI to extract and categorize transactions with PDF content
+    console.log("Sending to AI for processing...");
+    
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -113,6 +123,8 @@ IMPORTANT:
       }),
     });
 
+    console.log("AI response status:", aiResponse.status);
+
     if (!aiResponse.ok) {
       if (aiResponse.status === 429) {
         return new Response(
@@ -130,9 +142,10 @@ IMPORTANT:
     }
 
     const aiData = await aiResponse.json();
-    const content = aiData.choices?.[0]?.message?.content || "[]";
+    console.log("AI response received, parsing content...");
     
-    // AI response received (no sensitive data logged)
+    const content = aiData.choices?.[0]?.message?.content || "[]";
+    console.log("Content length:", content.length);
 
     // Parse the JSON response
     let transactions = [];
@@ -141,13 +154,18 @@ IMPORTANT:
       const jsonMatch = content.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         transactions = JSON.parse(jsonMatch[0]);
+        console.log("Parsed transactions from JSON match:", transactions.length);
       } else {
         transactions = JSON.parse(content);
+        console.log("Parsed transactions directly:", transactions.length);
       }
     } catch (e) {
-      console.error("Failed to parse AI response");
+      console.error("Failed to parse AI response:", e);
+      console.error("Content preview:", content.substring(0, 500));
       transactions = [];
     }
+
+    console.log("Processing complete, returning", transactions.length, "transactions");
 
     return new Response(
       JSON.stringify({ transactions }),
@@ -155,6 +173,8 @@ IMPORTANT:
     );
   } catch (error) {
     console.error("Processing failed:", error);
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
+    
     return new Response(
       JSON.stringify({ 
         error: "Failed to process bank statement. Please try again or contact support if the issue persists." 
