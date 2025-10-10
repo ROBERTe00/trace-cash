@@ -201,7 +201,7 @@ export default function Investments() {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
-          <PortfolioMetricsPanel />
+          <PortfolioMetricsPanel investments={investments} />
         </TabsContent>
 
         <TabsContent value="simulator" className="space-y-6">

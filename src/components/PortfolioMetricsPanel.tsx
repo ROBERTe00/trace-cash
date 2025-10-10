@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { calculatePortfolioMetrics, checkPortfolioBalance } from '@/lib/investmentMetrics';
-import { getInvestments } from '@/lib/storage';
+import { Investment } from '@/lib/storage';
 import { TrendingUp, TrendingDown, Activity, PieChart, AlertTriangle } from 'lucide-react';
 import {
   Radar,
@@ -13,12 +13,15 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-export function PortfolioMetricsPanel() {
+interface PortfolioMetricsPanelProps {
+  investments: Investment[];
+}
+
+export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProps) {
   const [metrics, setMetrics] = useState<any>(null);
   const [alerts, setAlerts] = useState<string[]>([]);
 
   useEffect(() => {
-    const investments = getInvestments();
     const calculatedMetrics = calculatePortfolioMetrics(investments);
     setMetrics(calculatedMetrics);
 
@@ -27,7 +30,7 @@ export function PortfolioMetricsPanel() {
       calculatedMetrics.totalValue
     );
     setAlerts(balanceAlerts);
-  }, []);
+  }, [investments]);
 
   if (!metrics) return null;
 
