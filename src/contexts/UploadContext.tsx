@@ -146,18 +146,21 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
       setFileName(null);
 
     } catch (error) {
-      console.error("File processing failed");
+      console.error("Bank statement processing error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      console.error("Error details:", errorMessage);
+      
       toast.dismiss(toastId);
       toast(
         <div className="flex items-center gap-3">
           <XCircle className="h-5 w-5 text-destructive" />
           <div>
             <p className="font-medium">Processing failed</p>
-            <p className="text-xs text-muted-foreground">Please try again</p>
+            <p className="text-xs text-muted-foreground">{errorMessage}</p>
           </div>
         </div>,
         {
-          duration: 5000,
+          duration: 8000,
           position: "bottom-right",
         }
       );
