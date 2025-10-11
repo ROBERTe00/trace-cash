@@ -31,6 +31,8 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
   const [toastId, setToastId] = useState<string | number | undefined>();
 
   const uploadFile = async (file: File) => {
+    console.log("📤 [Upload] Starting upload for:", file.name);
+    
     if (file.type !== "application/pdf") {
       toast.error("Please upload a PDF file");
       return;
@@ -38,6 +40,15 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
 
     if (file.size > 10 * 1024 * 1024) {
       toast.error("File size must be less than 10MB");
+      return;
+    }
+
+    // Check authentication FIRST
+    const { data: { user } } = await supabase.auth.getUser();
+    console.log("📤 [Upload] Current user:", user?.email || "❌ NOT LOGGED IN");
+    
+    if (!user) {
+      toast.error("Please log in to upload bank statements");
       return;
     }
 
@@ -68,12 +79,6 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
     setToastId(id);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("Please log in to upload bank statements");
-        return;
-      }
-
       setProgress(20);
       updateToastProgress(id, 20, "Uploading file...");
 
@@ -98,6 +103,8 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
       setProgress(60);
       updateToastProgress(id, 60, "AI is analyzing your statement...");
 
+      console.log("📤 [Upload] Invoking process-bank-statement edge function...");
+      
       // Process with AI
       const { data: processData, error: processError } = await supabase.functions.invoke(
         'process-bank-statement',
@@ -108,6 +115,12 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
           },
         }
       );
+
+      console.log("📤 [Upload] Edge function result:", { 
+        success: !processError, 
+        error: processError,
+        transactionCount: processData?.transactions?.length || 0 
+      });
 
       if (processError) throw processError;
 

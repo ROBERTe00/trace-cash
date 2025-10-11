@@ -62,16 +62,21 @@ const STORAGE_KEYS = {
 };
 
 // User management
+// ⚠️ DEPRECATED: Use Supabase Auth instead (supabase.auth.getUser())
+// These functions are kept for backwards compatibility with data migration only
 export const saveUser = (user: User) => {
+  console.warn("⚠️ saveUser is deprecated. Use Supabase Auth instead.");
   localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
 };
 
 export const getUser = (): User | null => {
+  console.warn("⚠️ getUser is deprecated. Use supabase.auth.getUser() instead.");
   const user = localStorage.getItem(STORAGE_KEYS.USER);
   return user ? JSON.parse(user) : null;
 };
 
 export const clearUser = () => {
+  console.warn("⚠️ clearUser is deprecated. Use supabase.auth.signOut() instead.");
   localStorage.removeItem(STORAGE_KEYS.USER);
 };
 

@@ -22,49 +22,12 @@ import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import { ImprovedOnboardingWizard } from "./components/ImprovedOnboardingWizard";
 import { SecurityAlerts } from "./components/SecurityAlerts";
-import { useState, useEffect } from "react";
-import { getUser } from "./lib/storage";
 
 const queryClient = new QueryClient();
 
 function AppRoutes() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-
-  useEffect(() => {
-    const user = getUser();
-    setIsAuthenticated(!!user);
-    
-    // Check if onboarding was completed
-    const onboardingCompleted = localStorage.getItem("onboarding_completed");
-    if (user && !onboardingCompleted) {
-      setShowOnboarding(true);
-    }
-    
-    setLoading(false);
-  }, []);
-
-  const handleOnboardingComplete = () => {
-    localStorage.setItem("onboarding_completed", "true");
-    setShowOnboarding(false);
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-pulse text-2xl gradient-text">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Auth />;
-  }
-
   return (
     <SidebarProvider>
-      <ImprovedOnboardingWizard isOpen={showOnboarding} onComplete={handleOnboardingComplete} />
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
