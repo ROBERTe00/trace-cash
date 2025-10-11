@@ -68,11 +68,27 @@ export default function Auth() {
           return;
         }
 
-        toast.success("Password updated successfully!");
-        setIsSettingNewPassword(false);
-        setIsLogin(true);
-        navigate("/");
-        setLoading(false);
+        // Refresh session after password update
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session) {
+          toast.error("Password updated but session refresh failed. Please sign in again.");
+          setIsSettingNewPassword(false);
+          setIsLogin(true);
+          setLoading(false);
+          return;
+        }
+
+        toast.success("Password updated successfully! Redirecting...");
+        
+        // Clear the hash to remove recovery token
+        window.history.replaceState(null, '', window.location.pathname);
+        
+        // Wait a bit then navigate
+        setTimeout(() => {
+          navigate("/");
+        }, 500);
+        
         return;
       }
 
