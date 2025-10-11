@@ -85,19 +85,19 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
   }
 
   return (
-    <Card className="glass-card p-6 animate-fade-in hover-lift border-2 border-primary/10">
-      <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
-        <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5">
-          <Target className="h-6 w-6 text-primary" />
+    <Card className="glass-card p-4 md:p-6 animate-fade-in hover-lift border-2 border-primary/10">
+      <h3 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 flex items-center gap-2 md:gap-3">
+        <div className="p-1.5 md:p-2 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5">
+          <Target className="h-5 w-5 md:h-6 md:w-6 text-primary" />
         </div>
         <span className="gradient-text">{t('portfolio.analysis')}</span>
       </h3>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
         {/* Pie Chart */}
         <div>
-          <h4 className="text-sm font-medium mb-4 text-muted-foreground">{t('portfolio.assetAllocation')}</h4>
-          <ResponsiveContainer width="100%" height={250}>
+          <h4 className="text-sm font-medium mb-3 md:mb-4 text-muted-foreground">{t('portfolio.assetAllocation')}</h4>
+          <ResponsiveContainer width="100%" height={200} className="md:h-[250px]">
             <PieChart>
               <Pie
                 data={pieData}
@@ -105,9 +105,11 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
                 cy="50%"
                 labelLine={false}
                 label={({ percentage }) => `${percentage}%`}
-                outerRadius={80}
+                outerRadius={60}
+                innerRadius={0}
                 fill="#8884d8"
                 dataKey="value"
+                className="md:!r-[80px]"
               >
                 {pieData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -119,27 +121,34 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
                   backgroundColor: "hsl(var(--background))",
                   border: "1px solid hsl(var(--border))",
                   borderRadius: "8px",
+                  fontSize: "12px",
                 }}
               />
-              <Legend />
+              <Legend 
+                wrapperStyle={{
+                  fontSize: "11px",
+                  paddingTop: "8px",
+                }}
+                iconSize={10}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
 
         {/* Metrics */}
-        <div className="space-y-4">
+        <div className="space-y-3 lg:space-y-4">
           {/* Diversification Score */}
-          <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
+          <div className="p-3 md:p-4 rounded-lg bg-primary/5 border border-primary/10">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium flex items-center gap-2">
-                <Shield className="h-4 w-4" />
+              <span className="text-xs md:text-sm font-medium flex items-center gap-1.5 md:gap-2">
+                <Shield className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 {t('portfolio.diversification')}
               </span>
-              <span className="text-2xl font-bold">{diversificationScore.toFixed(0)}/100</span>
+              <span className="text-xl md:text-2xl font-bold">{diversificationScore.toFixed(0)}/100</span>
             </div>
-            <div className="w-full bg-muted rounded-full h-2">
+            <div className="w-full bg-muted rounded-full h-1.5 md:h-2">
               <div
-                className="bg-primary h-2 rounded-full transition-all duration-500"
+                className="bg-primary h-1.5 md:h-2 rounded-full transition-all duration-500"
                 style={{ width: `${diversificationScore}%` }}
               />
             </div>
@@ -153,10 +162,10 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
           </div>
 
           {/* Risk Level */}
-          <div className="p-4 rounded-lg bg-card border border-border">
+          <div className="p-3 md:p-4 rounded-lg bg-card border border-border">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">{t('portfolio.riskLevel')}</span>
-              <span className={`text-lg font-bold ${riskLevel.color}`}>{riskLevel.level}</span>
+              <span className="text-xs md:text-sm font-medium">{t('portfolio.riskLevel')}</span>
+              <span className={`text-base md:text-lg font-bold ${riskLevel.color}`}>{riskLevel.level}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
               {t('portfolio.riskBased')}
@@ -164,13 +173,13 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
           </div>
 
           {/* Total Yield */}
-          <div className="p-4 rounded-lg bg-card border border-border">
+          <div className="p-3 md:p-4 rounded-lg bg-card border border-border">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
+              <span className="text-xs md:text-sm font-medium flex items-center gap-1.5 md:gap-2">
+                <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4" />
                 {t('portfolio.totalYield')}
               </span>
-              <span className={`text-lg font-bold ${totalYield >= 0 ? "text-green-500" : "text-red-500"}`}>
+              <span className={`text-base md:text-lg font-bold ${totalYield >= 0 ? "text-green-500" : "text-red-500"}`}>
                 {totalYield >= 0 ? "+" : ""}
                 {formatCurrency(totalYield)}
               </span>
