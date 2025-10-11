@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { User, LogOut, Settings, HelpCircle, FileText } from "lucide-react";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,13 +33,29 @@ export const AccountMenu = () => {
   }, []);
 
   const handleLogout = async () => {
-    await AuditLogger.log({
-      action: 'user_logout',
-      resourceType: 'auth',
-    });
-    await supabase.auth.signOut();
-    clearUser();
-    window.location.href = '/';
+    try {
+      await AuditLogger.log({
+        action: 'user_logout',
+        resourceType: 'auth',
+      });
+      
+      // Wait for signOut to complete before clearing and redirecting
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Logout error:", error);
+        toast.error("Errore durante il logout");
+        return;
+      }
+      
+      clearUser();
+      
+      // Force a complete page reload to clear all state
+      window.location.replace('/');
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Errore durante il logout");
+    }
   };
 
   const getInitials = (email: string) => {
