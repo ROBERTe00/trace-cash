@@ -6,6 +6,7 @@ import { ThemeProvider } from "next-themes";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { GlobalSearch } from "@/components/GlobalSearch";
+import { AccountMenu } from "@/components/AccountMenu";
 import { AppProvider } from "./contexts/AppContext";
 import { UploadProvider } from "./contexts/UploadContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -32,9 +33,12 @@ function AppRoutes() {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
-          <header className="h-14 flex items-center border-b px-4 sticky top-0 bg-background/95 backdrop-blur z-10 gap-4">
-            <SidebarTrigger />
-            <GlobalSearch />
+          <header className="h-14 flex items-center justify-between border-b px-4 sticky top-0 bg-background/95 backdrop-blur z-10 gap-4">
+            <div className="flex items-center gap-4 flex-1">
+              <SidebarTrigger />
+              <GlobalSearch />
+            </div>
+            <AccountMenu />
           </header>
           <main className="flex-1 p-6 overflow-auto">
             <Routes>
