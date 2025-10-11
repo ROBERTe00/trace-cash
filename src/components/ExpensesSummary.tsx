@@ -62,51 +62,51 @@ export function ExpensesSummary({ expenses }: ExpensesSummaryProps) {
 
       {/* Metriche principali */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="overflow-hidden">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Spese Totali
+              <DollarSign className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate">Spese Totali</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">€{totalCurrent.toFixed(2)}</div>
+            <div className="text-3xl font-bold truncate">€{totalCurrent.toFixed(2)}</div>
             <div className={`flex items-center gap-1 text-sm mt-2 ${percentageChange > 0 ? 'text-red-500' : 'text-green-500'}`}>
               {percentageChange > 0 ? (
-                <TrendingUp className="h-4 w-4" />
+                <TrendingUp className="h-4 w-4 flex-shrink-0" />
               ) : (
-                <TrendingDown className="h-4 w-4" />
+                <TrendingDown className="h-4 w-4 flex-shrink-0" />
               )}
-              {Math.abs(percentageChange).toFixed(1)}% vs mese scorso
+              <span className="truncate">{Math.abs(percentageChange).toFixed(1)}% vs mese scorso</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="overflow-hidden">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <PieChart className="h-4 w-4" />
-              Budget Utilizzato
+              <PieChart className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate">Budget Utilizzato</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{Math.min(budgetUsed, 100).toFixed(0)}%</div>
+            <div className="text-3xl font-bold truncate">{Math.min(budgetUsed, 100).toFixed(0)}%</div>
             <Progress value={Math.min(budgetUsed, 100)} className="mt-3" />
-            <div className="text-sm text-muted-foreground mt-2">
+            <div className="text-sm text-muted-foreground mt-2 truncate">
               €{(budgetLimit - totalCurrent).toFixed(2)} rimanenti
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="overflow-hidden">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-sm font-medium text-muted-foreground truncate">
               Transazioni
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{currentMonthExpenses.length}</div>
-            <div className="text-sm text-muted-foreground mt-2">
+            <div className="text-3xl font-bold truncate">{currentMonthExpenses.length}</div>
+            <div className="text-sm text-muted-foreground mt-2 truncate">
               Media €{currentMonthExpenses.length > 0 ? (totalCurrent / currentMonthExpenses.length).toFixed(2) : '0.00'}
             </div>
           </CardContent>
@@ -114,7 +114,7 @@ export function ExpensesSummary({ expenses }: ExpensesSummaryProps) {
       </div>
 
       {/* Top categorie */}
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader>
           <CardTitle className="text-lg">Top Categorie</CardTitle>
         </CardHeader>
@@ -123,9 +123,9 @@ export function ExpensesSummary({ expenses }: ExpensesSummaryProps) {
             const percentage = (amount / totalCurrent) * 100;
             return (
               <div key={category} className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="font-medium">{category}</span>
-                  <span className="text-muted-foreground">
+                <div className="flex justify-between text-sm gap-4 min-w-0">
+                  <span className="font-medium truncate">{category}</span>
+                  <span className="text-muted-foreground flex-shrink-0">
                     €{amount.toFixed(2)} ({percentage.toFixed(0)}%)
                   </span>
                 </div>
