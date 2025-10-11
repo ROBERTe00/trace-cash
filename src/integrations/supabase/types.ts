@@ -338,6 +338,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_profiles: {
+        Row: {
+          assets: Json | null
+          cash_available: number | null
+          created_at: string | null
+          debts: Json | null
+          id: string
+          income_sources: Json | null
+          monthly_income: number | null
+          onboarding_completed: boolean | null
+          onboarding_completed_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assets?: Json | null
+          cash_available?: number | null
+          created_at?: string | null
+          debts?: Json | null
+          id?: string
+          income_sources?: Json | null
+          monthly_income?: number | null
+          onboarding_completed?: boolean | null
+          onboarding_completed_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          assets?: Json | null
+          cash_available?: number | null
+          created_at?: string | null
+          debts?: Json | null
+          id?: string
+          income_sources?: Json | null
+          monthly_income?: number | null
+          onboarding_completed?: boolean | null
+          onboarding_completed_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null

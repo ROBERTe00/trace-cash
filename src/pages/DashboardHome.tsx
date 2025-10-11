@@ -6,6 +6,7 @@ import { FinancialGoals } from "@/components/FinancialGoals";
 import { InteractiveExpenseChart } from "@/components/InteractiveExpenseChart";
 import { InteractiveInvestmentChart } from "@/components/InteractiveInvestmentChart";
 import { EnhancedAIInsights } from "@/components/EnhancedAIInsights";
+import { FinancialProfile } from "@/components/FinancialProfile";
 import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
 import {
   Wallet,
@@ -142,6 +143,9 @@ export default function DashboardHome() {
             </Button>
           </div>
         </div>
+
+        {/* Financial Profile */}
+        <FinancialProfile />
 
         {/* Financial Goals */}
         <FinancialGoals
