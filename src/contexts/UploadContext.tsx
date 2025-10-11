@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Expense } from "@/lib/storage";
@@ -244,12 +244,31 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
   const clearTransactions = () => {
     setExtractedTransactions([]);
     setBankName(null);
+    setIsProcessing(false);
+    setProgress(0);
+    setFileName(null);
     localStorage.removeItem("upload-processing");
     localStorage.removeItem("upload-progress");
     localStorage.removeItem("upload-filename");
     localStorage.removeItem("upload-transactions");
     localStorage.removeItem("upload-bank-name");
   };
+
+  // Clear upload state when user logs out
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        clearTransactions();
+        if (toastId) {
+          toast.dismiss(toastId);
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [toastId]);
 
   return (
     <UploadContext.Provider
