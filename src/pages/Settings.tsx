@@ -42,8 +42,8 @@ export default function Settings() {
       
       clearUser();
       
-      // Force a complete page reload to clear all state
-      window.location.replace('/');
+      // Redirect to auth page
+      window.location.href = '/auth';
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Errore durante il logout");

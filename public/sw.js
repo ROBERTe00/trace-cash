@@ -2,8 +2,8 @@ const CACHE_NAME = 'trace-cash-v1';
 const RUNTIME_CACHE = 'trace-cash-runtime';
 
 // Essential files to cache for offline functionality
+// Note: /auth is NOT cached to prevent showing cached login page
 const PRECACHE_URLS = [
-  '/',
   '/index.html',
   '/manifest.json',
   '/icon-192.png',
@@ -50,14 +50,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network first strategy for API calls (Supabase)
-  if (url.hostname.includes('supabase.co')) {
+  // Network first strategy for API calls (Supabase) - skip auth routes
+  if (url.hostname.includes('supabase.co') || url.pathname.includes('/auth')) {
     event.respondWith(
       fetch(request)
         .then(response => {
           // Don't cache authentication or sensitive data
           if (request.url.includes('/auth/') || 
-              request.url.includes('/storage/')) {
+              request.url.includes('/storage/') ||
+              url.pathname.includes('/auth')) {
             return response;
           }
           

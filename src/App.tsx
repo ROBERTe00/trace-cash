@@ -12,8 +12,11 @@ import { PWAOfflineIndicator } from "@/components/PWAOfflineIndicator";
 import { AppProvider } from "./contexts/AppContext";
 import { UploadProvider } from "./contexts/UploadContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { registerServiceWorker, captureInstallPrompt } from "@/lib/pwaUtils";
+import { supabase } from "@/integrations/supabase/client";
+import { Session } from "@supabase/supabase-js";
+import { LoadingDashboard } from "@/components/LoadingDashboard";
 import Index from "./pages/Index";
 import DashboardHome from "./pages/DashboardHome";
 import Expenses from "./pages/Expenses";
@@ -31,7 +34,39 @@ import { SecurityAlerts } from "./components/SecurityAlerts";
 
 const queryClient = new QueryClient();
 
-function AppRoutes() {
+function ProtectedRoutes() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check auth on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        if (event === 'SIGNED_OUT') {
+          window.location.href = '/auth';
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading) {
+    return <LoadingDashboard />;
+  }
+
+  if (!session) {
+    window.location.href = '/auth';
+    return null;
+  }
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -92,7 +127,10 @@ function App() {
                 <PWAOfflineIndicator />
                 <PWAInstallPrompt />
                 <BrowserRouter>
-                  <AppRoutes />
+                  <Routes>
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/*" element={<ProtectedRoutes />} />
+                  </Routes>
                 </BrowserRouter>
               </TooltipProvider>
             </UploadProvider>
