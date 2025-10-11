@@ -1,18 +1,12 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, CheckCircle2 } from "lucide-react";
+import { Upload, FileText, CheckCircle2, AlertTriangle, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { Expense } from "@/lib/storage";
 import { z } from "zod";
 import { useUpload } from "@/contexts/UploadContext";
-
-const transactionSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
-  description: z.string().max(200, "Description is too long").trim(),
-  amount: z.number().min(-999999).max(999999),
-  category: z.string(),
-});
+import { useApp } from "@/contexts/AppContext";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 interface ExtractedTransaction {
   date: string;
@@ -44,11 +39,20 @@ interface ExtractedTransaction {
   amount: number;
   category: string;
   payee: string;
+  bank?: string;
+  confidence?: number;
 }
 
 interface BankStatementUploadProps {
   onTransactionsExtracted: (expenses: Omit<Expense, "id">[]) => void;
 }
+
+const transactionSchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+  description: z.string().max(200, "Description is too long").trim(),
+  amount: z.number().min(-999999).max(999999),
+  category: z.string(),
+});
 
 const categories = [
   "Food & Dining",
@@ -62,7 +66,8 @@ const categories = [
 ];
 
 export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUploadProps) => {
-  const { uploadFile, extractedTransactions, clearTransactions, isProcessing } = useUpload();
+  const { uploadFile, extractedTransactions, bankName, clearTransactions, isProcessing } = useUpload();
+  const { t } = useApp();
   const [dragActive, setDragActive] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const [editedTransactions, setEditedTransactions] = useState<ExtractedTransaction[]>([]);
@@ -141,7 +146,7 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
       setShowVerification(false);
       setEditedTransactions([]);
       clearTransactions();
-      toast.success("Transactions added successfully!");
+      toast.success(`${expenses.length} transactions added successfully!`);
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);
@@ -157,13 +162,42 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
     setEditedTransactions(updated);
   };
 
+  const getConfidenceBadge = (confidence?: number) => {
+    if (!confidence) return null;
+    
+    if (confidence >= 0.8) {
+      return (
+        <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
+          <CheckCircle2 className="h-3 w-3 mr-1" />
+          {(confidence * 100).toFixed(0)}%
+        </Badge>
+      );
+    } else if (confidence >= 0.6) {
+      return (
+        <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
+          <AlertTriangle className="h-3 w-3 mr-1" />
+          {(confidence * 100).toFixed(0)}%
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-500/20">
+          <AlertTriangle className="h-3 w-3 mr-1" />
+          {(confidence * 100).toFixed(0)}%
+        </Badge>
+      );
+    }
+  };
+
+  const lowConfidenceCount = editedTransactions.filter(t => (t.confidence || 0) < 0.6).length;
+
   return (
     <>
       <Card className="glass-card border-2 hover-lift p-8">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <FileText className="h-6 w-6 text-primary" />
-            <h3 className="text-xl font-bold">Upload Bank Statement</h3>
+            <h3 className="text-xl font-bold">{t("upload")} Bank Statement</h3>
           </div>
           
           <div
@@ -202,10 +236,13 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
             <div className="flex items-start gap-2">
               <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
               <div className="text-sm">
-                <p className="font-medium">AI-Powered Extraction</p>
-                <p className="text-muted-foreground">
-                  Our AI automatically extracts and categorizes your transactions
-                </p>
+                <p className="font-medium">Advanced AI Analysis</p>
+                <ul className="text-muted-foreground space-y-1 mt-1">
+                  <li>✓ Extracts ALL transactions (no limits)</li>
+                  <li>✓ Detects bank name automatically</li>
+                  <li>✓ Smart categorization with confidence scores</li>
+                  <li>✓ Multi-page support</li>
+                </ul>
               </div>
             </div>
           </div>
@@ -213,27 +250,47 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
       </Card>
 
       <Dialog open={showVerification} onOpenChange={setShowVerification}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>Review & Edit Transactions</DialogTitle>
-            <DialogDescription>
-              Review the extracted transactions and edit categories if needed
+            <DialogTitle className="flex items-center gap-2">
+              {bankName && (
+                <>
+                  <Building2 className="h-5 w-5 text-primary" />
+                  {bankName} -
+                </>
+              )}
+              Review & Edit Transactions
+            </DialogTitle>
+            <DialogDescription className="flex items-center gap-4">
+              <span>
+                Found {editedTransactions.length} transaction{editedTransactions.length !== 1 ? 's' : ''}
+              </span>
+              {lowConfidenceCount > 0 && (
+                <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
+                  <AlertTriangle className="h-3 w-3 mr-1" />
+                  {lowConfidenceCount} need review
+                </Badge>
+              )}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="rounded-md border">
+          <div className="flex-1 overflow-auto rounded-md border">
             <Table>
-              <TableHeader>
+              <TableHeader className="sticky top-0 bg-background z-10">
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Category</TableHead>
+                  <TableHead className="w-[110px]">Date</TableHead>
+                  <TableHead className="min-w-[200px]">Description</TableHead>
+                  <TableHead className="w-[120px] text-right">Amount</TableHead>
+                  <TableHead className="w-[180px]">Category</TableHead>
+                  <TableHead className="w-[100px]">Confidence</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {editedTransactions.map((transaction, index) => (
-                  <TableRow key={index}>
+                  <TableRow 
+                    key={index}
+                    className={transaction.confidence && transaction.confidence < 0.6 ? 'bg-yellow-500/5' : ''}
+                  >
                     <TableCell>
                       <Input
                         type="date"
@@ -255,7 +312,9 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
                         step="0.01"
                         value={transaction.amount}
                         onChange={(e) => updateTransaction(index, 'amount', parseFloat(e.target.value))}
-                        className="w-full"
+                        className={`w-full text-right font-medium ${
+                          transaction.amount < 0 ? 'text-red-600' : 'text-green-600'
+                        }`}
                       />
                     </TableCell>
                     <TableCell>
@@ -275,18 +334,24 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
                         </SelectContent>
                       </Select>
                     </TableCell>
+                    <TableCell>
+                      {getConfidenceBadge(transaction.confidence)}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowVerification(false)}>
-              Cancel
+          <DialogFooter className="flex-shrink-0">
+            <Button variant="outline" onClick={() => {
+              setShowVerification(false);
+              clearTransactions();
+            }}>
+              {t("cancel")}
             </Button>
             <Button onClick={handleConfirm}>
-              Confirm & Add {editedTransactions.length} Transactions
+              {t("confirm")} & {t("add")} {editedTransactions.length} Transactions
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -18,6 +18,7 @@ interface UploadContextType {
   fileName: string | null;
   uploadFile: (file: File) => Promise<void>;
   extractedTransactions: ExtractedTransaction[];
+  bankName: string | null;
   clearTransactions: () => void;
 }
 
@@ -38,6 +39,9 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
   const [extractedTransactions, setExtractedTransactions] = useState<ExtractedTransaction[]>(() => {
     const saved = localStorage.getItem("upload-transactions");
     return saved ? JSON.parse(saved) : [];
+  });
+  const [bankName, setBankName] = useState<string | null>(() => {
+    return localStorage.getItem("upload-bank-name");
   });
   const [toastId, setToastId] = useState<string | number | undefined>();
 
@@ -144,6 +148,7 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
       if (processError) throw processError;
 
       const transactions = processData.transactions || [];
+      const detectedBank = processData.bank || "Unknown Bank";
       
       if (transactions.length === 0) {
         toast.dismiss(id);
@@ -156,7 +161,9 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
       setProgress(100);
       localStorage.setItem("upload-progress", "100");
       setExtractedTransactions(transactions);
+      setBankName(detectedBank);
       localStorage.setItem("upload-transactions", JSON.stringify(transactions));
+      localStorage.setItem("upload-bank-name", detectedBank);
       
       // Show success toast
       toast.dismiss(id);
@@ -166,7 +173,7 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
           <div>
             <p className="font-medium">Processing complete!</p>
             <p className="text-xs text-muted-foreground">
-              Extracted {transactions.length} transactions
+              {detectedBank} - Extracted {transactions.length} transactions
             </p>
           </div>
         </div>,
@@ -236,10 +243,12 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
 
   const clearTransactions = () => {
     setExtractedTransactions([]);
+    setBankName(null);
     localStorage.removeItem("upload-processing");
     localStorage.removeItem("upload-progress");
     localStorage.removeItem("upload-filename");
     localStorage.removeItem("upload-transactions");
+    localStorage.removeItem("upload-bank-name");
   };
 
   return (
@@ -250,6 +259,7 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
         fileName,
         uploadFile,
         extractedTransactions,
+        bankName,
         clearTransactions,
       }}
     >
