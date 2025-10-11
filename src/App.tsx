@@ -7,9 +7,13 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { AccountMenu } from "@/components/AccountMenu";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { PWAOfflineIndicator } from "@/components/PWAOfflineIndicator";
 import { AppProvider } from "./contexts/AppContext";
 import { UploadProvider } from "./contexts/UploadContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { useEffect } from "react";
+import { registerServiceWorker, captureInstallPrompt } from "@/lib/pwaUtils";
 import Index from "./pages/Index";
 import DashboardHome from "./pages/DashboardHome";
 import Expenses from "./pages/Expenses";
@@ -62,6 +66,21 @@ function AppRoutes() {
 }
 
 function App() {
+  // Initialize PWA features
+  useEffect(() => {
+    console.log('[PWA] Initializing PWA features...');
+    
+    // Register service worker
+    registerServiceWorker().then(registration => {
+      if (registration) {
+        console.log('[PWA] Service Worker registered successfully');
+      }
+    });
+
+    // Capture install prompt
+    captureInstallPrompt();
+  }, []);
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -70,6 +89,8 @@ function App() {
             <UploadProvider>
               <TooltipProvider>
                 <Toaster />
+                <PWAOfflineIndicator />
+                <PWAInstallPrompt />
                 <BrowserRouter>
                   <AppRoutes />
                 </BrowserRouter>

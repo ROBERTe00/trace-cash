@@ -18,6 +18,16 @@ const Index = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log("🔐 [Index] Auth state changed:", event, "User:", session?.user?.email || "none");
+        
+        // Handle sign out explicitly
+        if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          setShowOnboarding(false);
+          return;
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
