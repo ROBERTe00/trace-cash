@@ -28,6 +28,7 @@ export const InteractiveInvestmentChart = ({ investments }: InteractiveInvestmen
   const [chartType, setChartType] = useState<'line' | 'area'>('area');
   const [isExpanded, setIsExpanded] = useState(false);
   const [showBrush, setShowBrush] = useState(true);
+  const isMobile = window.innerWidth < 768;
 
   // Memoize historical data to prevent unnecessary calculations
   const chartData = useMemo(() => {
@@ -175,7 +176,15 @@ export const InteractiveInvestmentChart = ({ investments }: InteractiveInvestmen
               activeDot={{ r: 6 }}
               name="Portfolio Value"
             />
-            {showBrush && <Brush dataKey="month" height={30} stroke="hsl(var(--primary))" />}
+            {showBrush && (
+              <Brush 
+                dataKey="month" 
+                height={isMobile ? 40 : 50} 
+                stroke="hsl(var(--primary))"
+                fill="hsl(var(--muted))"
+                travellerWidth={10}
+              />
+            )}
           </LineChart>
         ) : (
           <AreaChart data={chartData}>
@@ -214,7 +223,15 @@ export const InteractiveInvestmentChart = ({ investments }: InteractiveInvestmen
               fill="url(#colorValue)"
               name="Portfolio Value"
             />
-            {showBrush && <Brush dataKey="month" height={30} stroke="hsl(var(--primary))" />}
+            {showBrush && (
+              <Brush 
+                dataKey="month" 
+                height={isMobile ? 40 : 50} 
+                stroke="hsl(var(--primary))"
+                fill="hsl(var(--muted))"
+                travellerWidth={10}
+              />
+            )}
           </AreaChart>
         )}
       </ResponsiveContainer>

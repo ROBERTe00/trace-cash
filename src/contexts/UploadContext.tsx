@@ -106,15 +106,15 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
       console.log("📤 [Upload] Invoking process-bank-statement edge function...");
       
       // Process with AI
-      const { data: processData, error: processError } = await supabase.functions.invoke(
-        'process-bank-statement',
-        {
-          body: {
-            fileUrl: signedData.signedUrl,
-            fileName: file.name,
-          },
-        }
-      );
+    const { data: processData, error: processError } = await supabase.functions.invoke(
+      'process-bank-statement-v2',
+      {
+        body: {
+          fileUrl: signedData.signedUrl,
+          fileName: file.name,
+        },
+      }
+    );
 
       console.log("📤 [Upload] Edge function result:", { 
         success: !processError, 

@@ -153,8 +153,8 @@ export const InteractiveExpenseChart = ({ expenses }: InteractiveExpenseChartPro
                   data={chartData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={isMobile ? 40 : 50}
-                  outerRadius={isMobile ? 65 : 80}
+                  innerRadius={isMobile ? 50 : 60}
+                  outerRadius={isMobile ? 90 : 100}
                   fill="#8884d8"
                   dataKey="value"
                   onMouseEnter={(_, index) => setActiveIndex(index)}

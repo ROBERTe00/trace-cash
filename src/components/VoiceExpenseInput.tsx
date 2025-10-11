@@ -1,18 +1,21 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Mic, MicOff, Loader2 } from "lucide-react";
+import { Mic, MicOff } from "lucide-react";
 import { toast } from "sonner";
 import { Expense } from "@/lib/storage";
+import { useApp } from "@/contexts/AppContext";
 
 interface VoiceExpenseInputProps {
   onExpenseDetected: (expense: Omit<Expense, "id">) => void;
 }
 
 export const VoiceExpenseInput = ({ onExpenseDetected }: VoiceExpenseInputProps) => {
+  const { t, formatCurrency } = useApp();
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [detectedExpense, setDetectedExpense] = useState<Omit<Expense, "id"> | null>(null);
+  const recognitionRef = useRef<any>(null);
 
   const parseVoiceCommand = (text: string): Omit<Expense, "id"> | null => {
     // Simple parsing logic for voice commands
@@ -63,7 +66,7 @@ export const VoiceExpenseInput = ({ onExpenseDetected }: VoiceExpenseInputProps)
 
   const startListening = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      toast.error("Speech recognition not supported in this browser");
+      toast.error(t("voice.notSupported"));
       return;
     }
 
@@ -71,44 +74,57 @@ export const VoiceExpenseInput = ({ onExpenseDetected }: VoiceExpenseInputProps)
     const recognition = new SpeechRecognition();
     
     recognition.lang = 'en-US';
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.continuous = true;
+    recognition.interimResults = true;
 
     recognition.onstart = () => {
       setIsListening(true);
-      toast.info("Listening... Speak now!");
+      toast.info(t("voice.listening") + " " + t("voice.speak"));
     };
 
     recognition.onresult = (event: any) => {
-      const text = event.results[0][0].transcript;
+      const text = Array.from(event.results)
+        .map((result: any) => result[0].transcript)
+        .join('');
       setTranscript(text);
-      
-      const expense = parseVoiceCommand(text);
-      if (expense) {
-        setDetectedExpense(expense);
-        toast.success("Expense detected! Review and confirm below");
-      } else {
-        toast.error("Couldn't understand the command. Try: 'Add 50 euros food expense'");
-      }
     };
 
     recognition.onerror = (event: any) => {
       console.error('Speech recognition error:', event.error);
-      toast.error("Error recognizing speech. Please try again.");
+      toast.error(t("voice.errorRecognizing"));
       setIsListening(false);
     };
 
     recognition.onend = () => {
-      setIsListening(false);
+      if (recognitionRef.current) {
+        setIsListening(false);
+      }
     };
 
     recognition.start();
+    recognitionRef.current = recognition;
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+      setIsListening(false);
+      
+      const expense = parseVoiceCommand(transcript);
+      if (expense) {
+        setDetectedExpense(expense);
+        toast.success(t("voice.detected"));
+      } else {
+        toast.error(t("voice.error"));
+      }
+    }
   };
 
   const handleConfirm = () => {
     if (detectedExpense) {
       onExpenseDetected(detectedExpense);
-      toast.success(`Added ${detectedExpense.amount}€ to ${detectedExpense.category}!`);
+      toast.success(`${t("voice.added")} ${formatCurrency(detectedExpense.amount)} ${t("voice.to")} ${detectedExpense.category}!`);
       setDetectedExpense(null);
       setTranscript("");
     }
@@ -123,28 +139,30 @@ export const VoiceExpenseInput = ({ onExpenseDetected }: VoiceExpenseInputProps)
     <Card className="glass-card p-4">
       <div className="space-y-4">
         <div className="flex items-center gap-4">
-          <Button
-            onClick={startListening}
-            disabled={isListening}
-            variant={isListening ? "default" : "outline"}
-            size="lg"
-            className="gap-2"
-          >
-            {isListening ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                Listening...
-              </>
-            ) : (
-              <>
-                <Mic className="h-5 w-5" />
-                Voice Input
-              </>
-            )}
-          </Button>
+          {isListening ? (
+            <Button
+              onClick={stopListening}
+              variant="destructive"
+              size="lg"
+              className="gap-2"
+            >
+              <MicOff className="h-5 w-5 animate-pulse" />
+              {t("voice.stop")}
+            </Button>
+          ) : (
+            <Button
+              onClick={startListening}
+              variant="outline"
+              size="lg"
+              className="gap-2"
+            >
+              <Mic className="h-5 w-5" />
+              {t("voice.start")}
+            </Button>
+          )}
           <div className="flex-1">
             <p className="text-sm text-muted-foreground">
-              {transcript || "Try: 'Add 50 euros food expense' or 'Spent 30 on transport'"}
+              {transcript || t("voice.tryExample")}
             </p>
           </div>
         </div>
@@ -152,28 +170,28 @@ export const VoiceExpenseInput = ({ onExpenseDetected }: VoiceExpenseInputProps)
         {detectedExpense && (
           <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="font-semibold">Detected Expense</h4>
+              <h4 className="font-semibold">{t("voice.detectedExpense")}</h4>
             </div>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Amount:</span>
-                <span className="font-medium">{detectedExpense.amount}€</span>
+                <span className="text-muted-foreground">{t("amount")}:</span>
+                <span className="font-medium">{formatCurrency(detectedExpense.amount)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Category:</span>
+                <span className="text-muted-foreground">{t("category")}:</span>
                 <span className="font-medium">{detectedExpense.category}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Description:</span>
+                <span className="text-muted-foreground">{t("description")}:</span>
                 <span className="font-medium">{detectedExpense.description}</span>
               </div>
             </div>
             <div className="flex gap-2 mt-4">
               <Button onClick={handleConfirm} size="sm" className="flex-1">
-                Confirm & Add
+                {t("voice.confirmAdd")}
               </Button>
               <Button onClick={handleCancel} variant="outline" size="sm" className="flex-1">
-                Cancel
+                {t("cancel")}
               </Button>
             </div>
           </div>

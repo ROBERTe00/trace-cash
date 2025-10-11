@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Moon, Sun, Palette } from "lucide-react";
 import { toast } from "sonner";
+import { useTheme } from "next-themes";
+import { useApp } from "@/contexts/AppContext";
 
 const themes = [
   { name: "Blue", colors: { primary: "221 83% 53%", accent: "221 83% 63%" } },
@@ -13,44 +15,34 @@ const themes = [
 ];
 
 export const ThemeSwitcher = () => {
-  const [isDark, setIsDark] = useState(true);
+  const { theme, setTheme } = useTheme();
+  const { t } = useApp();
   const [selectedTheme, setSelectedTheme] = useState(0);
 
   useEffect(() => {
-    const savedDark = localStorage.getItem("theme-dark") === "true";
     const savedTheme = parseInt(localStorage.getItem("theme-color") || "0");
-    setIsDark(savedDark);
     setSelectedTheme(savedTheme);
-    applyTheme(savedDark, savedTheme);
+    applyColorTheme(savedTheme);
   }, []);
 
-  const applyTheme = (dark: boolean, themeIndex: number) => {
+  const applyColorTheme = (themeIndex: number) => {
     const root = document.documentElement;
-    const theme = themes[themeIndex];
-
-    if (dark) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-
-    root.style.setProperty("--primary", theme.colors.primary);
-    root.style.setProperty("--accent", theme.colors.accent);
+    const colorTheme = themes[themeIndex];
+    root.style.setProperty("--primary", colorTheme.colors.primary);
+    root.style.setProperty("--accent", colorTheme.colors.accent);
   };
 
   const toggleDarkMode = () => {
-    const newDark = !isDark;
-    setIsDark(newDark);
-    localStorage.setItem("theme-dark", String(newDark));
-    applyTheme(newDark, selectedTheme);
-    toast.success(`${newDark ? "Dark" : "Light"} mode activated`);
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    toast.success(t(newTheme === 'dark' ? 'theme.darkActivated' : 'theme.lightActivated'));
   };
 
   const changeTheme = (index: number) => {
     setSelectedTheme(index);
     localStorage.setItem("theme-color", String(index));
-    applyTheme(isDark, index);
-    toast.success(`${themes[index].name} theme applied`);
+    applyColorTheme(index);
+    toast.success(`${themes[index].name} ${t('theme.applied')}`);
   };
 
   return (
@@ -58,34 +50,34 @@ export const ThemeSwitcher = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Palette className="h-5 w-5" />
-          Theme Settings
+          {t('theme.settings')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
-          <h4 className="font-medium mb-3">Appearance</h4>
+          <h4 className="font-medium mb-3">{t('theme.appearance')}</h4>
           <div className="flex gap-3">
             <Button
-              variant={isDark ? "default" : "outline"}
+              variant={theme === 'dark' ? "default" : "outline"}
               onClick={toggleDarkMode}
               className="flex-1"
             >
               <Moon className="h-4 w-4 mr-2" />
-              Dark
+              {t('theme.dark')}
             </Button>
             <Button
-              variant={!isDark ? "default" : "outline"}
+              variant={theme === 'light' ? "default" : "outline"}
               onClick={toggleDarkMode}
               className="flex-1"
             >
               <Sun className="h-4 w-4 mr-2" />
-              Light
+              {t('theme.light')}
             </Button>
           </div>
         </div>
 
         <div>
-          <h4 className="font-medium mb-3">Color Theme</h4>
+          <h4 className="font-medium mb-3">{t('theme.colorTheme')}</h4>
           <div className="grid grid-cols-5 gap-3">
             {themes.map((theme, index) => (
               <button
