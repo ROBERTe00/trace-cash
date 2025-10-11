@@ -60,51 +60,51 @@ export default function FuturePlanner() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="glass-card p-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="glass-card p-4 overflow-hidden">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
+            <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
               <Target className="h-5 w-5 text-primary" />
             </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Obiettivi Attivi</div>
-              <div className="text-2xl font-bold">{activeGoals.length}</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm text-muted-foreground truncate">Obiettivi Attivi</div>
+              <div className="text-2xl font-bold truncate">{activeGoals.length}</div>
             </div>
           </div>
         </Card>
 
-        <Card className="glass-card p-4">
+        <Card className="glass-card p-4 overflow-hidden">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-green-500/10">
+            <div className="p-2 rounded-lg bg-green-500/10 flex-shrink-0">
               <Trophy className="h-5 w-5 text-green-500" />
             </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Completati</div>
-              <div className="text-2xl font-bold">{completedGoals.length}</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm text-muted-foreground truncate">Completati</div>
+              <div className="text-2xl font-bold truncate">{completedGoals.length}</div>
             </div>
           </div>
         </Card>
 
-        <Card className="glass-card p-4">
+        <Card className="glass-card p-4 overflow-hidden">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-500/10">
+            <div className="p-2 rounded-lg bg-blue-500/10 flex-shrink-0">
               <Target className="h-5 w-5 text-blue-500" />
             </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Progresso Medio</div>
-              <div className="text-2xl font-bold">{totalProgress.toFixed(0)}%</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm text-muted-foreground truncate">Progresso Medio</div>
+              <div className="text-2xl font-bold truncate">{totalProgress.toFixed(0)}%</div>
             </div>
           </div>
         </Card>
 
-        <Card className="glass-card p-4">
+        <Card className="glass-card p-4 overflow-hidden">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-orange-500/10">
+            <div className="p-2 rounded-lg bg-orange-500/10 flex-shrink-0">
               <Target className="h-5 w-5 text-orange-500" />
             </div>
-            <div>
-              <div className="text-sm text-muted-foreground">Valore Totale</div>
-              <div className="text-2xl font-bold">
+            <div className="min-w-0 flex-1">
+              <div className="text-sm text-muted-foreground truncate">Valore Totale</div>
+              <div className="text-xl font-bold truncate">
                 €{goals.reduce((sum, g) => sum + g.targetAmount, 0).toLocaleString()}
               </div>
             </div>
