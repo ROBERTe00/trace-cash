@@ -16,8 +16,16 @@ interface InvestmentFormProps {
 
 export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
   const { t, formatCurrency, currencySymbols, currency } = useApp();
-  const [formData, setFormData] = useState({
-    type: "Stocks",
+  const [formData, setFormData] = useState<{
+    type: Investment["type"];
+    name: string;
+    currentPrice: string;
+    profitPercentage: string;
+    quantity: string;
+    symbol: string;
+    liveTracking: boolean;
+  }>({
+    type: "Stock",
     name: "",
     currentPrice: "",
     profitPercentage: "",
@@ -49,7 +57,7 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
     });
 
     setFormData({
-      type: "Stocks",
+      type: "Stock",
       name: "",
       currentPrice: "",
       profitPercentage: "",
@@ -72,13 +80,13 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>{t('investment.type')}</Label>
-              <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
+              <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value as Investment["type"] })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Stocks">Stocks</SelectItem>
+                  <SelectItem value="Stock">Stock</SelectItem>
                   <SelectItem value="ETF">ETF</SelectItem>
                   <SelectItem value="Crypto">Crypto</SelectItem>
-                  <SelectItem value="Bonds">Bonds</SelectItem>
+                  <SelectItem value="Cash">Cash</SelectItem>
                 </SelectContent>
               </Select>
             </div>
