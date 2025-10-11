@@ -24,10 +24,21 @@ interface UploadContextType {
 const UploadContext = createContext<UploadContextType | undefined>(undefined);
 
 export const UploadProvider = ({ children }: { children: ReactNode }) => {
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [extractedTransactions, setExtractedTransactions] = useState<ExtractedTransaction[]>([]);
+  const [isProcessing, setIsProcessing] = useState(() => {
+    const saved = localStorage.getItem("upload-processing");
+    return saved === "true";
+  });
+  const [progress, setProgress] = useState(() => {
+    const saved = localStorage.getItem("upload-progress");
+    return saved ? parseFloat(saved) : 0;
+  });
+  const [fileName, setFileName] = useState<string | null>(() => {
+    return localStorage.getItem("upload-filename");
+  });
+  const [extractedTransactions, setExtractedTransactions] = useState<ExtractedTransaction[]>(() => {
+    const saved = localStorage.getItem("upload-transactions");
+    return saved ? JSON.parse(saved) : [];
+  });
   const [toastId, setToastId] = useState<string | number | undefined>();
 
   const uploadFile = async (file: File) => {
@@ -55,6 +66,11 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
     setFileName(file.name);
     setProgress(0);
     setIsProcessing(true);
+    
+    // Persist state to localStorage
+    localStorage.setItem("upload-processing", "true");
+    localStorage.setItem("upload-progress", "0");
+    localStorage.setItem("upload-filename", file.name);
 
     // Show persistent toast with progress
     const id = toast(
@@ -80,6 +96,7 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       setProgress(20);
+      localStorage.setItem("upload-progress", "20");
       updateToastProgress(id, 20, "Uploading file...");
 
       // Upload to storage
@@ -91,6 +108,7 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
       if (uploadError) throw uploadError;
 
       setProgress(40);
+      localStorage.setItem("upload-progress", "40");
       updateToastProgress(id, 40, "File uploaded, generating secure URL...");
 
       // Generate signed URL
@@ -101,6 +119,7 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
       if (signedError) throw signedError;
 
       setProgress(60);
+      localStorage.setItem("upload-progress", "60");
       updateToastProgress(id, 60, "AI is analyzing your statement...");
 
       console.log("📤 [Upload] Invoking process-bank-statement edge function...");
@@ -135,7 +154,9 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setProgress(100);
+      localStorage.setItem("upload-progress", "100");
       setExtractedTransactions(transactions);
+      localStorage.setItem("upload-transactions", JSON.stringify(transactions));
       
       // Show success toast
       toast.dismiss(id);
@@ -180,6 +201,12 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
       setIsProcessing(false);
       setFileName(null);
       setProgress(0);
+      
+      // Clear localStorage on error
+      localStorage.removeItem("upload-processing");
+      localStorage.removeItem("upload-progress");
+      localStorage.removeItem("upload-filename");
+      localStorage.removeItem("upload-transactions");
     }
   };
 
@@ -209,6 +236,10 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
 
   const clearTransactions = () => {
     setExtractedTransactions([]);
+    localStorage.removeItem("upload-processing");
+    localStorage.removeItem("upload-progress");
+    localStorage.removeItem("upload-filename");
+    localStorage.removeItem("upload-transactions");
   };
 
   return (

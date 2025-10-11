@@ -21,7 +21,7 @@ interface ExpenseFormProps {
 export const ExpenseForm = ({ onAdd }: ExpenseFormProps) => {
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split("T")[0],
-    category: "Food" as Expense["category"],
+    category: "Other" as Expense["category"],
     description: "",
     amount: "",
     type: "Expense" as "Income" | "Expense",
@@ -45,7 +45,7 @@ export const ExpenseForm = ({ onAdd }: ExpenseFormProps) => {
 
     setFormData({
       date: new Date().toISOString().split("T")[0],
-      category: "Food",
+      category: "Other",
       description: "",
       amount: "",
       type: "Expense",
@@ -82,7 +82,7 @@ export const ExpenseForm = ({ onAdd }: ExpenseFormProps) => {
               }
             >
               <SelectTrigger className="mt-1">
-                <SelectValue />
+                <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Food">Food</SelectItem>

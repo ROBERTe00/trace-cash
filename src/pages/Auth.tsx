@@ -188,6 +188,7 @@ export default function Auth() {
         }
 
         console.log("🔐 [Auth] Signup successful:", data.user?.email);
+        localStorage.setItem("show-onboarding", "true");
         toast.success("Account created successfully!");
         navigate("/");
       }

@@ -30,7 +30,7 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
     symbol: string;
     liveTracking: boolean;
   }>({
-    type: "Stock",
+    type: "" as Investment["type"],
     name: "",
     currentPrice: "",
     profitPercentage: "",
@@ -100,7 +100,7 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
     });
 
     setFormData({
-      type: "Stock",
+      type: "" as Investment["type"],
       name: "",
       currentPrice: "",
       profitPercentage: "",
@@ -109,6 +109,7 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
       liveTracking: false,
     });
     setSearchQuery("");
+    setManualEntry(false);
   };
 
   return (
@@ -125,7 +126,7 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
             <div className="space-y-2">
               <Label>{t('investment.type')}</Label>
               <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value as Investment["type"] })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Stock">{t('investment.typeStock')}</SelectItem>
                   <SelectItem value="ETF">{t('investment.typeETF')}</SelectItem>

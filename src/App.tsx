@@ -9,6 +9,7 @@ import { GlobalSearch } from "@/components/GlobalSearch";
 import { AccountMenu } from "@/components/AccountMenu";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAOfflineIndicator } from "@/components/PWAOfflineIndicator";
+import { UploadProgressBar } from "@/components/UploadProgressBar";
 import { AppProvider } from "./contexts/AppContext";
 import { UploadProvider } from "./contexts/UploadContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -126,6 +127,7 @@ function App() {
                 <Toaster />
                 <PWAOfflineIndicator />
                 <PWAInstallPrompt />
+                <UploadProgressBar />
                 <BrowserRouter>
                   <Routes>
                     <Route path="/auth" element={<Auth />} />
