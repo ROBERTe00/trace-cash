@@ -35,6 +35,10 @@
     scrollbar-color: hsl(var(--border)) transparent;
   }
   
+  .scrollbar-thumb-primary\/20 {
+    scrollbar-color: hsl(var(--primary) / 0.2) transparent;
+  }
+  
   .scrollbar-track-transparent {
     scrollbar-track-color: transparent;
   }
@@ -47,6 +51,11 @@
   
   .scrollbar-thumb-border::-webkit-scrollbar-thumb {
     background-color: hsl(var(--border));
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thumb-primary\/20::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--primary) / 0.2);
     border-radius: 3px;
   }
   
