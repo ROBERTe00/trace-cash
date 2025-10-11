@@ -16,6 +16,7 @@ const authSchema = z.object({
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
+  const [isResetPassword, setIsResetPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -29,6 +30,37 @@ export default function Auth() {
     setLoading(true);
 
     try {
+      if (isResetPassword) {
+        // Password reset flow
+        const validation = z.object({
+          email: z.string().email("Invalid email address").max(255),
+        }).safeParse({ email: formData.email.trim() });
+
+        if (!validation.success) {
+          toast.error(validation.error.errors[0].message);
+          setLoading(false);
+          return;
+        }
+
+        const { error } = await supabase.auth.resetPasswordForEmail(
+          formData.email.trim(),
+          {
+            redirectTo: `${window.location.origin}/`,
+          }
+        );
+
+        if (error) {
+          toast.error(error.message);
+          setLoading(false);
+          return;
+        }
+
+        toast.success("Password reset email sent! Check your inbox.");
+        setIsResetPassword(false);
+        setLoading(false);
+        return;
+      }
+
       // Validate input
       const validation = authSchema.safeParse({
         email: formData.email.trim(),
@@ -52,6 +84,8 @@ export default function Auth() {
         if (error) {
           if (error.message.includes("Invalid login credentials")) {
             toast.error("Invalid email or password");
+          } else if (error.message.includes("Email not confirmed")) {
+            toast.error("Please confirm your email address before signing in");
           } else {
             toast.error(error.message);
           }
@@ -94,6 +128,7 @@ export default function Auth() {
         navigate("/");
       }
     } catch (error) {
+      console.error("Auth error:", error);
       toast.error("An unexpected error occurred");
       setLoading(false);
     }
@@ -108,12 +143,12 @@ export default function Auth() {
           </div>
           <h1 className="text-2xl font-bold">MyFinance Tracker</h1>
           <p className="text-muted-foreground mt-2">
-            {isLogin ? "Welcome back!" : "Create your account"}
+            {isResetPassword ? "Reset your password" : isLogin ? "Welcome back!" : "Create your account"}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
+          {!isLogin && !isResetPassword && (
             <div>
               <Label htmlFor="name">Name</Label>
               <Input
@@ -143,35 +178,61 @@ export default function Auth() {
             />
           </div>
 
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-              placeholder="••••••••"
-              className="mt-1"
-            />
-          </div>
+          {!isResetPassword && (
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+                placeholder="••••••••"
+                className="mt-1"
+              />
+            </div>
+          )}
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
+            {loading ? "Loading..." : isResetPassword ? "Send Reset Email" : isLogin ? "Sign In" : "Sign Up"}
           </Button>
         </form>
 
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-sm text-primary hover:underline"
-          >
-            {isLogin
-              ? "Don't have an account? Sign up"
-              : "Already have an account? Sign in"}
-          </button>
+        <div className="mt-6 text-center space-y-2">
+          {isResetPassword ? (
+            <button
+              type="button"
+              onClick={() => {
+                setIsResetPassword(false);
+                setIsLogin(true);
+              }}
+              className="text-sm text-primary hover:underline"
+            >
+              Back to sign in
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-sm text-primary hover:underline block w-full"
+              >
+                {isLogin
+                  ? "Don't have an account? Sign up"
+                  : "Already have an account? Sign in"}
+              </button>
+              {isLogin && (
+                <button
+                  type="button"
+                  onClick={() => setIsResetPassword(true)}
+                  className="text-sm text-muted-foreground hover:text-primary hover:underline block w-full"
+                >
+                  Forgot password?
+                </button>
+              )}
+            </>
+          )}
         </div>
       </Card>
     </div>
