@@ -58,7 +58,7 @@ export default function Investments() {
       setInvestments(mapped);
     } catch (error) {
       console.error('Failed to load investments');
-      toast.error("Failed to load investments");
+      toast.error(t("loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -68,7 +68,7 @@ export default function Investments() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error("Please log in to add investments");
+        toast.error(t("loginRequired"));
         return;
       }
 
@@ -104,10 +104,10 @@ export default function Investments() {
 
       setInvestments([newInv, ...investments]);
       setSheetOpen(false);
-      toast.success("Investment added successfully!");
+      toast.success(t("investmentAdded"));
     } catch (error) {
       console.error('Failed to add investment');
-      toast.error("Failed to add investment");
+      toast.error(t("investmentFailed"));
     }
   };
 
@@ -121,10 +121,10 @@ export default function Investments() {
       if (error) throw error;
 
       setInvestments(investments.filter((i) => i.id !== id));
-      toast.success("Investment deleted");
+      toast.success(t("investmentDeleted"));
     } catch (error) {
       console.error('Failed to delete investment');
-      toast.error("Failed to delete investment");
+      toast.error(t("investmentFailed"));
     }
   };
 
@@ -142,18 +142,18 @@ export default function Investments() {
       ));
     } catch (error) {
       console.error('Failed to update price');
-      toast.error("Failed to update price");
+      toast.error(t("priceUpdateFailed"));
     }
   };
 
   const handleExportPDF = () => {
     exportInvestmentReport(investments);
-    toast.success("Report exported successfully!");
+    toast.success(t("exportSuccess"));
   };
 
   const handleExportCSV = () => {
     exportInvestmentCSV(investments);
-    toast.success("Data exported successfully!");
+    toast.success(t("exportSuccess"));
   };
 
   if (loading) {

@@ -9,12 +9,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2, TrendingUp, TrendingDown, Zap, RefreshCw } from "lucide-react";
+import { Trash2, TrendingUp, TrendingDown, Zap } from "lucide-react";
 import { Investment } from "@/lib/storage";
 import { useApp } from "@/contexts/AppContext";
 import { useState, useEffect } from "react";
 import { fetchAllAssetPrices } from "@/lib/marketData";
 import { toast } from "sonner";
+import { MobileInvestmentCard } from "@/components/MobileInvestmentCard";
 
 interface InvestmentTableProps {
   investments: Investment[];
@@ -29,6 +30,17 @@ export const InvestmentTable = ({
 }: InvestmentTableProps) => {
   const { formatCurrency, t } = useApp();
   const [updating, setUpdating] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const updateLivePrices = async () => {
     setUpdating(true);
@@ -53,7 +65,7 @@ export const InvestmentTable = ({
     
     setUpdating(false);
     if (updated > 0) {
-      toast.success(`Updated ${updated} asset${updated !== 1 ? "s" : ""}!`);
+      toast.success(t("pricesUpdated").replace("{count}", updated.toString()));
     }
   };
 
@@ -61,16 +73,57 @@ export const InvestmentTable = ({
     const hasLiveTracking = investments.some(inv => inv.liveTracking && inv.symbol);
     if (hasLiveTracking) {
       updateLivePrices();
-      const interval = setInterval(updateLivePrices, 60000); // Update every minute
+      const interval = setInterval(updateLivePrices, 60000);
       return () => clearInterval(interval);
     }
   }, [investments.length]);
+
   const calculateYield = (investment: Investment) => {
     const initial = investment.quantity * investment.purchasePrice;
     const current = investment.quantity * investment.currentPrice;
     return ((current - initial) / initial) * 100;
   };
 
+  // Mobile View
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">{t('investments.portfolio')}</h3>
+          {investments.some(inv => inv.liveTracking) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={updateLivePrices}
+              disabled={updating}
+              className="gap-2"
+            >
+              <Zap className={`h-4 w-4 ${updating ? 'animate-spin' : ''}`} />
+              {t('investments.syncPrices')}
+            </Button>
+          )}
+        </div>
+        
+        {investments.length === 0 ? (
+          <Card className="glass-card p-8 text-center">
+            <p className="text-muted-foreground">{t('investments.noInvestments')}</p>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {investments.map((investment) => (
+              <MobileInvestmentCard
+                key={investment.id}
+                investment={investment}
+                onDelete={onDelete}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Desktop View
   return (
     <Card className="glass-card p-6">
       <div className="flex items-center justify-between mb-4">

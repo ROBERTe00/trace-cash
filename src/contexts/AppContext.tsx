@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-export type Currency = "EUR" | "USD" | "GBP" | "JPY" | "CHF" | "CNY" | "AUD" | "CAD" | "BRL" | "INR" | "RUB" | "SEK" | "NOK" | "DKK" | "PLN" | "MXN" | "ZAR" | "SGD" | "HKD" | "KRW";
+export type Currency = "EUR" | "USD" | "GBP" | "JPY" | "CHF" | "CNY" | "AUD" | "CAD" | "BRL" | "INR" | "RUB" | "SEK" | "NOK" | "DKK" | "PLN" | "MXN" | "ZAR" | "SGD" | "HKD" | "KRW" | "TRY" | "AED" | "THB" | "IDR" | "MYR";
 export type Language = "en" | "it" | "es" | "fr" | "de";
 
 interface AppContextType {
@@ -36,6 +36,11 @@ const currencySymbols: Record<Currency, string> = {
   SGD: "S$",
   HKD: "HK$",
   KRW: "₩",
+  TRY: "₺",
+  AED: "د.إ",
+  THB: "฿",
+  IDR: "Rp",
+  MYR: "RM",
 };
 
 const translations: Record<Language, Record<string, string>> = {
@@ -258,6 +263,28 @@ const translations: Record<Language, Record<string, string>> = {
     "metrics.wellDiversified": "Well Diversified",
     "metrics.needsAttention": "Needs Attention",
     "metrics.consider": "Consider Improvements",
+    
+    // Settings
+    "settings.appearance": "Appearance",
+    "settings.security": "Security",
+    "settings.data": "Data & Privacy",
+    "settings.offline": "Offline Mode",
+    "settings.appearanceDesc": "Customize the look and feel of your app",
+    "settings.securityDesc": "Protect your account and data",
+    "settings.dataDesc": "Manage your data and privacy settings",
+    "settings.offlineDesc": "Work without an internet connection",
+    managePreferences: "Manage your preferences",
+    exportSuccess: "Data exported successfully!",
+    
+    // Toast Messages
+    investmentAdded: "Investment added successfully!",
+    investmentDeleted: "Investment deleted successfully!",
+    investmentFailed: "Failed to perform operation",
+    priceUpdateFailed: "Failed to update price",
+    pricesUpdated: "Updated {count} asset(s)!",
+    loginRequired: "Please log in to add investments",
+    loadFailed: "Failed to load data",
+    logoutError: "Logout error",
   },
   it: {
     // Navigation
@@ -478,6 +505,28 @@ const translations: Record<Language, Record<string, string>> = {
     "metrics.wellDiversified": "Ben Diversificato",
     "metrics.needsAttention": "Richiede Attenzione",
     "metrics.consider": "Considera Miglioramenti",
+    
+    // Settings
+    "settings.appearance": "Aspetto",
+    "settings.security": "Sicurezza",
+    "settings.data": "Dati e Privacy",
+    "settings.offline": "Modalità Offline",
+    "settings.appearanceDesc": "Personalizza l'aspetto della tua app",
+    "settings.securityDesc": "Proteggi il tuo account e i tuoi dati",
+    "settings.dataDesc": "Gestisci i tuoi dati e le impostazioni della privacy",
+    "settings.offlineDesc": "Lavora senza connessione internet",
+    managePreferences: "Gestisci le tue preferenze",
+    exportSuccess: "Dati esportati con successo!",
+    
+    // Toast Messages
+    investmentAdded: "Investimento aggiunto con successo!",
+    investmentDeleted: "Investimento eliminato con successo!",
+    investmentFailed: "Operazione fallita",
+    priceUpdateFailed: "Aggiornamento prezzo fallito",
+    pricesUpdated: "{count} asset aggiornati!",
+    loginRequired: "Effettua il login per aggiungere investimenti",
+    loadFailed: "Caricamento dati fallito",
+    logoutError: "Errore durante il logout",
   },
   es: {
     // Navigation

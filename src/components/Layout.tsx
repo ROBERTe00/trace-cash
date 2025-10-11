@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { SettingsPanel } from "@/components/SettingsPanel";
+import { useNavigate } from "react-router-dom";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -12,6 +13,7 @@ interface LayoutProps {
 export const Layout = ({ children, onLogout }: LayoutProps) => {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setMounted(true);
@@ -36,7 +38,7 @@ export const Layout = ({ children, onLogout }: LayoutProps) => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => window.location.href = '/'}
+              onClick={() => navigate('/')}
               className="rounded-full relative z-50"
               title="Home"
             >
