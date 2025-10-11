@@ -27,7 +27,7 @@ export const InvestmentTable = ({
   onDelete,
   onUpdatePrice,
 }: InvestmentTableProps) => {
-  const { formatCurrency } = useApp();
+  const { formatCurrency, t } = useApp();
   const [updating, setUpdating] = useState(false);
 
   const updateLivePrices = async () => {
@@ -74,7 +74,7 @@ export const InvestmentTable = ({
   return (
     <Card className="glass-card p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">Investment Portfolio</h3>
+        <h3 className="text-lg font-semibold">{t('investments.portfolio')}</h3>
         {investments.some(inv => inv.liveTracking) && (
           <Button
             variant="outline"
@@ -84,7 +84,7 @@ export const InvestmentTable = ({
             className="gap-2"
           >
             <Zap className={`h-4 w-4 ${updating ? 'animate-spin' : ''}`} />
-            Sync All Prices
+            {t('investments.syncPrices')}
           </Button>
         )}
       </div>
@@ -92,14 +92,14 @@ export const InvestmentTable = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Category</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead className="text-right">Quantity</TableHead>
-              <TableHead className="text-right">Purchase Price</TableHead>
-              <TableHead className="text-right">Current Price</TableHead>
-              <TableHead className="text-right">Initial Value</TableHead>
-              <TableHead className="text-right">Current Value</TableHead>
-              <TableHead className="text-right">Yield %</TableHead>
+              <TableHead>{t('investments.category')}</TableHead>
+              <TableHead>{t('investments.name')}</TableHead>
+              <TableHead className="text-right">{t('investments.quantity')}</TableHead>
+              <TableHead className="text-right">{t('investments.purchasePrice')}</TableHead>
+              <TableHead className="text-right">{t('investments.currentPrice')}</TableHead>
+              <TableHead className="text-right">{t('investments.initialValue')}</TableHead>
+              <TableHead className="text-right">{t('investments.currentValue')}</TableHead>
+              <TableHead className="text-right">{t('investments.yield')}</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -108,9 +108,9 @@ export const InvestmentTable = ({
               <TableRow>
                 <TableCell
                   colSpan={9}
-                  className="text-center text-muted-foreground"
+                  className="text-center text-muted-foreground py-8"
                 >
-                  No investments yet
+                  {t('investments.noInvestments')}
                 </TableCell>
               </TableRow>
             ) : (

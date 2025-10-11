@@ -141,17 +141,20 @@ export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProp
       {/* Diversification Radar Chart */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <PieChart className="h-5 w-5" />
-            {t('metrics.diversification')}
-          </CardTitle>
-          <CardDescription>
-            Herfindahl Index: {metrics.diversification.herfindahlIndex.toFixed(4)}
-            {' '}
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <PieChart className="h-5 w-5" />
+                {t('metrics.diversification')}
+              </CardTitle>
+              <CardDescription className="mt-1">
+                Herfindahl Index: {metrics.diversification.herfindahlIndex.toFixed(4)}
+              </CardDescription>
+            </div>
             <Badge variant={metrics.diversification.herfindahlIndex < 0.25 ? 'default' : 'destructive'}>
               {metrics.diversification.herfindahlIndex < 0.25 ? t('metrics.wellDiversified') : t('metrics.concentrated')}
             </Badge>
-          </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>

@@ -14,10 +14,13 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useApp } from "@/contexts/AppContext";
 
 export default function Investments() {
+  const { t } = useApp();
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterType, setFilterType] = useState<string>("all");
 
   useEffect(() => {
     loadInvestments();
@@ -159,64 +162,125 @@ export default function Investments() {
     );
   }
 
+  // Filter investments based on selected type
+  const filteredInvestments = filterType === "all" 
+    ? investments 
+    : investments.filter(inv => inv.type === filterType);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-4xl font-bold gradient-text">Investments</h1>
-          <p className="text-muted-foreground">Advanced portfolio management and analytics</p>
+          <h1 className="text-4xl font-bold gradient-text">{t('investments.title')}</h1>
+          <p className="text-muted-foreground">{t('investments.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={handleExportCSV} variant="outline" size="sm">
             <FileSpreadsheet className="h-4 w-4 mr-2" />
-            Export CSV
+            {t('common.exportCSV')}
           </Button>
           <Button onClick={handleExportPDF} variant="outline" size="sm">
             <Download className="h-4 w-4 mr-2" />
-            Export PDF
+            {t('common.exportPDF')}
           </Button>
         </div>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="simulator">Simulator</TabsTrigger>
-          <TabsTrigger value="import">Import</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 h-auto">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            {t('investments.overview')}
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            {t('investments.analytics')}
+          </TabsTrigger>
+          <TabsTrigger value="simulator" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            {t('investments.simulator')}
+          </TabsTrigger>
+          <TabsTrigger value="import" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            {t('investments.import')}
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6 mt-6 min-h-[800px] transition-all duration-300 overflow-hidden">
+        <TabsContent value="overview" className="space-y-6 mt-6 min-h-[800px] transition-all duration-300">
           <Collapsible defaultOpen={investments.length === 0}>
             <CollapsibleTrigger asChild>
-              <Button variant="outline" className="w-full justify-between mb-4">
-                <span className="flex items-center gap-2"><Plus className="h-4 w-4" />Quick Add</span>
+              <Button variant="outline" className="w-full justify-between mb-4 hover:bg-primary/10">
+                <span className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  {t('investments.quickAdd')}
+                </span>
               </Button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="mb-6">
+            <CollapsibleContent className="mb-6 animate-slide-down">
               <InvestmentForm onAdd={handleAddInvestment} />
             </CollapsibleContent>
           </Collapsible>
-          <PortfolioAnalysis investments={investments} />
-          <PortfolioChart investments={investments} />
-          <InvestmentTable investments={investments} onDelete={handleDeleteInvestment} onUpdatePrice={handleUpdateInvestmentPrice} />
+
+          {/* Filter Tabs */}
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            <Button
+              variant={filterType === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilterType("all")}
+              className="whitespace-nowrap"
+            >
+              {t('investments.all')} ({investments.length})
+            </Button>
+            <Button
+              variant={filterType === "Stock" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilterType("Stock")}
+              className="whitespace-nowrap"
+            >
+              {t('investment.typeStock')} ({investments.filter(i => i.type === "Stock").length})
+            </Button>
+            <Button
+              variant={filterType === "ETF" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilterType("ETF")}
+              className="whitespace-nowrap"
+            >
+              {t('investment.typeETF')} ({investments.filter(i => i.type === "ETF").length})
+            </Button>
+            <Button
+              variant={filterType === "Crypto" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilterType("Crypto")}
+              className="whitespace-nowrap"
+            >
+              {t('investment.typeCrypto')} ({investments.filter(i => i.type === "Crypto").length})
+            </Button>
+            <Button
+              variant={filterType === "Cash" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilterType("Cash")}
+              className="whitespace-nowrap"
+            >
+              {t('investment.typeCash')} ({investments.filter(i => i.type === "Cash").length})
+            </Button>
+          </div>
+
+          <PortfolioAnalysis investments={filteredInvestments} />
+          <PortfolioChart investments={filteredInvestments} />
+          <InvestmentTable investments={filteredInvestments} onDelete={handleDeleteInvestment} onUpdatePrice={handleUpdateInvestmentPrice} />
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-6 mt-6 min-h-[800px] transition-all duration-300 overflow-hidden">
+        <TabsContent value="analytics" className="space-y-6 mt-6 min-h-[800px] transition-all duration-300">
           <PortfolioMetricsPanel investments={investments} />
         </TabsContent>
 
-        <TabsContent value="simulator" className="space-y-6 mt-6 min-h-[800px] transition-all duration-300 overflow-hidden">
+        <TabsContent value="simulator" className="space-y-6 mt-6 min-h-[800px] transition-all duration-300">
           <InvestmentScenarioSimulator />
         </TabsContent>
 
-        <TabsContent value="import" className="space-y-6 mt-6 min-h-[800px] transition-all duration-300 overflow-hidden">
+        <TabsContent value="import" className="space-y-6 mt-6 min-h-[800px] transition-all duration-300">
           <BrokerIntegration />
           
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-6">
-            <h3 className="font-semibold mb-2">🚀 Coming Soon</h3>
+            <h3 className="font-semibold mb-2">🚀 {t('investments.comingSoon')}</h3>
             <p className="text-sm text-muted-foreground">
-              More broker integrations including Interactive Brokers, Coinbase, and Binance
+              {t('investments.moreBrokers')}
             </p>
           </div>
         </TabsContent>
