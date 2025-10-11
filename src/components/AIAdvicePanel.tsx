@@ -5,6 +5,7 @@ import { Sparkles, RefreshCw, Lightbulb } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Expense, Investment, FinancialGoal } from "@/lib/storage";
+import { useApp } from "@/contexts/AppContext";
 
 interface AIAdvicePanelProps {
   expenses: Expense[];
@@ -20,6 +21,7 @@ interface Advice {
 
 export function AIAdvicePanel({ expenses, investments, goals }: AIAdvicePanelProps) {
   const { toast } = useToast();
+  const { t, formatCurrency } = useApp();
   const [advices, setAdvices] = useState<Advice[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -166,21 +168,21 @@ export function AIAdvicePanel({ expenses, investments, goals }: AIAdvicePanelPro
   };
 
   return (
-    <Card className="glass-card p-6">
-      <div className="flex items-center justify-between mb-6">
+    <Card className="glass-card p-4 md:p-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-6 w-6 text-primary" />
-          <h2 className="text-2xl font-bold">AI Insights</h2>
+          <Sparkles className="h-5 md:h-6 w-5 md:w-6 text-primary flex-shrink-0" />
+          <h2 className="text-xl md:text-2xl font-bold">{t("ai.insights")}</h2>
         </div>
         <Button
           size="sm"
           variant="outline"
           onClick={fetchAdvice}
           disabled={loading}
-          className="gap-2"
+          className="gap-2 w-full sm:w-auto"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+          {t("ai.refresh")}
         </Button>
       </div>
 
@@ -191,34 +193,34 @@ export function AIAdvicePanel({ expenses, investments, goals }: AIAdvicePanelPro
           ))}
         </div>
       ) : advices.length === 0 ? (
-        <div className="text-center py-12">
-          <Lightbulb className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground mb-4">No insights yet</p>
-          <p className="text-sm text-muted-foreground">Add more transactions to get personalized advice</p>
+        <div className="text-center py-8 md:py-12">
+          <Lightbulb className="h-10 md:h-12 w-10 md:w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground mb-2 font-medium">{t("ai.noInsights")}</p>
+          <p className="text-xs md:text-sm text-muted-foreground">{t("ai.addMore")}</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
           {advices.map((advice, index) => (
             <Card
               key={index}
-              className={`p-4 border bg-gradient-to-br ${getImpactColor(advice.impact)} hover-lift transition-all`}
+              className={`p-4 md:p-5 border bg-gradient-to-br ${getImpactColor(advice.impact)} hover-lift transition-all`}
             >
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                  <Lightbulb className="h-5 w-5 text-primary" />
+                  <Lightbulb className="h-5 md:h-6 w-5 md:w-6 text-primary" />
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-semibold">{advice.title}</h3>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                    <h3 className="font-semibold text-sm md:text-base truncate">{advice.title}</h3>
+                    <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${
                       advice.impact === "high" ? "bg-red-500/20 text-red-700 dark:text-red-300" :
                       advice.impact === "medium" ? "bg-orange-500/20 text-orange-700 dark:text-orange-300" :
                       "bg-blue-500/20 text-blue-700 dark:text-blue-300"
                     }`}>
-                      {advice.impact} impact
+                      {t(`ai.${advice.impact}Impact`)}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground">{advice.description}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">{advice.description}</p>
                 </div>
               </div>
             </Card>
@@ -227,7 +229,7 @@ export function AIAdvicePanel({ expenses, investments, goals }: AIAdvicePanelPro
       )}
 
       <div className="mt-4 p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground">
-        💡 Insights powered by AI - recommendations based on your financial patterns
+        💡 {t("ai.powered")}
       </div>
     </Card>
   );

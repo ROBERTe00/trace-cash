@@ -143,7 +143,7 @@ export const InteractiveExpenseChart = ({ expenses }: InteractiveExpenseChartPro
 
       <div className="grid md:grid-cols-2 gap-4 md:gap-6">
         {/* Chart */}
-        <div className="overflow-hidden -mx-2 sm:mx-0">
+        <div className="overflow-hidden">
           <ResponsiveContainer width="100%" height={isMobile ? 300 : (isExpanded ? 500 : 350)}>
             {chartType === 'pie' ? (
               <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>

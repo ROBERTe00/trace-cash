@@ -20,68 +20,68 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { TooltipWrapper } from "@/components/TooltipWrapper";
-
-const navigationItems = [
-  { 
-    title: "Dashboard", 
-    url: "/", 
-    icon: LayoutDashboard,
-    tooltip: "View your financial overview with interactive charts"
-  },
-  { 
-    title: "Expenses", 
-    url: "/expenses", 
-    icon: Wallet,
-    tooltip: "Track and categorize your spending"
-  },
-  { 
-    title: "Investments", 
-    url: "/investments", 
-    icon: TrendingUp,
-    tooltip: "Monitor your investment portfolio and performance"
-  },
-  { 
-    title: "Future Planner", 
-    url: "/future-planner", 
-    icon: Lightbulb,
-    tooltip: "Get AI-powered financial projections and planning"
-  },
-  { 
-    title: "Progress Hub", 
-    url: "/progress", 
-    icon: Trophy,
-    tooltip: "Earn badges and track your financial milestones"
-  },
-  { 
-    title: "Community", 
-    url: "/community", 
-    icon: Users,
-    tooltip: "Share insights and connect with others"
-  },
-  { 
-    title: "Upload", 
-    url: "/upload", 
-    icon: Upload,
-    tooltip: "Import transactions from CSV, Excel, or PDF"
-  },
-  { 
-    title: "Settings", 
-    url: "/settings", 
-    icon: Settings,
-    tooltip: "Manage your account, security, and preferences"
-  },
-];
+import { useApp } from "@/contexts/AppContext";
 
 export function AppSidebar() {
   const { open, setOpenMobile } = useSidebar();
+  const { t } = useApp();
   const location = useLocation();
   const currentPath = location.pathname;
+
+  const navigationItems = [
+    { 
+      title: t("dashboard"), 
+      url: "/", 
+      icon: LayoutDashboard,
+      tooltip: t("dashboard")
+    },
+    { 
+      title: t("expenses"), 
+      url: "/expenses", 
+      icon: Wallet,
+      tooltip: t("expenses")
+    },
+    { 
+      title: t("investments"), 
+      url: "/investments", 
+      icon: TrendingUp,
+      tooltip: t("investments")
+    },
+    { 
+      title: t("future"), 
+      url: "/future-planner", 
+      icon: Lightbulb,
+      tooltip: t("future")
+    },
+    { 
+      title: t("progress"), 
+      url: "/progress", 
+      icon: Trophy,
+      tooltip: t("progress")
+    },
+    { 
+      title: t("community"), 
+      url: "/community", 
+      icon: Users,
+      tooltip: t("community")
+    },
+    { 
+      title: t("upload"), 
+      url: "/upload", 
+      icon: Upload,
+      tooltip: t("upload")
+    },
+    { 
+      title: t("settings"), 
+      url: "/settings", 
+      icon: Settings,
+      tooltip: t("settings")
+    },
+  ];
 
   const isActive = (path: string) => currentPath === path;
 
   const handleLinkClick = () => {
-    // Close sidebar on mobile when clicking a link
     setOpenMobile(false);
   };
 
