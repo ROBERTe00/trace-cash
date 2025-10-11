@@ -47,6 +47,7 @@ const translations: Record<Language, Record<string, string>> = {
     close: "Close",
     confirm: "Confirm",
     refresh: "Refresh",
+    optional: "Optional",
     
     // Theme
     "theme.settings": "Theme Settings",
@@ -91,6 +92,21 @@ const translations: Record<Language, Record<string, string>> = {
     "ai.highImpact": "high impact",
     "ai.mediumImpact": "medium impact",
     "ai.lowImpact": "low impact",
+    "ai.learnMore": "Learn More",
+    "ai.goalBehindSchedule": "Goal Behind Schedule",
+    "ai.youAreBehind": "You're behind on",
+    "ai.increaseSavings": "Increase savings by",
+    "ai.toStayOnTrack": "to stay on track",
+    "ai.reduceTopCategory": "Reduce Top Spending",
+    "ai.accountsFor": "accounts for",
+    "ai.considerCutting": "Consider cutting",
+    "ai.toAccelerateGoals": "to accelerate your goals",
+    "ai.diversifyPortfolio": "Diversify Your Portfolio",
+    "ai.diversifyPortfolioDesc": "Consider adding 2-3 more assets to reduce risk. ETFs provide instant diversification.",
+    "ai.actionSteps": "Action Steps",
+    "ai.reviewYourData": "Review your financial data regularly",
+    "ai.setSmartGoals": "Set SMART goals and track progress",
+    "ai.trackProgress": "Monitor and adjust your strategy monthly",
     
     // Charts
     "chart.expenseAnalysis": "Interactive Expense Analysis",
@@ -133,6 +149,12 @@ const translations: Record<Language, Record<string, string>> = {
     "investment.symbolOptional": "Symbol (Optional)",
     "investment.willBe": "will be",
     "investment.loading": "Loading price...",
+    "investment.typeStock": "Stock",
+    "investment.typeETF": "ETF",
+    "investment.typeCrypto": "Cryptocurrency",
+    "investment.typeCash": "Cash",
+    "investment.addCustomAsset": "Add Custom Asset",
+    "investment.assetName": "Asset Name",
     
     // Portfolio
     "portfolio.analysis": "Portfolio Analysis",
@@ -200,6 +222,7 @@ const translations: Record<Language, Record<string, string>> = {
     close: "Chiudi",
     confirm: "Conferma",
     refresh: "Aggiorna",
+    optional: "Opzionale",
     
     // Theme
     "theme.settings": "Impostazioni Tema",
@@ -244,6 +267,21 @@ const translations: Record<Language, Record<string, string>> = {
     "ai.highImpact": "alto impatto",
     "ai.mediumImpact": "medio impatto",
     "ai.lowImpact": "basso impatto",
+    "ai.learnMore": "Scopri di Più",
+    "ai.goalBehindSchedule": "Obiettivo in Ritardo",
+    "ai.youAreBehind": "Sei in ritardo su",
+    "ai.increaseSavings": "Aumenta i risparmi di",
+    "ai.toStayOnTrack": "per restare in pista",
+    "ai.reduceTopCategory": "Riduci Spese Principali",
+    "ai.accountsFor": "rappresenta",
+    "ai.considerCutting": "Considera di ridurre del",
+    "ai.toAccelerateGoals": "per accelerare i tuoi obiettivi",
+    "ai.diversifyPortfolio": "Diversifica il Portfolio",
+    "ai.diversifyPortfolioDesc": "Considera di aggiungere 2-3 asset per ridurre il rischio. Gli ETF offrono diversificazione istantanea.",
+    "ai.actionSteps": "Passi da Seguire",
+    "ai.reviewYourData": "Rivedi i tuoi dati finanziari regolarmente",
+    "ai.setSmartGoals": "Imposta obiettivi SMART e traccia i progressi",
+    "ai.trackProgress": "Monitora e aggiusta la tua strategia mensilmente",
     
     // Charts
     "chart.expenseAnalysis": "Analisi Spese Interattiva",
@@ -286,6 +324,12 @@ const translations: Record<Language, Record<string, string>> = {
     "investment.symbolOptional": "Simbolo (Opzionale)",
     "investment.willBe": "sarà",
     "investment.loading": "Caricamento prezzo...",
+    "investment.typeStock": "Azioni",
+    "investment.typeETF": "ETF",
+    "investment.typeCrypto": "Criptovaluta",
+    "investment.typeCash": "Contanti",
+    "investment.addCustomAsset": "Aggiungi Asset Personalizzato",
+    "investment.assetName": "Nome Asset",
     
     // Portfolio
     "portfolio.analysis": "Analisi Portfolio",

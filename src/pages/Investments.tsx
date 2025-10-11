@@ -186,7 +186,7 @@ export default function Investments() {
           <TabsTrigger value="import">Import</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6 mt-6">
+        <TabsContent value="overview" className="space-y-6 mt-6 min-h-[800px] transition-all duration-300 overflow-hidden">
           <Collapsible defaultOpen={investments.length === 0}>
             <CollapsibleTrigger asChild>
               <Button variant="outline" className="w-full justify-between mb-4">
@@ -202,15 +202,15 @@ export default function Investments() {
           <InvestmentTable investments={investments} onDelete={handleDeleteInvestment} onUpdatePrice={handleUpdateInvestmentPrice} />
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-6 mt-6 min-h-[400px]">
+        <TabsContent value="analytics" className="space-y-6 mt-6 min-h-[800px] transition-all duration-300 overflow-hidden">
           <PortfolioMetricsPanel investments={investments} />
         </TabsContent>
 
-        <TabsContent value="simulator" className="space-y-6 mt-6 min-h-[400px]">
+        <TabsContent value="simulator" className="space-y-6 mt-6 min-h-[800px] transition-all duration-300 overflow-hidden">
           <InvestmentScenarioSimulator />
         </TabsContent>
 
-        <TabsContent value="import" className="space-y-6 mt-6 min-h-[400px]">
+        <TabsContent value="import" className="space-y-6 mt-6 min-h-[800px] transition-all duration-300 overflow-hidden">
           <BrokerIntegration />
           
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-6">

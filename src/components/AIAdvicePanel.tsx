@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, RefreshCw, Lightbulb } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sparkles, RefreshCw, Lightbulb, TrendingDown, Target, PieChart, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Expense, Investment, FinancialGoal } from "@/lib/storage";
@@ -17,6 +19,7 @@ interface Advice {
   title: string;
   description: string;
   impact: "high" | "medium" | "low";
+  icon?: any;
 }
 
 export function AIAdvicePanel({ expenses, investments, goals }: AIAdvicePanelProps) {
@@ -24,6 +27,7 @@ export function AIAdvicePanel({ expenses, investments, goals }: AIAdvicePanelPro
   const { t, formatCurrency } = useApp();
   const [advices, setAdvices] = useState<Advice[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedAdvice, setSelectedAdvice] = useState<Advice | null>(null);
 
   const fetchAdvice = async () => {
     setLoading(true);
@@ -93,6 +97,7 @@ export function AIAdvicePanel({ expenses, investments, goals }: AIAdvicePanelPro
           title: line.substring(0, 50),
           description: line,
           impact: i === 0 ? "high" : i === 1 ? "medium" : "low",
+          icon: i === 0 ? Target : i === 1 ? TrendingDown : PieChart,
         });
       }
     }
@@ -115,9 +120,10 @@ export function AIAdvicePanel({ expenses, investments, goals }: AIAdvicePanelPro
       const goal = behindGoals[0];
       const remaining = goal.targetAmount - goal.currentAmount;
       advices.push({
-        title: "Goal Behind Schedule",
-        description: `You're behind on "${goal.name}". Increase savings by €${(remaining / 30).toFixed(2)}/day to stay on track.`,
+        title: t("ai.goalBehindSchedule"),
+        description: `${t("ai.youAreBehind")} "${goal.name}". ${t("ai.increaseSavings")} ${formatCurrency(remaining / 30)}/day ${t("ai.toStayOnTrack")}.`,
         impact: "high",
+        icon: Target,
       });
     }
 
@@ -133,9 +139,10 @@ export function AIAdvicePanel({ expenses, investments, goals }: AIAdvicePanelPro
     
     if (topCategory && topCategory[1] > 500) {
       advices.push({
-        title: "Reduce Top Spending Category",
-        description: `${topCategory[0]} accounts for €${topCategory[1].toFixed(2)}. Consider cutting 15% to accelerate your goals.`,
+        title: t("ai.reduceTopCategory"),
+        description: `${topCategory[0]} ${t("ai.accountsFor")} ${formatCurrency(topCategory[1])}. ${t("ai.considerCutting")} 15% ${t("ai.toAccelerateGoals")}.`,
         impact: "medium",
+        icon: TrendingDown,
       });
     }
 
@@ -143,9 +150,10 @@ export function AIAdvicePanel({ expenses, investments, goals }: AIAdvicePanelPro
     const portfolioValue = investments.reduce((sum, inv) => sum + inv.quantity * inv.currentPrice, 0);
     if (investments.length < 3 && portfolioValue > 1000) {
       advices.push({
-        title: "Diversify Your Portfolio",
-        description: "Consider adding 2-3 more assets to reduce risk. ETFs provide instant diversification.",
+        title: t("ai.diversifyPortfolio"),
+        description: t("ai.diversifyPortfolioDesc"),
         impact: "medium",
+        icon: PieChart,
       });
     }
 
@@ -158,21 +166,41 @@ export function AIAdvicePanel({ expenses, investments, goals }: AIAdvicePanelPro
     }
   }, []);
 
-  const getImpactColor = (impact: string) => {
+  const getImpactStyles = (impact: string) => {
     switch (impact) {
-      case "high": return "from-red-500/20 to-red-600/5 border-red-500/30";
-      case "medium": return "from-orange-500/20 to-orange-600/5 border-orange-500/30";
-      case "low": return "from-blue-500/20 to-blue-600/5 border-blue-500/30";
-      default: return "from-gray-500/20 to-gray-600/5 border-gray-500/30";
+      case "high": 
+        return {
+          card: "border-l-red-500 bg-gradient-to-br from-red-500/10 to-red-600/5",
+          icon: "bg-red-500/20",
+          badge: "bg-red-500/20 text-red-700 dark:text-red-300"
+        };
+      case "medium": 
+        return {
+          card: "border-l-amber-500 bg-gradient-to-br from-amber-500/10 to-amber-600/5",
+          icon: "bg-amber-500/20",
+          badge: "bg-amber-500/20 text-amber-700 dark:text-amber-300"
+        };
+      case "low": 
+        return {
+          card: "border-l-blue-500 bg-gradient-to-br from-blue-500/10 to-blue-600/5",
+          icon: "bg-blue-500/20",
+          badge: "bg-blue-500/20 text-blue-700 dark:text-blue-300"
+        };
+      default: 
+        return {
+          card: "border-l-gray-500 bg-gradient-to-br from-gray-500/10 to-gray-600/5",
+          icon: "bg-gray-500/20",
+          badge: "bg-gray-500/20 text-gray-700 dark:text-gray-300"
+        };
     }
   };
 
   return (
-    <Card className="glass-card p-4 md:p-6">
+    <Card className="glass-card p-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 md:h-6 w-5 md:w-6 text-primary flex-shrink-0" />
-          <h2 className="text-xl md:text-2xl font-bold">{t("ai.insights")}</h2>
+          <Sparkles className="h-6 w-6 text-primary flex-shrink-0" />
+          <h2 className="text-2xl font-bold">{t("ai.insights")}</h2>
         </div>
         <Button
           size="sm"
@@ -187,50 +215,95 @@ export function AIAdvicePanel({ expenses, investments, goals }: AIAdvicePanelPro
       </div>
 
       {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 rounded-lg bg-muted animate-pulse" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-[220px] rounded-lg bg-muted animate-pulse" />
           ))}
         </div>
       ) : advices.length === 0 ? (
-        <div className="text-center py-8 md:py-12">
-          <Lightbulb className="h-10 md:h-12 w-10 md:w-12 text-muted-foreground mx-auto mb-4" />
+        <div className="text-center py-12">
+          <Lightbulb className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-muted-foreground mb-2 font-medium">{t("ai.noInsights")}</p>
-          <p className="text-xs md:text-sm text-muted-foreground">{t("ai.addMore")}</p>
+          <p className="text-sm text-muted-foreground">{t("ai.addMore")}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
-          {advices.map((advice, index) => (
-            <Card
-              key={index}
-              className={`p-4 md:p-5 border bg-gradient-to-br ${getImpactColor(advice.impact)} hover-lift transition-all`}
-            >
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                  <Lightbulb className="h-5 md:h-6 w-5 md:w-6 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                    <h3 className="font-semibold text-sm md:text-base truncate">{advice.title}</h3>
-                    <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${
-                      advice.impact === "high" ? "bg-red-500/20 text-red-700 dark:text-red-300" :
-                      advice.impact === "medium" ? "bg-orange-500/20 text-orange-700 dark:text-orange-300" :
-                      "bg-blue-500/20 text-blue-700 dark:text-blue-300"
-                    }`}>
-                      {t(`ai.${advice.impact}Impact`)}
-                    </span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {advices.map((advice, index) => {
+            const Icon = advice.icon || Lightbulb;
+            const styles = getImpactStyles(advice.impact);
+            
+            return (
+              <Card
+                key={index}
+                className={`p-6 border-l-4 ${styles.card} hover-lift transition-all duration-300 hover:scale-[1.02] min-h-[220px] shadow-lg hover:shadow-xl`}
+              >
+                <div className="flex items-start gap-4 h-full">
+                  <div className={`p-3 rounded-full shadow-md ${styles.icon} shrink-0`}>
+                    <Icon className="h-8 w-8 text-primary" />
                   </div>
-                  <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">{advice.description}</p>
+                  
+                  <div className="flex-1 space-y-3 flex flex-col">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="font-bold text-lg line-clamp-1 flex-1">{advice.title}</h3>
+                      <Badge variant="outline" className={`shrink-0 shadow-sm ${styles.badge}`}>
+                        {t(`ai.${advice.impact}Impact`)}
+                      </Badge>
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground line-clamp-2 flex-1">
+                      {advice.description}
+                    </p>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedAdvice(advice)}
+                      className="mt-auto w-full gap-2"
+                    >
+                      <Eye className="h-4 w-4" />
+                      {t('ai.learnMore')}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
 
-      <div className="mt-4 p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground">
+      <div className="mt-6 p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground">
         💡 {t("ai.powered")}
       </div>
+
+      {/* Detail Dialog */}
+      <Dialog open={!!selectedAdvice} onOpenChange={() => setSelectedAdvice(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {selectedAdvice?.icon && <selectedAdvice.icon className="h-6 w-6 text-primary" />}
+              {selectedAdvice?.title}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="flex items-center gap-2">
+              <Badge className={getImpactStyles(selectedAdvice?.impact || "low").badge}>
+                {t(`ai.${selectedAdvice?.impact}Impact`)}
+              </Badge>
+            </div>
+            <p className="text-muted-foreground leading-relaxed">
+              {selectedAdvice?.description}
+            </p>
+            <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+              <p className="text-sm font-medium mb-2">{t("ai.actionSteps")}</p>
+              <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                <li>{t("ai.reviewYourData")}</li>
+                <li>{t("ai.setSmartGoals")}</li>
+                <li>{t("ai.trackProgress")}</li>
+              </ul>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

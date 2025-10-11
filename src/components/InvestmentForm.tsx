@@ -42,6 +42,7 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState(searchAssets("", 10));
+  const [manualEntry, setManualEntry] = useState(false);
   
   const { price, loading } = useLivePrice(
     formData.symbol || undefined,
@@ -126,10 +127,10 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
               <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value as Investment["type"] })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Stock">Stock</SelectItem>
-                  <SelectItem value="ETF">ETF</SelectItem>
-                  <SelectItem value="Crypto">Crypto</SelectItem>
-                  <SelectItem value="Cash">Cash</SelectItem>
+                  <SelectItem value="Stock">{t('investment.typeStock')}</SelectItem>
+                  <SelectItem value="ETF">{t('investment.typeETF')}</SelectItem>
+                  <SelectItem value="Crypto">{t('investment.typeCrypto')}</SelectItem>
+                  <SelectItem value="Cash">{t('investment.typeCash')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -179,6 +180,56 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
                   </Command>
                 </PopoverContent>
               </Popover>
+              
+              {/* Manual Entry Section */}
+              {!manualEntry && (
+                <div className="flex items-center gap-2 my-2">
+                  <div className="flex-1 border-t border-muted"></div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setManualEntry(true)}
+                    className="gap-2 text-xs"
+                  >
+                    <Plus className="h-3 w-3" />
+                    {t('investment.addCustomAsset')}
+                  </Button>
+                  <div className="flex-1 border-t border-muted"></div>
+                </div>
+              )}
+              
+              {manualEntry && (
+                <div className="space-y-3 mt-3 p-3 border rounded-lg bg-muted/30">
+                  <div>
+                    <Label className="text-xs">{t('investment.assetName')}</Label>
+                    <Input
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      placeholder="e.g., My Custom Stock"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">{t('investment.symbol')} ({t('common.optional')})</Label>
+                    <Input
+                      value={formData.symbol || ''}
+                      onChange={(e) => setFormData({...formData, symbol: e.target.value.toUpperCase()})}
+                      placeholder="e.g., CUSTOM"
+                      className="mt-1"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setManualEntry(false)}
+                    className="w-full text-xs"
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
