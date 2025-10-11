@@ -1,26 +1,27 @@
 import { useState, useEffect } from "react";
 import { InvestmentForm } from "@/components/InvestmentForm";
 import { InvestmentTable } from "@/components/InvestmentTable";
-import { PortfolioChart } from "@/components/PortfolioChart";
 import { PortfolioAnalysis } from "@/components/PortfolioAnalysis";
 import { BrokerIntegration } from "@/components/BrokerIntegration";
 import { PortfolioMetricsPanel } from "@/components/PortfolioMetricsPanel";
 import { InvestmentScenarioSimulator } from "@/components/InvestmentScenarioSimulator";
 import { Investment } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
-import { Download, FileSpreadsheet, Plus } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Download, FileSpreadsheet, Plus, PieChart, BarChart3, Calculator, Upload as UploadIcon, TrendingUp } from "lucide-react";
 import { exportInvestmentReport, exportInvestmentCSV } from "@/lib/investmentExport";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useApp } from "@/contexts/AppContext";
 
 export default function Investments() {
-  const { t } = useApp();
+  const { t, formatCurrency } = useApp();
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<string>("all");
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   useEffect(() => {
     loadInvestments();
@@ -102,6 +103,7 @@ export default function Investments() {
       };
 
       setInvestments([newInv, ...investments]);
+      setSheetOpen(false);
       toast.success("Investment added successfully!");
     } catch (error) {
       console.error('Failed to add investment');
@@ -167,102 +169,167 @@ export default function Investments() {
     ? investments 
     : investments.filter(inv => inv.type === filterType);
 
+  // Calculate portfolio stats
+  const totalValue = investments.reduce((sum, inv) => sum + inv.quantity * inv.currentPrice, 0);
+  const totalYield = investments.reduce((sum, inv) => {
+    const initial = inv.quantity * inv.purchasePrice;
+    const current = inv.quantity * inv.currentPrice;
+    return sum + current - initial;
+  }, 0);
+  const yieldPercent = investments.length > 0
+    ? (totalYield / investments.reduce((sum, inv) => sum + inv.quantity * inv.purchasePrice, 0)) * 100
+    : 0;
+
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-4xl font-bold gradient-text">{t('investments.title')}</h1>
-          <p className="text-muted-foreground">{t('investments.subtitle')}</p>
+      {/* Hero Section */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-background border border-primary/20 p-8">
+        <div className="relative z-10">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            {/* Left: Title + Subtitle */}
+            <div>
+              <h1 className="text-4xl font-bold gradient-text mb-2">
+                {t('investments.title')}
+              </h1>
+              <p className="text-muted-foreground">
+                {t('investments.subtitle')}
+              </p>
+            </div>
+            
+            {/* Right: Quick Stats Cards */}
+            <div className="grid grid-cols-2 gap-4 md:w-auto">
+              <Card className="p-4 bg-background/80 backdrop-blur">
+                <p className="text-xs text-muted-foreground mb-1">
+                  {t('investments.totalValue')}
+                </p>
+                <p className="text-2xl font-bold">
+                  {formatCurrency(totalValue)}
+                </p>
+              </Card>
+              
+              <Card className="p-4 bg-background/80 backdrop-blur">
+                <p className="text-xs text-muted-foreground mb-1">
+                  {t('investments.totalReturn')}
+                </p>
+                <p className={`text-2xl font-bold ${totalYield >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {totalYield >= 0 ? '+' : ''}{yieldPercent.toFixed(2)}%
+                </p>
+              </Card>
+            </div>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={handleExportCSV} variant="outline" size="sm">
-            <FileSpreadsheet className="h-4 w-4 mr-2" />
-            {t('common.exportCSV')}
-          </Button>
-          <Button onClick={handleExportPDF} variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            {t('common.exportPDF')}
-          </Button>
-        </div>
+        
+        {/* Background decoration */}
+        <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(white,transparent_70%)]" />
+      </div>
+
+      {/* Export Actions */}
+      <div className="flex gap-2 justify-end">
+        <Button onClick={handleExportCSV} variant="outline" size="sm">
+          <FileSpreadsheet className="h-4 w-4 mr-2" />
+          {t('common.exportCSV')}
+        </Button>
+        <Button onClick={handleExportPDF} variant="outline" size="sm">
+          <Download className="h-4 w-4 mr-2" />
+          {t('common.exportPDF')}
+        </Button>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 h-auto">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            {t('investments.overview')}
+        {/* Pills-style tabs */}
+        <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl">
+          <TabsTrigger 
+            value="overview" 
+            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-6 py-2.5"
+          >
+            <div className="flex items-center gap-2">
+              <PieChart className="h-4 w-4" />
+              {t('investments.overview')}
+            </div>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            {t('investments.analytics')}
+          
+          <TabsTrigger 
+            value="analytics" 
+            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-6 py-2.5"
+          >
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              {t('investments.analytics')}
+            </div>
           </TabsTrigger>
-          <TabsTrigger value="simulator" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            {t('investments.simulator')}
+          
+          <TabsTrigger 
+            value="simulator" 
+            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-6 py-2.5"
+          >
+            <div className="flex items-center gap-2">
+              <Calculator className="h-4 w-4" />
+              {t('investments.simulator')}
+            </div>
           </TabsTrigger>
-          <TabsTrigger value="import" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            {t('investments.import')}
+          
+          <TabsTrigger 
+            value="import" 
+            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-6 py-2.5"
+          >
+            <div className="flex items-center gap-2">
+              <UploadIcon className="h-4 w-4" />
+              {t('investments.import')}
+            </div>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-6 min-h-[800px] transition-all duration-300">
-          <Collapsible defaultOpen={investments.length === 0}>
-            <CollapsibleTrigger asChild>
-              <Button variant="outline" className="w-full justify-between mb-4 hover:bg-primary/10">
-                <span className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  {t('investments.quickAdd')}
-                </span>
+          {/* Sheet drawer instead of Collapsible */}
+          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+            <SheetTrigger asChild>
+              <Button variant="default" size="lg" className="gap-2 w-full sm:w-auto">
+                <Plus className="h-5 w-5" />
+                {t('investments.quickAdd')}
               </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mb-6 animate-slide-down">
-              <InvestmentForm onAdd={handleAddInvestment} />
-            </CollapsibleContent>
-          </Collapsible>
+            </SheetTrigger>
+            
+            <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>{t('investments.addNew')}</SheetTitle>
+                <SheetDescription>
+                  {t('investments.addNewDesc')}
+                </SheetDescription>
+              </SheetHeader>
+              
+              <div className="mt-6">
+                <InvestmentForm onAdd={handleAddInvestment} />
+              </div>
+            </SheetContent>
+          </Sheet>
 
-          {/* Filter Tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            <Button
-              variant={filterType === "all" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilterType("all")}
-              className="whitespace-nowrap"
-            >
-              {t('investments.all')} ({investments.length})
-            </Button>
-            <Button
-              variant={filterType === "Stock" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilterType("Stock")}
-              className="whitespace-nowrap"
-            >
-              {t('investment.typeStock')} ({investments.filter(i => i.type === "Stock").length})
-            </Button>
-            <Button
-              variant={filterType === "ETF" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilterType("ETF")}
-              className="whitespace-nowrap"
-            >
-              {t('investment.typeETF')} ({investments.filter(i => i.type === "ETF").length})
-            </Button>
-            <Button
-              variant={filterType === "Crypto" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilterType("Crypto")}
-              className="whitespace-nowrap"
-            >
-              {t('investment.typeCrypto')} ({investments.filter(i => i.type === "Crypto").length})
-            </Button>
-            <Button
-              variant={filterType === "Cash" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilterType("Cash")}
-              className="whitespace-nowrap"
-            >
-              {t('investment.typeCash')} ({investments.filter(i => i.type === "Cash").length})
-            </Button>
+          {/* Filter Chips - Modern rounded-full style */}
+          <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            <span className="text-sm font-medium text-muted-foreground shrink-0">
+              {t('investments.filterBy')}
+            </span>
+            
+            {['all', 'Stock', 'ETF', 'Crypto', 'Cash'].map((type) => (
+              <button
+                key={type}
+                onClick={() => setFilterType(type)}
+                className={`
+                  px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap
+                  ${filterType === type 
+                    ? 'bg-primary text-primary-foreground shadow-sm' 
+                    : 'bg-muted hover:bg-muted/80'
+                  }
+                `}
+              >
+                {type === 'all' ? t('investments.all') : t(`investment.type${type}`)}
+                <span className="ml-2 opacity-70">
+                  ({type === 'all' ? investments.length : investments.filter(i => i.type === type).length})
+                </span>
+              </button>
+            ))}
           </div>
 
           <PortfolioAnalysis investments={filteredInvestments} />
-          <PortfolioChart investments={filteredInvestments} />
           <InvestmentTable investments={filteredInvestments} onDelete={handleDeleteInvestment} onUpdatePrice={handleUpdateInvestmentPrice} />
         </TabsContent>
 
