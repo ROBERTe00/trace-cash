@@ -11,21 +11,60 @@ export interface BeforeInstallPromptEvent extends Event {
 let deferredPrompt: BeforeInstallPromptEvent | null = null;
 
 /**
- * Register service worker
+ * Register service worker with automatic update checking
  */
 export const registerServiceWorker = async (): Promise<ServiceWorkerRegistration | null> => {
   if ('serviceWorker' in navigator) {
     try {
       const registration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/'
+        scope: '/',
+        updateViaCache: 'none' // Always check for updates, don't use HTTP cache
       });
       
       console.log('[PWA] Service Worker registered successfully:', registration);
       
-      // Check for updates periodically
+      // Check for updates on page load
+      registration.update();
+      
+      // Check for updates when page becomes visible
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          console.log('[PWA] Page visible, checking for updates');
+          registration.update();
+        }
+      });
+      
+      // Check for updates periodically (every 30 seconds when app is active)
       setInterval(() => {
-        registration.update();
-      }, 60 * 60 * 1000); // Check every hour
+        if (document.visibilityState === 'visible') {
+          console.log('[PWA] Periodic update check');
+          registration.update();
+        }
+      }, 30000);
+      
+      // Listen for new service worker
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        console.log('[PWA] Update found, new worker installing');
+        
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            console.log('[PWA] New worker state:', newWorker.state);
+            
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.log('[PWA] New version available');
+              
+              // On iOS in standalone mode, we need user action
+              if (isIOS() && isAppInstalled()) {
+                console.log('[PWA] iOS standalone - user update required');
+              } else {
+                // On Android/Desktop, update can be automatic
+                console.log('[PWA] Non-iOS or browser - can auto-update');
+              }
+            }
+          });
+        }
+      });
       
       return registration;
     } catch (error) {
@@ -222,4 +261,34 @@ export const setupConnectivityListeners = (
     window.removeEventListener('online', onOnline);
     window.removeEventListener('offline', onOffline);
   };
+};
+
+/**
+ * Force service worker update
+ */
+export const forceServiceWorkerUpdate = async (): Promise<void> => {
+  if ('serviceWorker' in navigator) {
+    const registration = await navigator.serviceWorker.ready;
+    await registration.update();
+    console.log('[PWA] Forced service worker update check');
+  }
+};
+
+/**
+ * Check if running in standalone mode (installed PWA)
+ */
+export const isStandalone = (): boolean => {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         (window.navigator as any).standalone === true ||
+         document.referrer.includes('android-app://');
+};
+
+/**
+ * Detect iOS version
+ */
+export const getIOSVersion = (): number | null => {
+  if (!isIOS()) return null;
+  
+  const match = navigator.userAgent.match(/OS (\d+)_/);
+  return match ? parseInt(match[1], 10) : null;
 };

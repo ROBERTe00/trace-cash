@@ -1,46 +1,68 @@
-const CACHE_NAME = 'trace-cash-v1';
-const RUNTIME_CACHE = 'trace-cash-runtime';
+const CACHE_VERSION = 'v2.1.0';
+const CACHE_NAME = `trace-cash-${CACHE_VERSION}`;
+const RUNTIME_CACHE = `trace-cash-runtime-${CACHE_VERSION}`;
 
 // Essential files to cache for offline functionality
-// Note: /auth is NOT cached to prevent showing cached login page
 const PRECACHE_URLS = [
+  '/',
   '/index.html',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png'
 ];
 
-// Install event - precache essential files
+// Install event - precache essential files and skip waiting
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing service worker...');
+  console.log('[SW] Installing service worker version:', CACHE_VERSION);
+  
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('[SW] Precaching essential files');
         return cache.addAll(PRECACHE_URLS);
       })
-      .then(() => self.skipWaiting())
+      .then(() => {
+        console.log('[SW] Calling skipWaiting to activate immediately');
+        return self.skipWaiting();
+      })
   );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches and take control immediately
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating service worker...');
+  console.log('[SW] Activating service worker version:', CACHE_VERSION);
+  
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
-            console.log('[SW] Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
+    caches.keys()
+      .then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
+              console.log('[SW] Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+      .then(() => {
+        console.log('[SW] Claiming clients to take control immediately');
+        return self.clients.claim();
+      })
+      .then(() => {
+        // Notify all clients that a new version is active
+        return self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({
+              type: 'SW_ACTIVATED',
+              version: CACHE_VERSION
+            });
+          });
+        });
+      })
   );
 });
 
-// Fetch event - network first for API, cache first for assets
+// Fetch event with network-first for core files, cache-first for assets
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -50,19 +72,58 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network first strategy for API calls (Supabase) - skip auth routes
-  if (url.hostname.includes('supabase.co') || url.pathname.includes('/auth')) {
+  // Network-first strategy for HTML, JS, CSS (core app files)
+  if (
+    request.destination === 'document' ||
+    request.url.includes('.js') ||
+    request.url.includes('.css') ||
+    url.pathname === '/' ||
+    url.pathname.startsWith('/assets/')
+  ) {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          // Cache the new version
+          if (response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cache if network fails
+          return caches.match(request).then(cachedResponse => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            // Return offline page for navigation requests
+            if (request.destination === 'document') {
+              return caches.match('/index.html');
+            }
+            return new Response('Offline', { status: 503 });
+          });
+        })
+    );
+    return;
+  }
+
+  // Network-first for API calls (Supabase)
+  if (url.hostname.includes('supabase.co')) {
     event.respondWith(
       fetch(request)
         .then(response => {
           // Don't cache authentication or sensitive data
-          if (request.url.includes('/auth/') || 
-              request.url.includes('/storage/') ||
-              url.pathname.includes('/auth')) {
+          if (
+            request.url.includes('/auth/') || 
+            request.url.includes('/storage/') ||
+            request.url.includes('/realtime/')
+          ) {
             return response;
           }
           
-          // Cache successful responses
+          // Cache successful API responses
           if (response.status === 200) {
             const responseClone = response.clone();
             caches.open(RUNTIME_CACHE).then(cache => {
@@ -79,37 +140,58 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache first strategy for static assets
-  event.respondWith(
-    caches.match(request)
-      .then(cachedResponse => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-
-        return fetch(request).then(response => {
-          // Cache successful responses for static assets
-          if (response.status === 200 && 
-              (request.url.includes('.js') || 
-               request.url.includes('.css') || 
-               request.url.includes('.png') ||
-               request.url.includes('.jpg') ||
-               request.url.includes('.svg'))) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(request, responseClone);
-            });
+  // Cache-first strategy for static assets (images, fonts)
+  if (
+    request.url.includes('.png') ||
+    request.url.includes('.jpg') ||
+    request.url.includes('.jpeg') ||
+    request.url.includes('.svg') ||
+    request.url.includes('.webp') ||
+    request.url.includes('.woff') ||
+    request.url.includes('.woff2')
+  ) {
+    event.respondWith(
+      caches.match(request)
+        .then(cachedResponse => {
+          if (cachedResponse) {
+            // Return cached version immediately
+            return cachedResponse;
           }
-          return response;
-        });
-      })
-      .catch(() => {
-        // Return offline page for navigation requests
-        if (request.destination === 'document') {
-          return caches.match('/index.html');
-        }
-      })
+
+          return fetch(request).then(response => {
+            if (response.status === 200) {
+              const responseClone = response.clone();
+              caches.open(CACHE_NAME).then(cache => {
+                cache.put(request, responseClone);
+              });
+            }
+            return response;
+          });
+        })
+    );
+    return;
+  }
+
+  // Default: network-first
+  event.respondWith(
+    fetch(request)
+      .catch(() => caches.match(request))
   );
+});
+
+// Listen for messages from the app
+self.addEventListener('message', (event) => {
+  console.log('[SW] Received message:', event.data);
+  
+  if (event.data.type === 'SKIP_WAITING') {
+    console.log('[SW] Skipping waiting as requested by client');
+    self.skipWaiting();
+  }
+  
+  if (event.data.type === 'CHECK_UPDATE') {
+    console.log('[SW] Update check requested by client');
+    self.registration.update();
+  }
 });
 
 // Push notification event
@@ -117,7 +199,7 @@ self.addEventListener('push', (event) => {
   console.log('[SW] Push notification received');
   
   const options = {
-    body: event.data ? event.data.text() : 'Nuova notifica da Trace-Cash',
+    body: event.data ? event.data.text() : 'New notification from Trace-Cash',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
     vibrate: [200, 100, 200],
@@ -128,11 +210,11 @@ self.addEventListener('push', (event) => {
     actions: [
       {
         action: 'explore',
-        title: 'Apri App'
+        title: 'Open App'
       },
       {
         action: 'close',
-        title: 'Chiudi'
+        title: 'Close'
       }
     ]
   };
@@ -156,7 +238,7 @@ self.addEventListener('notificationclick', (event) => {
 
 // Background sync for offline data
 self.addEventListener('sync', (event) => {
-  console.log('[SW] Background sync triggered');
+  console.log('[SW] Background sync triggered:', event.tag);
   
   if (event.tag === 'sync-expenses') {
     event.waitUntil(syncExpenses());
@@ -164,6 +246,6 @@ self.addEventListener('sync', (event) => {
 });
 
 async function syncExpenses() {
-  // Sync logic would go here
   console.log('[SW] Syncing expenses...');
+  // Sync logic would go here
 }

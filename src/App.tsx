@@ -9,6 +9,7 @@ import { GlobalSearch } from "@/components/GlobalSearch";
 import { AccountMenu } from "@/components/AccountMenu";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAOfflineIndicator } from "@/components/PWAOfflineIndicator";
+import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { UploadProgressBar } from "@/components/UploadProgressBar";
 import { AppProvider } from "./contexts/AppContext";
 import { UploadProvider } from "./contexts/UploadContext";
@@ -127,6 +128,7 @@ function App() {
                 <Toaster />
                 <PWAOfflineIndicator />
                 <PWAInstallPrompt />
+                <PWAUpdateNotification />
                 <UploadProgressBar />
                 <BrowserRouter>
                   <Routes>
