@@ -10,6 +10,9 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 seconds timeout
+
   try {
     const { fileUrl, fileName } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -20,8 +23,8 @@ serve(async (req) => {
 
     console.log("Starting bank statement processing:", fileName);
 
-    // Fetch the PDF file
-    const fileResponse = await fetch(fileUrl);
+    // Fetch the PDF file with timeout
+    const fileResponse = await fetch(fileUrl, { signal: controller.signal });
     if (!fileResponse.ok) {
       console.error("Failed to fetch file, status:", fileResponse.status);
       throw new Error("Failed to fetch file");
@@ -54,13 +57,19 @@ serve(async (req) => {
       );
     }
 
-    console.log("PDF validation passed, converting to base64...");
-    const base64File = btoa(String.fromCharCode(...uint8Array));
-    console.log("Base64 conversion complete, length:", base64File.length);
+    console.log("Valid PDF detected");
 
-    // Use Lovable AI to extract and categorize transactions with PDF content
-    console.log("Sending to AI for processing...");
-    
+    // Convert to base64
+    const base64 = btoa(
+      Array.from(uint8Array)
+        .map(byte => String.fromCharCode(byte))
+        .join('')
+    );
+
+    console.log("Converted to base64, length:", base64.length);
+
+    // Call AI API with timeout
+    console.log("Calling Lovable AI API...");
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -71,81 +80,61 @@ serve(async (req) => {
         model: "google/gemini-2.5-flash",
         messages: [
           {
+            role: "system",
+            content: `You are a financial data extraction assistant. Extract ALL transactions from the bank statement PDF.
+Return ONLY a JSON array with this EXACT structure, no markdown, no code blocks, no additional text:
+[
+  {
+    "date": "YYYY-MM-DD",
+    "description": "Transaction description",
+    "amount": number (positive for income, negative for expenses),
+    "category": "one of: Shopping, Transport, Food, Bills, Entertainment, Healthcare, Other",
+    "payee": "Merchant or payee name"
+  }
+]
+
+CRITICAL RULES:
+1. Return ONLY the JSON array, nothing else
+2. Extract ALL transactions, not just a sample
+3. Use negative numbers for expenses/debits
+4. Use positive numbers for income/credits
+5. Dates must be in YYYY-MM-DD format
+6. Categories must match the list exactly
+7. If unclear, use "Other" category`
+          },
+          {
             role: "user",
             content: [
               {
                 type: "text",
-                text: `Analyze this bank statement PDF and extract all transactions.
-
-Categories to use:
-- Food & Dining
-- Transportation
-- Shopping
-- Entertainment
-- Healthcare
-- Bills & Utilities
-- Income
-- Other
-
-For each transaction, extract:
-1. Date (format: YYYY-MM-DD)
-2. Description (brief, max 100 chars)
-3. Amount (positive for income, negative for expenses)
-4. Category (from list above)
-5. Payee (merchant/company name)
-
-Return ONLY a valid JSON array with this exact structure:
-[
-  {
-    "date": "2024-01-15",
-    "description": "Grocery Store",
-    "amount": -50.25,
-    "category": "Food & Dining",
-    "payee": "SuperMarket XYZ"
-  }
-]
-
-IMPORTANT:
-- Return ONLY the JSON array, no markdown, no explanations
-- Use negative amounts for expenses
-- Use positive amounts for income/deposits
-- If no transactions found, return empty array: []`
+                text: "Extract all transactions from this bank statement PDF. Return ONLY the JSON array."
               },
               {
                 type: "image_url",
                 image_url: {
-                  url: `data:application/pdf;base64,${base64File}`
+                  url: `data:application/pdf;base64,${base64}`
                 }
               }
             ]
           }
         ],
+        max_tokens: 16000,
+        temperature: 0.1
       }),
+      signal: controller.signal
     });
 
-    console.log("AI response status:", aiResponse.status);
-
     if (!aiResponse.ok) {
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Payment required. Please add credits." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+      const errorText = await aiResponse.text();
+      console.error("AI API error:", aiResponse.status, errorText);
       throw new Error(`AI service error: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    console.log("AI response received, parsing content...");
+    console.log("AI response received");
     
-    const content = aiData.choices?.[0]?.message?.content || "[]";
-    console.log("Content length:", content.length);
+    const content = aiData.choices?.[0]?.message?.content || "";
+    console.log("Content preview:", content.substring(0, 200));
 
     // Parse the JSON response
     let transactions = [];
@@ -175,6 +164,19 @@ IMPORTANT:
     console.error("Processing failed:", error);
     console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
     
+    // Check if it's an AbortError (timeout)
+    if (error instanceof Error && error.name === 'AbortError') {
+      return new Response(
+        JSON.stringify({ 
+          error: "Il file è troppo grande o la richiesta ha impiegato troppo tempo. Prova con un file più piccolo." 
+        }),
+        {
+          status: 408,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+    
     return new Response(
       JSON.stringify({ 
         error: "Failed to process bank statement. Please try again or contact support if the issue persists." 
@@ -184,5 +186,7 @@ IMPORTANT:
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
+  } finally {
+    clearTimeout(timeoutId);
   }
 });

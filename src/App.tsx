@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { AppProvider } from "./contexts/AppContext";
 import { UploadProvider } from "./contexts/UploadContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import Index from "./pages/Index";
 import DashboardHome from "./pages/DashboardHome";
 import Expenses from "./pages/Expenses";
@@ -58,20 +59,22 @@ function AppRoutes() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-        <AppProvider>
-          <UploadProvider>
-            <TooltipProvider>
-              <Toaster />
-              <BrowserRouter>
-                <AppRoutes />
-              </BrowserRouter>
-            </TooltipProvider>
-          </UploadProvider>
-        </AppProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <AppProvider>
+            <UploadProvider>
+              <TooltipProvider>
+                <Toaster />
+                <BrowserRouter>
+                  <AppRoutes />
+                </BrowserRouter>
+              </TooltipProvider>
+            </UploadProvider>
+          </AppProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

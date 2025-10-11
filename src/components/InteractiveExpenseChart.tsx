@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -66,22 +66,22 @@ export const InteractiveExpenseChart = ({ expenses }: InteractiveExpenseChartPro
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Group expenses by category
-  const categoryData = expenses
+  // Memoize category data to prevent unnecessary re-renders
+  const categoryData = useMemo(() => expenses
     .filter((e) => e.type === "Expense")
     .reduce((acc, exp) => {
       acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
       return acc;
-    }, {} as Record<string, number>);
+    }, {} as Record<string, number>), [expenses]);
 
-  const chartData = Object.entries(categoryData)
+  const chartData = useMemo(() => Object.entries(categoryData)
     .map(([name, amount]) => ({
       name,
       value: Math.round(amount * 100) / 100,
     }))
-    .sort((a, b) => b.value - a.value);
+    .sort((a, b) => b.value - a.value), [categoryData]);
 
-  const totalExpenses = chartData.reduce((sum, item) => sum + item.value, 0);
+  const totalExpenses = useMemo(() => chartData.reduce((sum, item) => sum + item.value, 0), [chartData]);
 
   // Drill-down data for selected category
   const categoryExpenses = selectedCategory

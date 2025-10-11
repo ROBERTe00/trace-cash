@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,8 +29,8 @@ export const InteractiveInvestmentChart = ({ investments }: InteractiveInvestmen
   const [isExpanded, setIsExpanded] = useState(false);
   const [showBrush, setShowBrush] = useState(true);
 
-  // Generate historical data (mock for demonstration)
-  const generateHistoricalData = () => {
+  // Memoize historical data to prevent unnecessary calculations
+  const chartData = useMemo(() => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const currentMonth = new Date().getMonth();
     
@@ -47,9 +47,7 @@ export const InteractiveInvestmentChart = ({ investments }: InteractiveInvestmen
         value: Math.round(portfolioValue * 100) / 100,
       };
     });
-  };
-
-  const chartData = generateHistoricalData();
+  }, [investments]);
   
   if (investments.length === 0) {
     return (

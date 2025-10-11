@@ -1,14 +1,34 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { TrendingUp, TrendingDown, DollarSign, PieChart, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { TrendingUp, TrendingDown, DollarSign, PieChart, AlertTriangle, Settings } from "lucide-react";
 import { Expense } from "@/lib/storage";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface ExpensesSummaryProps {
   expenses: Expense[];
 }
 
 export function ExpensesSummary({ expenses }: ExpensesSummaryProps) {
+  const [monthlyBudgetLimit, setMonthlyBudgetLimit] = useState(() => {
+    const saved = localStorage.getItem('monthlyBudgetLimit');
+    return saved ? parseFloat(saved) : 1500;
+  });
+  const [tempBudget, setTempBudget] = useState(monthlyBudgetLimit.toString());
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleSaveBudget = () => {
+    const newBudget = parseFloat(tempBudget);
+    if (!isNaN(newBudget) && newBudget > 0) {
+      setMonthlyBudgetLimit(newBudget);
+      localStorage.setItem('monthlyBudgetLimit', newBudget.toString());
+      setIsDialogOpen(false);
+    }
+  };
+
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
   
@@ -44,8 +64,7 @@ export function ExpensesSummary({ expenses }: ExpensesSummaryProps) {
     .sort(([, a], [, b]) => b - a)
     .slice(0, 4);
 
-  const budgetLimit = 1500; // Mock budget limit
-  const budgetUsed = (totalCurrent / budgetLimit) * 100;
+  const budgetUsed = (totalCurrent / monthlyBudgetLimit) * 100;
   const isOverBudget = budgetUsed > 100;
 
   return (
@@ -55,7 +74,7 @@ export function ExpensesSummary({ expenses }: ExpensesSummaryProps) {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Budget superato! Hai speso €{totalCurrent.toFixed(2)} su €{budgetLimit.toFixed(2)}
+            Budget superato! Hai speso €{totalCurrent.toFixed(2)} su €{monthlyBudgetLimit.toFixed(2)}
           </AlertDescription>
         </Alert>
       )}
@@ -71,7 +90,7 @@ export function ExpensesSummary({ expenses }: ExpensesSummaryProps) {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold truncate">€{totalCurrent.toFixed(2)}</div>
-            <div className={`flex items-center gap-1 text-sm mt-2 ${percentageChange > 0 ? 'text-red-500' : 'text-green-500'}`}>
+            <div className={`flex items-center gap-1 text-sm mt-2 ${percentageChange > 0 ? 'text-destructive' : 'text-success'}`}>
               {percentageChange > 0 ? (
                 <TrendingUp className="h-4 w-4 flex-shrink-0" />
               ) : (
@@ -83,58 +102,95 @@ export function ExpensesSummary({ expenses }: ExpensesSummaryProps) {
         </Card>
 
         <Card className="overflow-hidden">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <PieChart className="h-4 w-4 flex-shrink-0" />
               <span className="truncate">Budget Utilizzato</span>
             </CardTitle>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Imposta Budget Mensile</DialogTitle>
+                  <DialogDescription>
+                    Definisci il tuo limite di spesa mensile per monitorare meglio le tue finanze.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <Input
+                    type="number"
+                    value={tempBudget}
+                    onChange={(e) => setTempBudget(e.target.value)}
+                    placeholder="Budget mensile"
+                    min="0"
+                    step="100"
+                    className="h-11"
+                  />
+                  <Button onClick={handleSaveBudget} className="w-full">
+                    Salva Budget
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold truncate">{Math.min(budgetUsed, 100).toFixed(0)}%</div>
             <Progress value={Math.min(budgetUsed, 100)} className="mt-3" />
             <div className="text-sm text-muted-foreground mt-2 truncate">
-              €{(budgetLimit - totalCurrent).toFixed(2)} rimanenti
+              €{Math.max(0, monthlyBudgetLimit - totalCurrent).toFixed(2)} rimanenti
             </div>
           </CardContent>
         </Card>
 
         <Card className="overflow-hidden">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground truncate">
-              Transazioni
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Categoria Principale
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold truncate">{currentMonthExpenses.length}</div>
-            <div className="text-sm text-muted-foreground mt-2 truncate">
-              Media €{currentMonthExpenses.length > 0 ? (totalCurrent / currentMonthExpenses.length).toFixed(2) : '0.00'}
-            </div>
+            {topCategories.length > 0 ? (
+              <>
+                <div className="text-2xl font-bold truncate">{topCategories[0][0]}</div>
+                <div className="text-sm text-muted-foreground mt-2 truncate">
+                  €{topCategories[0][1].toFixed(2)}
+                </div>
+              </>
+            ) : (
+              <div className="text-muted-foreground">Nessuna spesa</div>
+            )}
           </CardContent>
         </Card>
       </div>
 
       {/* Top categorie */}
-      <Card className="overflow-hidden">
-        <CardHeader>
-          <CardTitle className="text-lg">Top Categorie</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {topCategories.map(([category, amount]) => {
-            const percentage = (amount / totalCurrent) * 100;
-            return (
-              <div key={category} className="space-y-2">
-                <div className="flex justify-between text-sm gap-4 min-w-0">
-                  <span className="font-medium truncate">{category}</span>
-                  <span className="text-muted-foreground flex-shrink-0">
-                    €{amount.toFixed(2)} ({percentage.toFixed(0)}%)
-                  </span>
-                </div>
-                <Progress value={percentage} />
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
+      {topCategories.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Top Categorie di Spesa</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {topCategories.map(([category, amount]) => {
+                const percentage = (amount / totalCurrent) * 100;
+                return (
+                  <div key={category} className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium truncate">{category}</span>
+                      <span className="text-muted-foreground">€{amount.toFixed(2)}</span>
+                    </div>
+                    <Progress value={percentage} className="h-2" />
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

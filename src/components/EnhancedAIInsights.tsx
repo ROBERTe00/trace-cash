@@ -109,7 +109,7 @@ export const EnhancedAIInsights = ({ expenses, investments }: EnhancedAIInsights
     if (expenses.length > 0 || investments.length > 0) {
       generateInsights();
     }
-  }, []);
+  }, [expenses, investments]);
 
   const getInsightIcon = (type: Insight['type']) => {
     switch (type) {
