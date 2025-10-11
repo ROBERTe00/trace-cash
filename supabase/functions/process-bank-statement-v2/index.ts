@@ -1,9 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+const uploadSchema = z.object({
+  fileUrl: z.string().url().startsWith('https://bexsbrlwjelfgmcvnmrf.supabase.co/storage/'),
+  fileName: z.string().min(1).max(255).regex(/^[a-zA-Z0-9._-]+\.pdf$/i)
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -14,7 +21,22 @@ serve(async (req) => {
   const timeoutId = setTimeout(() => controller.abort(), 120000);
 
   try {
-    const { fileUrl, fileName } = await req.json();
+    const body = await req.json();
+    
+    // Validate input
+    const validation = uploadSchema.safeParse(body);
+    if (!validation.success) {
+      console.error("Invalid input:", validation.error);
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid file URL or filename",
+          details: validation.error.issues 
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    const { fileUrl, fileName } = validation.data;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (!LOVABLE_API_KEY) {

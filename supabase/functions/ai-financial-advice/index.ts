@@ -1,9 +1,23 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+const financialDataSchema = z.object({
+  financialData: z.object({
+    totalExpenses: z.number().min(0).max(100000000).optional(),
+    totalIncome: z.number().min(0).max(100000000).optional(),
+    portfolioValue: z.number().min(0).max(100000000).optional(),
+    categoryBreakdown: z.record(z.string().max(50), z.number().min(0).max(1000000)).optional(),
+    expenseCount: z.number().int().min(0).max(10000).optional(),
+    investmentCount: z.number().int().min(0).max(1000).optional(),
+    goalsProgress: z.array(z.any()).max(100).optional()
+  })
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -11,55 +25,22 @@ serve(async (req) => {
   }
 
   try {
-    const { financialData } = await req.json();
-
-    // Input validation
-    if (!financialData || typeof financialData !== 'object') {
+    const body = await req.json();
+    
+    // Validate input with Zod
+    const validation = financialDataSchema.safeParse(body);
+    if (!validation.success) {
+      console.error("Invalid input:", validation.error);
       return new Response(
-        JSON.stringify({ error: 'Invalid financial data provided' }),
+        JSON.stringify({ 
+          error: "Invalid financial data format",
+          details: validation.error.issues 
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    // Validate numeric fields
-    const numericFields = ['totalExpenses', 'totalIncome', 'portfolioValue', 'expenseCount', 'investmentCount'];
-    for (const field of numericFields) {
-      if (financialData[field] !== undefined && 
-          (typeof financialData[field] !== 'number' || 
-           financialData[field] < 0 || 
-           financialData[field] > 100000000)) {
-        return new Response(
-          JSON.stringify({ error: 'Invalid financial data values' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    }
-
-    // Sanitize category breakdown
-    const validCategories = [
-      'Food & Dining', 'Transportation', 'Shopping', 'Entertainment', 
-      'Healthcare', 'Bills & Utilities', 'Income', 'Other', 
-      'Salary', 'Food', 'Transport', 'Rent'
-    ];
     
-    if (financialData.categoryBreakdown && typeof financialData.categoryBreakdown === 'object') {
-      const sanitizedBreakdown: Record<string, number> = {};
-      for (const [category, amount] of Object.entries(financialData.categoryBreakdown)) {
-        // Only allow predefined categories with string names under 50 chars
-        if (typeof category === 'string' && 
-            category.length <= 50 && 
-            typeof amount === 'number' && 
-            amount >= 0 && 
-            amount <= 1000000) {
-          // Limit to valid categories or truncate custom ones
-          const safeCategory = validCategories.includes(category) 
-            ? category 
-            : category.substring(0, 50);
-          sanitizedBreakdown[safeCategory] = amount;
-        }
-      }
-      financialData.categoryBreakdown = sanitizedBreakdown;
-    }
+    const { financialData } = validation.data;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 

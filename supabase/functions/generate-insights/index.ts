@@ -1,9 +1,30 @@
 // Supabase Edge Function for AI-powered financial insights
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const financialDataSchema = z.object({
+  data: z.object({
+    expenses: z.array(z.object({
+      category: z.string().max(50),
+      amount: z.number().min(0).max(1000000),
+      date: z.string()
+    })).max(1000),
+    investments: z.array(z.object({
+      type: z.string().max(50),
+      value: z.number().min(0).max(100000000)
+    })).max(200),
+    summary: z.object({
+      totalIncome: z.number().min(0).max(100000000),
+      totalExpenses: z.number().min(0).max(100000000),
+      netBalance: z.number().min(-100000000).max(100000000)
+    })
+  })
+});
 
 interface FinancialData {
   expenses: Array<{
@@ -28,14 +49,22 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { data } = await req.json() as { data: FinancialData };
-
-    if (!data || !data.expenses || !data.summary) {
+    const body = await req.json();
+    
+    // Validate input with Zod
+    const validation = financialDataSchema.safeParse(body);
+    if (!validation.success) {
+      console.error("Invalid input:", validation.error);
       return new Response(
-        JSON.stringify({ error: 'Invalid financial data' }),
+        JSON.stringify({ 
+          error: "Invalid financial data format",
+          details: validation.error.issues 
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    const { data } = validation.data;
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {

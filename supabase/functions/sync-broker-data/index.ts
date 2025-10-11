@@ -1,10 +1,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+const brokerSchema = z.object({
+  apiKey: z.string().min(10).max(100).regex(/^[A-Za-z0-9_-]+$/),
+  apiSecret: z.string().min(10).max(200).regex(/^[A-Za-z0-9_-]+$/),
+  broker: z.enum(['alpaca'])
+});
 
 interface AlpacaPosition {
   symbol: string;
@@ -23,11 +31,22 @@ serve(async (req) => {
   }
 
   try {
-    const { apiKey, apiSecret, broker } = await req.json();
-
-    if (!apiKey || !apiSecret) {
-      throw new Error("API credentials required");
+    const body = await req.json();
+    
+    // Validate input
+    const validation = brokerSchema.safeParse(body);
+    if (!validation.success) {
+      console.error("Invalid input:", validation.error);
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid broker credentials format",
+          details: validation.error.issues 
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+    
+    const { apiKey, apiSecret, broker } = validation.data;
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
