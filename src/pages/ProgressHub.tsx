@@ -216,52 +216,52 @@ export default function ProgressHub() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-bold gradient-text">Progress Hub</h1>
-          <p className="text-muted-foreground">Track your financial journey and achieve your goals</p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+        <div className="w-full sm:w-auto">
+          <h1 className="text-3xl md:text-4xl font-bold gradient-text">Progress Hub</h1>
+          <p className="text-sm md:text-base text-muted-foreground">Track your financial journey and achieve your goals</p>
         </div>
-        <Button onClick={exportProgressToPDF} className="gap-2">
+        <Button onClick={exportProgressToPDF} className="gap-2 w-full sm:w-auto">
           <Download className="h-4 w-4" />
-          Export PDF
+          <span className="sm:inline">Export PDF</span>
         </Button>
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="glass-card p-6 hover-lift">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/5">
-              <Flame className="h-8 w-8 text-orange-500" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <Card className="glass-card p-4 md:p-6 hover-lift">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="p-2 md:p-3 rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/5 flex-shrink-0">
+              <Flame className="h-6 w-6 md:h-8 md:w-8 text-orange-500" />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Current Streak</p>
-              <p className="text-3xl font-bold">{streak} days</p>
+            <div className="min-w-0">
+              <p className="text-xs md:text-sm text-muted-foreground">Current Streak</p>
+              <p className="text-2xl md:text-3xl font-bold truncate">{streak} days</p>
               <p className="text-xs text-muted-foreground mt-1">Keep going! 🔥</p>
             </div>
           </div>
         </Card>
 
-        <Card className="glass-card p-6 hover-lift">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-600/5">
-              <Trophy className="h-8 w-8 text-blue-500" />
+        <Card className="glass-card p-4 md:p-6 hover-lift">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="p-2 md:p-3 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-600/5 flex-shrink-0">
+              <Trophy className="h-6 w-6 md:h-8 md:w-8 text-blue-500" />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Level</p>
-              <p className="text-3xl font-bold">{level}</p>
-              <p className="text-xs text-muted-foreground mt-1">{getLevelTitle(level)}</p>
+            <div className="min-w-0">
+              <p className="text-xs md:text-sm text-muted-foreground">Level</p>
+              <p className="text-2xl md:text-3xl font-bold truncate">{level}</p>
+              <p className="text-xs text-muted-foreground mt-1 truncate">{getLevelTitle(level)}</p>
             </div>
           </div>
         </Card>
 
-        <Card className="glass-card p-6 hover-lift">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-gradient-to-br from-green-500/20 to-green-600/5">
-              <Star className="h-8 w-8 text-green-500" />
+        <Card className="glass-card p-4 md:p-6 hover-lift">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="p-2 md:p-3 rounded-2xl bg-gradient-to-br from-green-500/20 to-green-600/5 flex-shrink-0">
+              <Star className="h-6 w-6 md:h-8 md:w-8 text-green-500" />
             </div>
-            <div className="flex-1">
-              <p className="text-sm text-muted-foreground mb-2">XP Progress</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs md:text-sm text-muted-foreground mb-2">XP Progress</p>
               <Progress value={xp} className="h-2" />
               <p className="text-xs text-muted-foreground mt-1">{xp}/100 XP to next level</p>
             </div>
@@ -284,17 +284,17 @@ export default function ProgressHub() {
       <AIAdvicePanel expenses={expenses} investments={investments} goals={goals} />
 
       {/* Achievements */}
-      <Card className="glass-card p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            <Award className="h-6 w-6" />
+      <Card className="glass-card p-4 md:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 md:mb-6 gap-3">
+          <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+            <Award className="h-5 w-5 md:h-6 md:w-6" />
             Achievements
           </h2>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setShowAchievements(!showAchievements)}
-            className="gap-2"
+            className="gap-2 w-full sm:w-auto"
           >
             {showAchievements ? (
               <>
@@ -310,7 +310,7 @@ export default function ProgressHub() {
           </Button>
         </div>
         {showAchievements && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           {achievements.map((achievement) => {
             const Icon = achievement.icon;
             const progressPercent = (achievement.progress / achievement.maxProgress) * 100;
@@ -318,34 +318,34 @@ export default function ProgressHub() {
             return (
               <Card 
                 key={achievement.id}
-                className={`p-4 transition-all ${
+                className={`p-3 md:p-4 transition-all ${
                   achievement.unlocked 
                     ? "bg-gradient-to-br from-primary/20 to-primary/5 border-primary/30 hover-lift" 
                     : "opacity-60 hover:opacity-80"
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <div className={`p-2 rounded-lg ${
+                  <div className={`p-2 rounded-lg flex-shrink-0 ${
                     achievement.unlocked 
                       ? "bg-primary/20" 
                       : "bg-muted"
                   }`}>
-                    <Icon className={`h-5 w-5 ${
+                    <Icon className={`h-4 w-4 md:h-5 md:w-5 ${
                       achievement.unlocked 
                         ? "text-primary" 
                         : "text-muted-foreground"
                     }`} />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold">{achievement.title}</h3>
+                      <h3 className="font-semibold text-sm md:text-base truncate">{achievement.title}</h3>
                       {achievement.unlocked && (
-                        <Badge variant="default" className="text-xs">
+                        <Badge variant="default" className="text-xs flex-shrink-0">
                           ✓
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mb-2">
+                    <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
                       {achievement.description}
                     </p>
                     <div className="space-y-1">
@@ -364,14 +364,14 @@ export default function ProgressHub() {
       </Card>
 
       {/* Motivational Card */}
-      <Card className="glass-card p-6 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
-        <div className="flex items-start gap-4">
-          <div className="p-3 rounded-xl bg-green-500/20">
-            <Flame className="h-6 w-6 text-green-500" />
+      <Card className="glass-card p-4 md:p-6 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
+        <div className="flex flex-col sm:flex-row items-start gap-4">
+          <div className="p-3 rounded-xl bg-green-500/20 flex-shrink-0">
+            <Flame className="h-5 w-5 md:h-6 md:w-6 text-green-500" />
           </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold mb-2">Daily Motivation</h3>
-            <p className="text-muted-foreground mb-3">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base md:text-lg font-semibold mb-2">Daily Motivation</h3>
+            <p className="text-sm md:text-base text-muted-foreground mb-3">
               {streak > 0 
                 ? `Amazing! You're on a ${streak}-day streak. Keep tracking your finances daily! 🎉`
                 : "Start your streak today by adding a transaction! 💪"
@@ -380,7 +380,7 @@ export default function ProgressHub() {
             {goals.length > 0 && goals.some(g => g.currentAmount < g.targetAmount) && (
               <div className="mt-3 p-3 rounded-lg bg-background/50">
                 <p className="text-sm font-medium mb-1">Next Milestone:</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs md:text-sm text-muted-foreground">
                   {(() => {
                     const nextGoal = goals.find(g => g.currentAmount < g.targetAmount);
                     if (!nextGoal) return null;

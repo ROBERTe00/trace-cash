@@ -65,6 +65,9 @@ export const InteractiveExpenseChart = ({ expenses }: InteractiveExpenseChartPro
   const [chartType, setChartType] = useState<'pie' | 'bar'>('pie');
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  
+  // Check if mobile
+  const isMobile = window.innerWidth < 768;
 
   // Memoize category data to prevent unnecessary re-renders
   const categoryData = useMemo(() => expenses
@@ -105,24 +108,24 @@ export const InteractiveExpenseChart = ({ expenses }: InteractiveExpenseChartPro
   }
 
   return (
-    <Card className={`glass-card p-6 transition-all ${isExpanded ? 'col-span-full' : ''}`}>
-      <div className="flex items-center justify-between mb-4">
+    <Card className={`glass-card p-4 md:p-6 transition-all ${isExpanded ? 'col-span-full' : ''}`}>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-3">
         <div className="flex items-center gap-3">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <TrendingDown className="h-5 w-5 text-primary" />
-            Interactive Expense Analysis
+          <h3 className="text-base md:text-lg font-semibold flex items-center gap-2">
+            <TrendingDown className="h-4 md:h-5 w-4 md:w-5 text-primary" />
+            <span className="truncate">Interactive Expense Analysis</span>
           </h3>
           <Badge variant="outline" className="text-xs">
-            {chartData.length} categories
+            {chartData.length}
           </Badge>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setChartType(chartType === 'pie' ? 'bar' : 'pie')}
-            className="text-xs"
+            className="text-xs flex-1 sm:flex-none"
           >
             {chartType === 'pie' ? 'Bar View' : 'Pie View'}
           </Button>
@@ -131,26 +134,27 @@ export const InteractiveExpenseChart = ({ expenses }: InteractiveExpenseChartPro
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
+            className="flex-shrink-0"
           >
             {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </Button>
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-4 md:gap-6">
         {/* Chart */}
-        <div>
-          <ResponsiveContainer width="100%" height={isExpanded ? 500 : 350}>
+        <div className="overflow-hidden -mx-2 sm:mx-0">
+          <ResponsiveContainer width="100%" height={isMobile ? 300 : (isExpanded ? 500 : 350)}>
             {chartType === 'pie' ? (
-              <PieChart>
+              <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                 <Pie
                   activeIndex={activeIndex}
                   activeShape={renderActiveShape}
                   data={chartData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
+                  innerRadius={isMobile ? 40 : 50}
+                  outerRadius={isMobile ? 65 : 80}
                   fill="#8884d8"
                   dataKey="value"
                   onMouseEnter={(_, index) => setActiveIndex(index)}
@@ -171,16 +175,28 @@ export const InteractiveExpenseChart = ({ expenses }: InteractiveExpenseChartPro
                     backgroundColor: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px",
+                    padding: "12px",
+                  }}
+                  labelStyle={{
+                    color: "hsl(var(--foreground))",
+                    fontWeight: "600",
+                    marginBottom: "4px",
+                  }}
+                  itemStyle={{
+                    color: "hsl(var(--foreground))",
                   }}
                 />
               </PieChart>
             ) : (
-              <BarChart data={chartData}>
+              <BarChart data={chartData} margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis
                   dataKey="name"
                   stroke="hsl(var(--muted-foreground))"
                   fontSize={12}
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
                 />
                 <YAxis
                   stroke="hsl(var(--muted-foreground))"
@@ -192,6 +208,15 @@ export const InteractiveExpenseChart = ({ expenses }: InteractiveExpenseChartPro
                     backgroundColor: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px",
+                    padding: "12px",
+                  }}
+                  labelStyle={{
+                    color: "hsl(var(--foreground))",
+                    fontWeight: "600",
+                    marginBottom: "4px",
+                  }}
+                  itemStyle={{
+                    color: "hsl(var(--foreground))",
                   }}
                 />
                 <Legend />
@@ -209,12 +234,12 @@ export const InteractiveExpenseChart = ({ expenses }: InteractiveExpenseChartPro
 
         {/* Category Breakdown */}
         <div className="space-y-3">
-          <h4 className="font-semibold text-sm flex items-center gap-2">
+          <h4 className="font-semibold text-sm md:text-base flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             Category Breakdown
           </h4>
           
-          <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+          <div className="space-y-2 max-h-[300px] md:max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
             {chartData.map((item, index) => {
               const percentage = (item.value / totalExpenses) * 100;
               const isSelected = selectedCategory === item.name;
@@ -236,15 +261,15 @@ export const InteractiveExpenseChart = ({ expenses }: InteractiveExpenseChartPro
                   }}
                   aria-label={`${item.name} category with ${formatCurrency(item.value)} spent`}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between mb-2 gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <div
-                        className="w-3 h-3 rounded-full"
+                        className="w-3 h-3 rounded-full flex-shrink-0"
                         style={{ backgroundColor: COLORS[index % COLORS.length] }}
                       />
-                      <span className="font-medium text-sm">{item.name}</span>
+                      <span className="font-medium text-sm truncate">{item.name}</span>
                     </div>
-                    <span className="text-sm font-bold">{formatCurrency(item.value)}</span>
+                    <span className="text-sm font-bold whitespace-nowrap">{formatCurrency(item.value)}</span>
                   </div>
                   
                   <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
@@ -270,15 +295,25 @@ export const InteractiveExpenseChart = ({ expenses }: InteractiveExpenseChartPro
           </div>
 
           {selectedCategory && (
-            <div className="mt-4 p-4 border border-primary/30 rounded-lg bg-primary/5">
-              <h5 className="font-semibold text-sm mb-2">
-                {selectedCategory} Transactions ({categoryExpenses.length})
-              </h5>
-              <div className="space-y-1 max-h-[200px] overflow-y-auto text-xs">
+            <div className="mt-4 p-3 md:p-4 border border-primary/30 rounded-lg bg-primary/5">
+              <div className="flex items-center justify-between mb-3">
+                <h5 className="font-semibold text-sm">
+                  {selectedCategory} ({categoryExpenses.length})
+                </h5>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedCategory(null)}
+                  className="h-7 text-xs"
+                >
+                  Close
+                </Button>
+              </div>
+              <div className="space-y-1 max-h-[200px] overflow-y-auto text-xs scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
                 {categoryExpenses.slice(0, 10).map((exp) => (
-                  <div key={exp.id} className="flex justify-between py-1">
-                    <span className="text-muted-foreground">{exp.description}</span>
-                    <span className="font-medium">{formatCurrency(exp.amount)}</span>
+                  <div key={exp.id} className="flex justify-between items-start py-1.5 gap-2">
+                    <span className="text-muted-foreground truncate flex-1">{exp.description}</span>
+                    <span className="font-medium text-destructive whitespace-nowrap">-{formatCurrency(exp.amount)}</span>
                   </div>
                 ))}
                 {categoryExpenses.length > 10 && (
