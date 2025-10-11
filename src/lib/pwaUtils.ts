@@ -51,14 +51,20 @@ export const captureInstallPrompt = () => {
  * Show install prompt to user
  */
 export const showInstallPrompt = async (): Promise<boolean> => {
+  console.log('[PWA] Attempting to show install prompt, deferredPrompt:', !!deferredPrompt);
+  
   if (!deferredPrompt) {
-    console.log('[PWA] Install prompt not available');
+    console.log('[PWA] Install prompt not available - event not captured');
     return false;
   }
 
   try {
+    console.log('[PWA] Calling prompt()...');
     await deferredPrompt.prompt();
+    
+    console.log('[PWA] Waiting for user choice...');
     const { outcome } = await deferredPrompt.userChoice;
+    
     console.log(`[PWA] User ${outcome} the install prompt`);
     deferredPrompt = null;
     return outcome === 'accepted';
@@ -66,6 +72,27 @@ export const showInstallPrompt = async (): Promise<boolean> => {
     console.error('[PWA] Error showing install prompt:', error);
     return false;
   }
+};
+
+/**
+ * Check if install prompt is available
+ */
+export const isInstallPromptAvailable = (): boolean => {
+  return deferredPrompt !== null;
+};
+
+/**
+ * Detect iOS device
+ */
+export const isIOS = (): boolean => {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+};
+
+/**
+ * Check if running in Safari
+ */
+export const isSafari = (): boolean => {
+  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 };
 
 /**
