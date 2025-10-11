@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-export type Currency = "EUR" | "USD" | "GBP" | "JPY" | "CHF";
+export type Currency = "EUR" | "USD" | "GBP" | "JPY" | "CHF" | "CNY" | "AUD" | "CAD" | "BRL" | "INR" | "RUB" | "SEK" | "NOK" | "DKK" | "PLN" | "MXN" | "ZAR" | "SGD" | "HKD" | "KRW";
 export type Language = "en" | "it" | "es" | "fr" | "de";
 
 interface AppContextType {
@@ -21,6 +21,21 @@ const currencySymbols: Record<Currency, string> = {
   GBP: "£",
   JPY: "¥",
   CHF: "CHF",
+  CNY: "¥",
+  AUD: "A$",
+  CAD: "C$",
+  BRL: "R$",
+  INR: "₹",
+  RUB: "₽",
+  SEK: "kr",
+  NOK: "kr",
+  DKK: "kr",
+  PLN: "zł",
+  MXN: "Mex$",
+  ZAR: "R",
+  SGD: "S$",
+  HKD: "HK$",
+  KRW: "₩",
 };
 
 const translations: Record<Language, Record<string, string>> = {

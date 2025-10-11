@@ -3,7 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Trophy, Flame, Star, Target, TrendingUp, Award, Download, Eye, EyeOff } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Trophy, Flame, Star, Target, TrendingUp, Award, Download, CheckCircle2, Circle } from "lucide-react";
 import { getExpenses, getInvestments, getGoals, saveGoals, FinancialGoal } from "@/lib/storage";
 import { useApp } from "@/contexts/AppContext";
 import { FinancialGoals } from "@/components/FinancialGoals";
@@ -21,6 +22,7 @@ interface Achievement {
   unlocked: boolean;
   progress: number;
   maxProgress: number;
+  category: 'essential' | 'advanced' | 'expert';
 }
 
 export default function ProgressHub() {
@@ -31,7 +33,6 @@ export default function ProgressHub() {
   const [xp, setXp] = useState(0);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [goals, setGoals] = useState<FinancialGoal[]>([]);
-  const [showAchievements, setShowAchievements] = useState(true);
 
   useEffect(() => {
     calculateProgress();
@@ -77,12 +78,10 @@ export default function ProgressHub() {
     doc.setFontSize(12);
     doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 30);
     
-    // Stats
     doc.text(`Current Streak: ${streak} days`, 20, 45);
     doc.text(`Level: ${level} - ${getLevelTitle(level)}`, 20, 55);
     doc.text(`XP Progress: ${xp}/100`, 20, 65);
     
-    // Achievements
     doc.text("Achievements:", 20, 80);
     let yPos = 90;
     achievements.forEach((ach, idx) => {
@@ -91,7 +90,6 @@ export default function ProgressHub() {
       yPos += 10;
     });
     
-    // Goals
     if (goals.length > 0) {
       yPos += 10;
       doc.text("Financial Goals:", 20, yPos);
@@ -114,7 +112,6 @@ export default function ProgressHub() {
     const expenses = getExpenses();
     const investments = getInvestments();
     
-    // Calculate streak (days with transactions)
     const today = new Date().toISOString().split('T')[0];
     const recentDays = expenses
       .map(e => e.date)
@@ -124,74 +121,79 @@ export default function ProgressHub() {
       });
     setStreak(new Set(recentDays).size);
 
-    // Calculate level and XP
     const totalTransactions = expenses.length + investments.length;
     const calculatedLevel = Math.floor(totalTransactions / 10) + 1;
     const calculatedXp = (totalTransactions % 10) * 10;
     setLevel(calculatedLevel);
     setXp(calculatedXp);
 
-    // Define achievements
+    const portfolioValue = investments.reduce((sum, inv) => sum + inv.quantity * inv.currentPrice, 0);
+
     const newAchievements: Achievement[] = [
       {
         id: "first_investment",
-        title: "First Investment",
-        description: "Add your first investment",
+        title: "Primo Investimento",
+        description: "Aggiungi il tuo primo investimento",
         icon: TrendingUp,
         unlocked: investments.length > 0,
         progress: Math.min(investments.length, 1),
         maxProgress: 1,
+        category: 'essential',
       },
       {
         id: "streak_7",
-        title: "Week Warrior",
-        description: "Track expenses for 7 days straight",
+        title: "Guerriero Settimanale",
+        description: "Traccia le spese per 7 giorni di fila",
         icon: Flame,
         unlocked: streak >= 7,
         progress: streak,
         maxProgress: 7,
+        category: 'essential',
       },
       {
         id: "transactions_50",
-        title: "Active Tracker",
-        description: "Record 50 transactions",
+        title: "Tracker Attivo",
+        description: "Registra 50 transazioni",
         icon: Star,
         unlocked: totalTransactions >= 50,
         progress: Math.min(totalTransactions, 50),
         maxProgress: 50,
+        category: 'advanced',
       },
       {
         id: "portfolio_1k",
-        title: "First Milestone",
-        description: "Reach 1,000€ portfolio value",
+        title: "Prima Pietra Miliare",
+        description: "Raggiungi 1.000€ di valore portafoglio",
         icon: Target,
-        unlocked: investments.reduce((sum, inv) => sum + inv.quantity * inv.currentPrice, 0) >= 1000,
-        progress: Math.min(investments.reduce((sum, inv) => sum + inv.quantity * inv.currentPrice, 0), 1000),
+        unlocked: portfolioValue >= 1000,
+        progress: Math.min(portfolioValue, 1000),
         maxProgress: 1000,
+        category: 'advanced',
       },
       {
         id: "diversified",
-        title: "Diversification Master",
-        description: "Own 5 different investments",
+        title: "Maestro Diversificazione",
+        description: "Possiedi 5 investimenti diversi",
         icon: Trophy,
         unlocked: investments.length >= 5,
         progress: Math.min(investments.length, 5),
         maxProgress: 5,
+        category: 'advanced',
       },
       {
         id: "level_10",
-        title: "Finance Pro",
-        description: "Reach level 10",
+        title: "Professionista Finanza",
+        description: "Raggiungi il livello 10",
         icon: Award,
         unlocked: calculatedLevel >= 10,
         progress: Math.min(calculatedLevel, 10),
         maxProgress: 10,
+        category: 'expert',
       },
     ];
 
     setAchievements(newAchievements);
 
-    // Celebrate newly unlocked achievements
     newAchievements.forEach(achievement => {
       if (achievement.unlocked && achievement.progress === achievement.maxProgress) {
         confetti({
@@ -204,199 +206,274 @@ export default function ProgressHub() {
   };
 
   const getLevelTitle = (level: number) => {
-    if (level < 5) return "Beginner Saver";
-    if (level < 10) return "Smart Spender";
-    if (level < 20) return "Investment Explorer";
-    if (level < 30) return "Finance Guru";
-    return "Wealth Master";
+    if (level < 5) return "Risparmiatore Principiante";
+    if (level < 10) return "Spender Intelligente";
+    if (level < 20) return "Esploratore Investimenti";
+    if (level < 30) return "Guru Finanza";
+    return "Maestro Ricchezza";
   };
 
   const expenses = getExpenses();
   const investments = getInvestments();
+  
+  const essentialAchievements = achievements.filter(a => a.category === 'essential');
+  const advancedAchievements = achievements.filter(a => a.category === 'advanced');
+  const expertAchievements = achievements.filter(a => a.category === 'expert');
+  
+  const overallProgress = achievements.length > 0 
+    ? (achievements.filter(a => a.unlocked).length / achievements.length) * 100 
+    : 0;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
-        <div className="w-full sm:w-auto">
-          <h1 className="text-3xl md:text-4xl font-bold gradient-text">Progress Hub</h1>
-          <p className="text-sm md:text-base text-muted-foreground">Track your financial journey and achieve your goals</p>
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Header più compatto */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            Progress Hub
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Monitora i tuoi progressi finanziari
+          </p>
         </div>
-        <Button onClick={exportProgressToPDF} className="gap-2 w-full sm:w-auto">
+        <Button onClick={exportProgressToPDF} variant="outline" className="gap-2">
           <Download className="h-4 w-4" />
-          <span className="sm:inline">Export PDF</span>
+          Esporta PDF
         </Button>
       </div>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card className="glass-card p-6 hover-lift">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-gradient-to-br from-orange-500/20 to-orange-600/5 shrink-0">
-              <Flame className="h-8 w-8 text-orange-500" />
+      {/* Dashboard Statistiche */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="p-6 bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-500/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Streak Attuale</p>
+              <p className="text-3xl font-bold mt-2">{streak}</p>
+              <p className="text-xs text-muted-foreground mt-1">giorni consecutivi</p>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-muted-foreground">Current Streak</p>
-              <p className="text-3xl font-bold">{streak} days</p>
-              <p className="text-xs text-muted-foreground mt-1 truncate">Keep going! 🔥</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="glass-card p-6 hover-lift">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-600/5 shrink-0">
-              <Trophy className="h-8 w-8 text-blue-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-muted-foreground">Level</p>
-              <p className="text-3xl font-bold">{level}</p>
-              <p className="text-xs text-muted-foreground mt-1 truncate">{getLevelTitle(level)}</p>
+            <div className="p-3 rounded-xl bg-orange-500/20">
+              <Flame className="h-6 w-6 text-orange-500" />
             </div>
           </div>
         </Card>
 
-        <Card className="glass-card p-6 hover-lift">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-2xl bg-gradient-to-br from-green-500/20 to-green-600/5 shrink-0">
-              <Star className="h-8 w-8 text-green-500" />
+        <Card className="p-6 bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Livello</p>
+              <p className="text-3xl font-bold mt-2">{level}</p>
+              <p className="text-xs text-muted-foreground mt-1">{getLevelTitle(level)}</p>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-muted-foreground mb-2">XP Progress</p>
-              <Progress value={xp} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-1">{xp}/100 XP to next level</p>
+            <div className="p-3 rounded-xl bg-blue-500/20">
+              <Trophy className="h-6 w-6 text-blue-500" />
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6 bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-muted-foreground mb-2">XP a Prossimo Livello</p>
+              <Progress value={xp} className="h-2 mb-2" />
+              <p className="text-xs text-muted-foreground">{xp}/100 XP</p>
+            </div>
+            <div className="p-3 rounded-xl bg-green-500/20 ml-4">
+              <Star className="h-6 w-6 text-green-500" />
             </div>
           </div>
         </Card>
       </div>
 
-      {/* Financial Goals */}
-      <FinancialGoals
-        goals={goals}
-        onAdd={handleAddGoal}
-        onDelete={handleDeleteGoal}
-        onUpdate={handleUpdateGoal}
-      />
-
-      {/* Trend Chart */}
-      <TrendChart expenses={expenses} />
-
-      {/* AI Insights */}
-      <AIAdvicePanel expenses={expenses} investments={investments} goals={goals} />
-
-      {/* Achievements */}
-      <Card className="glass-card p-4 md:p-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 md:mb-6 gap-3">
-          <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-            <Award className="h-5 w-5 md:h-6 md:w-6" />
+      {/* Tabs per organizzare meglio il contenuto */}
+      <Tabs defaultValue="achievements" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="achievements" className="gap-2">
+            <Trophy className="h-4 w-4" />
             Achievements
-          </h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowAchievements(!showAchievements)}
-            className="gap-2 w-full sm:w-auto"
-          >
-            {showAchievements ? (
-              <>
-                <EyeOff className="h-4 w-4" />
-                Hide
-              </>
-            ) : (
-              <>
-                <Eye className="h-4 w-4" />
-                Show
-              </>
-            )}
-          </Button>
-        </div>
-        {showAchievements && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {achievements.map((achievement) => {
-            const Icon = achievement.icon;
-            const progressPercent = (achievement.progress / achievement.maxProgress) * 100;
-            
-            return (
-              <Card 
-                key={achievement.id}
-                className={`p-5 transition-all min-h-[180px] ${
-                  achievement.unlocked 
-                    ? "bg-gradient-to-br from-primary/20 to-primary/5 border-primary/30 hover-lift" 
-                    : "opacity-60 hover:opacity-80"
-                }`}
-              >
-                <div className="flex flex-col gap-3 h-full">
-                  {/* Header: icon + title + badge */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className={`p-2.5 rounded-xl shrink-0 ${
-                        achievement.unlocked 
-                          ? "bg-primary/20" 
-                          : "bg-muted"
-                      }`}>
-                        <Icon className={`h-6 w-6 ${
-                          achievement.unlocked 
-                            ? "text-primary" 
-                            : "text-muted-foreground"
-                        }`} />
-                      </div>
-                      <h3 className="font-semibold text-base line-clamp-1 flex-1">{achievement.title}</h3>
-                    </div>
-                    {achievement.unlocked && (
-                      <Badge variant="default" className="shrink-0 text-xs">✓</Badge>
-                    )}
-                  </div>
-                  
-                  {/* Description */}
-                  <p className="text-sm text-muted-foreground line-clamp-2 px-1">
-                    {achievement.description}
-                  </p>
-                  
-                  {/* Progress bar */}
-                  <div className="space-y-1.5 mt-auto">
-                    <Progress value={progressPercent} className="h-2" />
-                    <p className="text-xs text-muted-foreground text-right">
-                      {achievement.progress}/{achievement.maxProgress}
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-          </div>
-        )}
-      </Card>
+          </TabsTrigger>
+          <TabsTrigger value="goals" className="gap-2">
+            <Target className="h-4 w-4" />
+            Obiettivi
+          </TabsTrigger>
+          <TabsTrigger value="insights" className="gap-2">
+            <TrendingUp className="h-4 w-4" />
+            Insights
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Motivational Card */}
-      <Card className="glass-card p-4 md:p-6 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
-        <div className="flex flex-col sm:flex-row items-start gap-4">
-          <div className="p-3 rounded-xl bg-green-500/20 flex-shrink-0">
-            <Flame className="h-5 w-5 md:h-6 md:w-6 text-green-500" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-base md:text-lg font-semibold mb-2">Daily Motivation</h3>
-            <p className="text-sm md:text-base text-muted-foreground mb-3">
-              {streak > 0 
-                ? `Amazing! You're on a ${streak}-day streak. Keep tracking your finances daily! 🎉`
-                : "Start your streak today by adding a transaction! 💪"
-              }
-            </p>
-            {goals.length > 0 && goals.some(g => g.currentAmount < g.targetAmount) && (
-              <div className="mt-3 p-3 rounded-lg bg-background/50">
-                <p className="text-sm font-medium mb-1">Next Milestone:</p>
-                <p className="text-xs md:text-sm text-muted-foreground">
-                  {(() => {
-                    const nextGoal = goals.find(g => g.currentAmount < g.targetAmount);
-                    if (!nextGoal) return null;
-                    const remaining = nextGoal.targetAmount - nextGoal.currentAmount;
-                    const daysLeft = Math.ceil((new Date(nextGoal.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                    return `Save €${remaining.toFixed(2)} more for "${nextGoal.name}" in ${daysLeft} days`;
-                  })()}
+        {/* Tab Achievements */}
+        <TabsContent value="achievements" className="space-y-6">
+          {/* Progresso Complessivo */}
+          <Card className="p-6 bg-gradient-to-r from-primary/5 to-transparent">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">Progresso Complessivo</h3>
+                <p className="text-sm text-muted-foreground">
+                  {achievements.filter(a => a.unlocked).length} di {achievements.length} completati
                 </p>
               </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-primary">{overallProgress.toFixed(0)}%</p>
+              </div>
+            </div>
+            <Progress value={overallProgress} className="h-3" />
+          </Card>
+
+          {/* Achievements Essenziali */}
+          {essentialAchievements.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="h-px flex-1 bg-border" />
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                  Essenziali
+                </h3>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {essentialAchievements.map((achievement) => (
+                  <AchievementCard key={achievement.id} achievement={achievement} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Achievements Avanzati */}
+          {advancedAchievements.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="h-px flex-1 bg-border" />
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                  Avanzati
+                </h3>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {advancedAchievements.map((achievement) => (
+                  <AchievementCard key={achievement.id} achievement={achievement} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Achievements Esperti */}
+          {expertAchievements.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="h-px flex-1 bg-border" />
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                  Esperti
+                </h3>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {expertAchievements.map((achievement) => (
+                  <AchievementCard key={achievement.id} achievement={achievement} />
+                ))}
+              </div>
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Tab Obiettivi */}
+        <TabsContent value="goals" className="space-y-6">
+          <FinancialGoals
+            goals={goals}
+            onAdd={handleAddGoal}
+            onDelete={handleDeleteGoal}
+            onUpdate={handleUpdateGoal}
+          />
+          <TrendChart expenses={expenses} />
+        </TabsContent>
+
+        {/* Tab Insights */}
+        <TabsContent value="insights" className="space-y-6">
+          <AIAdvicePanel expenses={expenses} investments={investments} goals={goals} />
+          
+          {/* Motivational Card */}
+          <Card className="p-6 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-xl bg-green-500/20 flex-shrink-0">
+                <Flame className="h-6 w-6 text-green-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold mb-2">Motivazione Giornaliera</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {streak > 0 
+                    ? `Fantastico! Sei a ${streak} giorni di streak. Continua così! 🎉`
+                    : "Inizia il tuo streak oggi aggiungendo una transazione! 💪"
+                  }
+                </p>
+                {goals.length > 0 && goals.some(g => g.currentAmount < g.targetAmount) && (
+                  <div className="mt-3 p-3 rounded-lg bg-background/50 border border-green-500/20">
+                    <p className="text-sm font-medium mb-1">Prossimo Traguardo:</p>
+                    <p className="text-sm text-muted-foreground">
+                      {(() => {
+                        const nextGoal = goals.find(g => g.currentAmount < g.targetAmount);
+                        if (!nextGoal) return null;
+                        const remaining = nextGoal.targetAmount - nextGoal.currentAmount;
+                        const daysLeft = Math.ceil((new Date(nextGoal.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                        return `Risparmia €${remaining.toFixed(2)} per "${nextGoal.name}" in ${daysLeft} giorni`;
+                      })()}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// Componente Achievement Card riutilizzabile
+function AchievementCard({ achievement }: { achievement: Achievement }) {
+  const Icon = achievement.icon;
+  const progressPercent = (achievement.progress / achievement.maxProgress) * 100;
+  
+  return (
+    <Card 
+      className={`p-5 transition-all ${
+        achievement.unlocked 
+          ? "bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30" 
+          : "opacity-70 hover:opacity-100"
+      }`}
+    >
+      <div className="flex items-start gap-4">
+        <div className={`p-3 rounded-xl flex-shrink-0 ${
+          achievement.unlocked 
+            ? "bg-primary/20" 
+            : "bg-muted"
+        }`}>
+          <Icon className={`h-6 w-6 ${
+            achievement.unlocked 
+              ? "text-primary" 
+              : "text-muted-foreground"
+          }`} />
+        </div>
+        
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="font-semibold line-clamp-1">{achievement.title}</h3>
+            {achievement.unlocked ? (
+              <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+            ) : (
+              <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
             )}
           </div>
+          
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {achievement.description}
+          </p>
+          
+          <div className="space-y-1">
+            <Progress value={progressPercent} className="h-1.5" />
+            <p className="text-xs text-muted-foreground text-right">
+              {achievement.progress}/{achievement.maxProgress}
+            </p>
+          </div>
         </div>
-      </Card>
-    </div>
+      </div>
+    </Card>
   );
 }

@@ -65,7 +65,7 @@ export const AccountMenu = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+        <Button variant="ghost" className="relative h-9 w-9 rounded-full z-50">
           <Avatar className="h-9 w-9">
             <AvatarImage src="" alt="User avatar" />
             <AvatarFallback className="bg-primary/10 text-primary">
@@ -74,7 +74,7 @@ export const AccountMenu = () => {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 bg-popover" align="end" forceMount>
+      <DropdownMenuContent className="w-56 bg-popover z-[100]" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{t("myAccount")}</p>

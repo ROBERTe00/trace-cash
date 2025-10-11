@@ -17,6 +17,21 @@ const currencies: { value: Currency; label: string; symbol: string }[] = [
   { value: "GBP", label: "Sterlina Britannica", symbol: "£" },
   { value: "JPY", label: "Yen Giapponese", symbol: "¥" },
   { value: "CHF", label: "Franco Svizzero", symbol: "CHF" },
+  { value: "CNY", label: "Yuan Cinese", symbol: "¥" },
+  { value: "AUD", label: "Dollaro Australiano", symbol: "A$" },
+  { value: "CAD", label: "Dollaro Canadese", symbol: "C$" },
+  { value: "BRL", label: "Real Brasiliano", symbol: "R$" },
+  { value: "INR", label: "Rupia Indiana", symbol: "₹" },
+  { value: "RUB", label: "Rublo Russo", symbol: "₽" },
+  { value: "SEK", label: "Corona Svedese", symbol: "kr" },
+  { value: "NOK", label: "Corona Norvegese", symbol: "kr" },
+  { value: "DKK", label: "Corona Danese", symbol: "kr" },
+  { value: "PLN", label: "Zloty Polacco", symbol: "zł" },
+  { value: "MXN", label: "Peso Messicano", symbol: "Mex$" },
+  { value: "ZAR", label: "Rand Sudafricano", symbol: "R" },
+  { value: "SGD", label: "Dollaro Singapore", symbol: "S$" },
+  { value: "HKD", label: "Dollaro Hong Kong", symbol: "HK$" },
+  { value: "KRW", label: "Won Sudcoreano", symbol: "₩" },
 ];
 
 const languages: { value: Language; label: string; flag: string }[] = [
@@ -61,7 +76,7 @@ export function LanguageCurrencySettings() {
               <SelectTrigger id="currency" className="bg-background">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-popover z-50">
+              <SelectContent className="bg-popover z-[100]">
                 {currencies.map((curr) => (
                   <SelectItem key={curr.value} value={curr.value}>
                     <div className="flex items-center gap-2">
@@ -96,7 +111,7 @@ export function LanguageCurrencySettings() {
               <SelectTrigger id="language" className="bg-background">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-popover z-50">
+              <SelectContent className="bg-popover z-[100]">
                 {languages.map((lang) => (
                   <SelectItem key={lang.value} value={lang.value}>
                     <div className="flex items-center gap-2">

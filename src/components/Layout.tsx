@@ -1,4 +1,4 @@
-import { Moon, Sun, LogOut } from "lucide-react";
+import { Moon, Sun, LogOut, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
@@ -33,12 +33,21 @@ export const Layout = ({ children, onLogout }: LayoutProps) => {
           </div>
           
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => window.location.href = '/'}
+              className="rounded-full relative z-50"
+              title="Home"
+            >
+              <Home className="h-5 w-5" />
+            </Button>
             <SettingsPanel />
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="rounded-full"
+              className="rounded-full relative z-50"
             >
               {theme === "dark" ? (
                 <Sun className="h-5 w-5" />
@@ -52,7 +61,7 @@ export const Layout = ({ children, onLogout }: LayoutProps) => {
                 variant="ghost"
                 size="icon"
                 onClick={onLogout}
-                className="rounded-full"
+                className="rounded-full relative z-50"
               >
                 <LogOut className="h-5 w-5" />
               </Button>
