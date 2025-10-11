@@ -45,16 +45,15 @@ export default function Auth() {
 
     try {
       if (isSettingNewPassword) {
-        // Set new password after email recovery
+        console.log("🔐 [Auth] Setting new password...");
+        
         if (formData.newPassword.length < 6) {
           toast.error("Password must be at least 6 characters");
-          setLoading(false);
           return;
         }
 
         if (formData.newPassword !== formData.confirmPassword) {
           toast.error("Passwords do not match");
-          setLoading(false);
           return;
         }
 
@@ -63,8 +62,8 @@ export default function Auth() {
         });
 
         if (error) {
+          console.error("🔐 [Auth] Password update error:", error);
           toast.error(error.message);
-          setLoading(false);
           return;
         }
 
@@ -72,13 +71,14 @@ export default function Auth() {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError || !session) {
+          console.error("🔐 [Auth] Session refresh failed:", sessionError);
           toast.error("Password updated but session refresh failed. Please sign in again.");
           setIsSettingNewPassword(false);
           setIsLogin(true);
-          setLoading(false);
           return;
         }
 
+        console.log("🔐 [Auth] Password updated successfully, user:", session.user.email);
         toast.success("Password updated successfully! Redirecting...");
         
         // Clear the hash to remove recovery token
@@ -93,14 +93,14 @@ export default function Auth() {
       }
 
       if (isResetPassword) {
-        // Password reset flow
+        console.log("🔐 [Auth] Requesting password reset for:", formData.email);
+        
         const validation = z.object({
           email: z.string().email("Invalid email address").max(255),
         }).safeParse({ email: formData.email.trim() });
 
         if (!validation.success) {
           toast.error(validation.error.errors[0].message);
-          setLoading(false);
           return;
         }
 
@@ -112,14 +112,14 @@ export default function Auth() {
         );
 
         if (error) {
+          console.error("🔐 [Auth] Password reset error:", error);
           toast.error(error.message);
-          setLoading(false);
           return;
         }
 
+        console.log("🔐 [Auth] Password reset email sent");
         toast.success("Password reset email sent! Check your inbox.");
         setIsResetPassword(false);
-        setLoading(false);
         return;
       }
 
@@ -132,18 +132,19 @@ export default function Auth() {
 
       if (!validation.success) {
         toast.error(validation.error.errors[0].message);
-        setLoading(false);
         return;
       }
 
       if (isLogin) {
-        // Sign in with Supabase
-        const { error } = await supabase.auth.signInWithPassword({
+        console.log("🔐 [Auth] Attempting login for:", formData.email);
+        
+        const { error, data } = await supabase.auth.signInWithPassword({
           email: formData.email.trim(),
           password: formData.password,
         });
 
         if (error) {
+          console.error("🔐 [Auth] Login error:", error);
           if (error.message.includes("Invalid login credentials")) {
             toast.error("Invalid email or password");
           } else if (error.message.includes("Email not confirmed")) {
@@ -151,21 +152,21 @@ export default function Auth() {
           } else {
             toast.error(error.message);
           }
-          setLoading(false);
           return;
         }
 
+        console.log("🔐 [Auth] Login successful:", data.user?.email, "Session:", !!data.session);
         toast.success("Welcome back!");
         navigate("/");
       } else {
-        // Sign up with Supabase
+        console.log("🔐 [Auth] Attempting signup for:", formData.email);
+        
         if (!formData.name.trim()) {
           toast.error("Please enter your name");
-          setLoading(false);
           return;
         }
 
-        const { error } = await supabase.auth.signUp({
+        const { error, data } = await supabase.auth.signUp({
           email: formData.email.trim(),
           password: formData.password,
           options: {
@@ -177,21 +178,24 @@ export default function Auth() {
         });
 
         if (error) {
+          console.error("🔐 [Auth] Signup error:", error);
           if (error.message.includes("already registered")) {
             toast.error("Email already registered. Please sign in.");
           } else {
             toast.error(error.message);
           }
-          setLoading(false);
           return;
         }
 
+        console.log("🔐 [Auth] Signup successful:", data.user?.email);
         toast.success("Account created successfully!");
         navigate("/");
       }
     } catch (error) {
-      console.error("Auth error:", error);
+      console.error("🔐 [Auth] Unexpected error:", error);
       toast.error("An unexpected error occurred");
+    } finally {
+      // This ALWAYS runs, ensuring loading state is cleared
       setLoading(false);
     }
   };
