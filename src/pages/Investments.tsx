@@ -8,11 +8,12 @@ import { PortfolioMetricsPanel } from "@/components/PortfolioMetricsPanel";
 import { InvestmentScenarioSimulator } from "@/components/InvestmentScenarioSimulator";
 import { Investment } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
-import { Download, FileSpreadsheet } from "lucide-react";
+import { Download, FileSpreadsheet, Plus } from "lucide-react";
 import { exportInvestmentReport, exportInvestmentCSV } from "@/lib/investmentExport";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 export default function Investments() {
   const [investments, setInvestments] = useState<Investment[]>([]);
@@ -186,18 +187,19 @@ export default function Investments() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
+          <Collapsible defaultOpen={investments.length === 0}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between mb-4">
+                <span className="flex items-center gap-2"><Plus className="h-4 w-4" />Quick Add</span>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mb-6">
+              <InvestmentForm onAdd={handleAddInvestment} />
+            </CollapsibleContent>
+          </Collapsible>
           <PortfolioAnalysis investments={investments} />
           <PortfolioChart investments={investments} />
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <InvestmentForm onAdd={handleAddInvestment} />
-          </div>
-
-          <InvestmentTable
-            investments={investments}
-            onDelete={handleDeleteInvestment}
-            onUpdatePrice={handleUpdateInvestmentPrice}
-          />
+          <InvestmentTable investments={investments} onDelete={handleDeleteInvestment} onUpdatePrice={handleUpdateInvestmentPrice} />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">

@@ -68,15 +68,17 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
 
   const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 
+  const { t } = useApp();
+
   if (investments.length === 0) {
     return (
       <Card className="glass-card p-6">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Target className="h-5 w-5 text-primary" />
-          Portfolio Analysis
+          {t('portfolio.analysis')}
         </h3>
         <p className="text-muted-foreground text-center py-8">
-          Add investments to see your portfolio analysis
+          {t('portfolio.addInvestments')}
         </p>
       </Card>
     );
@@ -88,13 +90,13 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
         <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5">
           <Target className="h-6 w-6 text-primary" />
         </div>
-        <span className="gradient-text">Portfolio Analysis</span>
+        <span className="gradient-text">{t('portfolio.analysis')}</span>
       </h3>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pie Chart */}
         <div>
-          <h4 className="text-sm font-medium mb-4 text-muted-foreground">Asset Allocation</h4>
+          <h4 className="text-sm font-medium mb-4 text-muted-foreground">{t('portfolio.assetAllocation')}</h4>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
@@ -131,7 +133,7 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium flex items-center gap-2">
                 <Shield className="h-4 w-4" />
-                Diversification Score
+                {t('portfolio.diversification')}
               </span>
               <span className="text-2xl font-bold">{diversificationScore.toFixed(0)}/100</span>
             </div>
@@ -143,21 +145,21 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
             </div>
             <p className="text-xs text-muted-foreground mt-2">
               {diversificationScore >= 70
-                ? "Excellent diversification"
+                ? t('portfolio.excellentDiv')
                 : diversificationScore >= 50
-                ? "Good diversification"
-                : "Consider diversifying more"}
+                ? t('portfolio.goodDiv')
+                : t('portfolio.considerDiv')}
             </p>
           </div>
 
           {/* Risk Level */}
           <div className="p-4 rounded-lg bg-card border border-border">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Risk Level</span>
+              <span className="text-sm font-medium">{t('portfolio.riskLevel')}</span>
               <span className={`text-lg font-bold ${riskLevel.color}`}>{riskLevel.level}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Based on asset allocation and volatility
+              {t('portfolio.riskBased')}
             </p>
           </div>
 
@@ -166,7 +168,7 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
-                Total Yield
+                {t('portfolio.totalYield')}
               </span>
               <span className={`text-lg font-bold ${totalYield >= 0 ? "text-green-500" : "text-red-500"}`}>
                 {totalYield >= 0 ? "+" : ""}
@@ -175,7 +177,7 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
             </div>
             <p className="text-xs text-muted-foreground">
               {yieldPercentage >= 0 ? "+" : ""}
-              {yieldPercentage.toFixed(2)}% average return
+              {yieldPercentage.toFixed(2)}% {t('portfolio.avgReturn')}
             </p>
           </div>
         </div>

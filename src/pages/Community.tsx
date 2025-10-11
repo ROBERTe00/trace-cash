@@ -145,19 +145,19 @@ export default function Community() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold gradient-text">Community Hub</h1>
           <p className="text-muted-foreground">Confronta, impara e cresci con la community</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Users className="h-5 w-5" />
-            <span>12.5k utenti attivi</span>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 text-muted-foreground whitespace-nowrap">
+            <Users className="h-5 w-5 flex-shrink-0" />
+            <span className="text-sm lg:text-base">12.5k utenti attivi</span>
           </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Trophy className="h-5 w-5" />
-            <span>Top {userPercentile}%</span>
+          <div className="flex items-center gap-2 text-muted-foreground whitespace-nowrap">
+            <Trophy className="h-5 w-5 flex-shrink-0" />
+            <span className="text-sm lg:text-base">Top {userPercentile}%</span>
           </div>
         </div>
       </div>
@@ -241,15 +241,15 @@ export default function Community() {
             onChange={(e) => setNewPost(e.target.value)}
             rows={4}
           />
-          <div className="flex items-center justify-between">
-            <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div className="space-y-3 flex-1">
               <div className="flex items-center gap-2">
                 <Switch
                   id="anonymous"
                   checked={isAnonymous}
                   onCheckedChange={setIsAnonymous}
                 />
-                <Label htmlFor="anonymous">Pubblica in modo anonimo</Label>
+                <Label htmlFor="anonymous" className="text-sm">Pubblica in modo anonimo</Label>
               </div>
               <div className="flex items-center gap-2">
                 <Switch
@@ -257,10 +257,10 @@ export default function Community() {
                   checked={sharePortfolio}
                   onCheckedChange={setSharePortfolio}
                 />
-                <Label htmlFor="share-portfolio">Condividi statistiche portfolio mascherate</Label>
+                <Label htmlFor="share-portfolio" className="text-sm">Condividi statistiche portfolio</Label>
               </div>
             </div>
-            <Button onClick={handlePost} disabled={loading}>
+            <Button onClick={handlePost} disabled={loading} className="w-full sm:w-auto">
               <Share2 className="h-4 w-4 mr-2" />
               Pubblica
             </Button>

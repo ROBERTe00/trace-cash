@@ -12,12 +12,14 @@ import {
   PolarRadiusAxis,
   ResponsiveContainer,
 } from 'recharts';
+import { useApp } from '@/contexts/AppContext';
 
 interface PortfolioMetricsPanelProps {
   investments: Investment[];
 }
 
 export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProps) {
+  const { t, formatCurrency } = useApp();
   const [metrics, setMetrics] = useState<any>(null);
   const [alerts, setAlerts] = useState<string[]>([]);
 
@@ -55,7 +57,7 @@ export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProp
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-orange-500">
               <AlertTriangle className="h-5 w-5" />
-              Portfolio Alerts
+              {t('metrics.alerts')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -73,11 +75,11 @@ export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProp
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Total Value</CardDescription>
+            <CardDescription>{t('metrics.totalValue')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              €{metrics.totalValue.toFixed(2)}
+              {formatCurrency(metrics.totalValue)}
             </div>
             <div className={`text-sm flex items-center gap-1 ${getMetricColor(metrics.totalGainLossPercent)}`}>
               {metrics.totalGainLoss > 0 ? (
@@ -92,7 +94,7 @@ export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProp
 
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Annualized Return</CardDescription>
+            <CardDescription>{t('metrics.annualizedReturn')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${getMetricColor(metrics.annualizedReturn)}`}>
@@ -108,7 +110,7 @@ export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProp
           <CardHeader className="pb-3">
             <CardDescription className="flex items-center gap-1">
               <Activity className="h-3 w-3" />
-              Volatility
+              {t('metrics.volatility')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -116,21 +118,21 @@ export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProp
               {metrics.volatility.toFixed(2)}%
             </div>
             <div className="text-sm text-muted-foreground">
-              Lower is better
+              {t('metrics.lowerBetter')}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Sharpe Ratio</CardDescription>
+            <CardDescription>{t('metrics.sharpeRatio')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {metrics.sharpeRatio.toFixed(2)}
             </div>
             <div className="text-sm text-muted-foreground">
-              {metrics.sharpeRatio > 1 ? 'Good' : metrics.sharpeRatio > 0.5 ? 'Fair' : 'Poor'}
+              {metrics.sharpeRatio > 1 ? t('metrics.good') : metrics.sharpeRatio > 0.5 ? t('metrics.fair') : t('metrics.poor')}
             </div>
           </CardContent>
         </Card>
@@ -141,13 +143,13 @@ export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProp
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <PieChart className="h-5 w-5" />
-            Asset Diversification
+            {t('metrics.diversification')}
           </CardTitle>
           <CardDescription>
             Herfindahl Index: {metrics.diversification.herfindahlIndex.toFixed(4)}
             {' '}
             <Badge variant={metrics.diversification.herfindahlIndex < 0.25 ? 'default' : 'destructive'}>
-              {metrics.diversification.herfindahlIndex < 0.25 ? 'Well Diversified' : 'Concentrated'}
+              {metrics.diversification.herfindahlIndex < 0.25 ? t('metrics.wellDiversified') : t('metrics.concentrated')}
             </Badge>
           </CardDescription>
         </CardHeader>

@@ -10,6 +10,7 @@ interface AppContextType {
   setLanguage: (language: Language) => void;
   formatCurrency: (amount: number) => string;
   t: (key: string) => string;
+  currencySymbols: Record<Currency, string>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -26,19 +27,29 @@ const translations: Record<Language, Record<string, string>> = {
   en: {
     // Navigation
     dashboard: "Dashboard",
-    income: "Income",
     expenses: "Expenses",
-    investments: "Investments",
-    goals: "Financial Goals",
-    budget: "Budget",
-    health: "Financial Health",
-    settings: "Settings",
-    logout: "Logout",
     insights: "Insights",
-    futurePlanner: "Future Planner",
-    progressHub: "Progress Hub",
+    investments: "Investments",
+    progress: "Progress",
     community: "Community",
+    future: "Future Planner",
     upload: "Upload",
+    settings: "Settings",
+    profile: "Profile",
+    logout: "Logout",
+    
+    // Investment translations
+    "investment.quickAdd": "Quick Add Investment",
+    "investment.type": "Type",
+    "investment.name": "Name",
+    "investment.symbol": "Symbol",
+    "investment.currentPrice": "Current Price",
+    "investment.purchasePrice": "Purchase Price",
+    "investment.quantity": "Quantity",
+    "investment.profitLoss": "Profit/Loss",
+    "investment.liveTracking": "Enable Live Price Tracking",
+    "investment.addButton": "Add Investment",
+    "investment.livePrice": "Live",
     
     // Common
     save: "Save",
@@ -298,7 +309,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AppContext.Provider
-      value={{ currency, language, setCurrency, setLanguage, formatCurrency, t }}
+      value={{ currency, language, setCurrency, setLanguage, formatCurrency, t, currencySymbols }}
     >
       {children}
     </AppContext.Provider>

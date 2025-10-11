@@ -8,8 +8,10 @@ import { simulateFutureReturns } from '@/lib/investmentMetrics';
 import { getInvestments } from '@/lib/storage';
 import { Calculator, TrendingUp } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useApp } from '@/contexts/AppContext';
 
 export function InvestmentScenarioSimulator() {
+  const { t, formatCurrency, currencySymbols, currency } = useApp();
   const [currentValue, setCurrentValue] = useState(0);
   const [monthlyContribution, setMonthlyContribution] = useState(500);
   const [expectedReturn, setExpectedReturn] = useState(8);
@@ -51,16 +53,16 @@ export function InvestmentScenarioSimulator() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calculator className="h-5 w-5" />
-          Scenario Simulator
+          {t('simulator.title')}
         </CardTitle>
         <CardDescription>
-          Project your portfolio growth with monthly contributions
+          {t('simulator.description')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="monthly">Monthly Contribution (€)</Label>
+            <Label htmlFor="monthly">{t('simulator.monthlyContribution')} ({currencySymbols[currency]})</Label>
             <Input
               id="monthly"
               type="number"
@@ -72,7 +74,7 @@ export function InvestmentScenarioSimulator() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="years">Time Horizon (Years)</Label>
+            <Label htmlFor="years">{t('simulator.timeHorizon')}</Label>
             <Input
               id="years"
               type="number"
@@ -84,7 +86,7 @@ export function InvestmentScenarioSimulator() {
           </div>
 
           <div className="space-y-2">
-            <Label>Expected Annual Return: {expectedReturn}%</Label>
+            <Label>{t('simulator.expectedReturn')}: {expectedReturn}%</Label>
             <Slider
               value={[expectedReturn]}
               onValueChange={(value) => setExpectedReturn(value[0])}
@@ -94,14 +96,14 @@ export function InvestmentScenarioSimulator() {
               className="w-full"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Conservative (4-6%)</span>
-              <span>Moderate (7-10%)</span>
-              <span>Aggressive (11%+)</span>
+              <span>{t('simulator.conservative')}</span>
+              <span>{t('simulator.moderate')}</span>
+              <span>{t('simulator.aggressive')}</span>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Capital Gains Tax: {taxRate}%</Label>
+            <Label>{t('simulator.taxRate')}: {taxRate}%</Label>
             <Slider
               value={[taxRate]}
               onValueChange={(value) => setTaxRate(value[0])}
@@ -111,7 +113,7 @@ export function InvestmentScenarioSimulator() {
               className="w-full"
             />
             <p className="text-xs text-muted-foreground">
-              Italy: 26% standard, up to 43% for some assets
+              {t('simulator.italyTax')}
             </p>
           </div>
         </div>
@@ -120,43 +122,43 @@ export function InvestmentScenarioSimulator() {
           <>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Projected Value</p>
+                <p className="text-sm text-muted-foreground">{t('simulator.projectedValue')}</p>
                 <p className="text-2xl font-bold text-green-500">
-                  €{simulation.projectedValue.toLocaleString('it-IT', { maximumFractionDigits: 0 })}
+                  {formatCurrency(simulation.projectedValue)}
                 </p>
               </div>
 
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Total Contributions</p>
+                <p className="text-sm text-muted-foreground">{t('simulator.totalContributions')}</p>
                 <p className="text-lg font-semibold">
-                  €{simulation.totalContributions.toLocaleString('it-IT', { maximumFractionDigits: 0 })}
+                  {formatCurrency(simulation.totalContributions)}
                 </p>
               </div>
 
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Total Gains</p>
+                <p className="text-sm text-muted-foreground">{t('simulator.totalGains')}</p>
                 <p className="text-lg font-semibold text-blue-500">
-                  €{simulation.totalGains.toLocaleString('it-IT', { maximumFractionDigits: 0 })}
+                  {formatCurrency(simulation.totalGains)}
                 </p>
               </div>
 
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Tax Liability</p>
+                <p className="text-sm text-muted-foreground">{t('simulator.taxLiability')}</p>
                 <p className="text-lg font-semibold text-orange-500">
-                  -€{simulation.taxLiability.toLocaleString('it-IT', { maximumFractionDigits: 0 })}
+                  -{formatCurrency(simulation.taxLiability)}
                 </p>
               </div>
             </div>
 
             <div className="pt-4">
-              <h4 className="text-sm font-semibold mb-4">Projected Growth</h4>
+              <h4 className="text-sm font-semibold mb-4">{t('simulator.projectedGrowth')}</h4>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="year" label={{ value: 'Years', position: 'insideBottom', offset: -5 }} />
+                  <XAxis dataKey="year" />
                   <YAxis />
                   <Tooltip
-                    formatter={(value: number) => `€${value.toLocaleString('it-IT', { maximumFractionDigits: 0 })}`}
+                    formatter={(value: number) => formatCurrency(value)}
                   />
                   <Legend />
                   <Line
@@ -164,29 +166,29 @@ export function InvestmentScenarioSimulator() {
                     dataKey="value"
                     stroke="hsl(var(--primary))"
                     strokeWidth={2}
-                    name="Portfolio Value"
+                    name={t('portfolio.analysis')}
                   />
                   <Line
                     type="monotone"
                     dataKey="contributions"
                     stroke="hsl(var(--muted-foreground))"
                     strokeDasharray="5 5"
-                    name="Contributions Only"
+                    name={t('simulator.totalContributions')}
                   />
                 </LineChart>
               </ResponsiveContainer>
             </div>
 
-            <div className="bg-primary/5 p-4 rounded-lg">
+            <div className="bg-primary/5 p-4 rounded-lg border border-primary/10">
               <h4 className="font-semibold mb-2 flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
-                Net Value After Taxes
+                {t('simulator.netValue')}
               </h4>
               <p className="text-3xl font-bold text-green-500">
-                €{simulation.netValue.toLocaleString('it-IT', { maximumFractionDigits: 0 })}
+                {formatCurrency(simulation.netValue)}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                Final value after {taxRate}% capital gains tax
+                {t('simulator.finalValue')} {taxRate}% {t('simulator.taxRate').toLowerCase()}
               </p>
             </div>
           </>
