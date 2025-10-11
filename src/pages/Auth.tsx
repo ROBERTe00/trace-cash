@@ -17,19 +17,65 @@ const authSchema = z.object({
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [isResetPassword, setIsResetPassword] = useState(false);
+  const [isSettingNewPassword, setIsSettingNewPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
+    newPassword: "",
+    confirmPassword: "",
   });
   const navigate = useNavigate();
+
+  // Check for password recovery token in URL
+  useState(() => {
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const type = hashParams.get('type');
+    if (type === 'recovery') {
+      setIsSettingNewPassword(true);
+      setIsLogin(false);
+      setIsResetPassword(false);
+    }
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      if (isSettingNewPassword) {
+        // Set new password after email recovery
+        if (formData.newPassword.length < 6) {
+          toast.error("Password must be at least 6 characters");
+          setLoading(false);
+          return;
+        }
+
+        if (formData.newPassword !== formData.confirmPassword) {
+          toast.error("Passwords do not match");
+          setLoading(false);
+          return;
+        }
+
+        const { error } = await supabase.auth.updateUser({
+          password: formData.newPassword,
+        });
+
+        if (error) {
+          toast.error(error.message);
+          setLoading(false);
+          return;
+        }
+
+        toast.success("Password updated successfully!");
+        setIsSettingNewPassword(false);
+        setIsLogin(true);
+        navigate("/");
+        setLoading(false);
+        return;
+      }
+
       if (isResetPassword) {
         // Password reset flow
         const validation = z.object({
@@ -143,12 +189,51 @@ export default function Auth() {
           </div>
           <h1 className="text-2xl font-bold">MyFinance Tracker</h1>
           <p className="text-muted-foreground mt-2">
-            {isResetPassword ? "Reset your password" : isLogin ? "Welcome back!" : "Create your account"}
+            {isSettingNewPassword 
+              ? "Set your new password" 
+              : isResetPassword 
+              ? "Reset your password" 
+              : isLogin 
+              ? "Welcome back!" 
+              : "Create your account"}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && !isResetPassword && (
+          {isSettingNewPassword ? (
+            <>
+              <div>
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  value={formData.newPassword}
+                  onChange={(e) =>
+                    setFormData({ ...formData, newPassword: e.target.value })
+                  }
+                  placeholder="Enter new password"
+                  className="mt-1"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={(e) =>
+                    setFormData({ ...formData, confirmPassword: e.target.value })
+                  }
+                  placeholder="Confirm new password"
+                  className="mt-1"
+                  required
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              {!isLogin && !isResetPassword && (
             <div>
               <Label htmlFor="name">Name</Label>
               <Input
@@ -162,10 +247,10 @@ export default function Auth() {
                 className="mt-1"
               />
             </div>
-          )}
+              )}
 
-          <div>
-            <Label htmlFor="email">Email</Label>
+              <div>
+                <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
@@ -176,9 +261,9 @@ export default function Auth() {
               placeholder="you@example.com"
               className="mt-1"
             />
-          </div>
+              </div>
 
-          {!isResetPassword && (
+              {!isResetPassword && (
             <div>
               <Label htmlFor="password">Password</Label>
               <Input
@@ -192,15 +277,25 @@ export default function Auth() {
                 className="mt-1"
               />
             </div>
+              )}
+            </>
           )}
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Loading..." : isResetPassword ? "Send Reset Email" : isLogin ? "Sign In" : "Sign Up"}
+            {loading 
+              ? "Loading..." 
+              : isSettingNewPassword 
+              ? "Update Password" 
+              : isResetPassword 
+              ? "Send Reset Email" 
+              : isLogin 
+              ? "Sign In" 
+              : "Sign Up"}
           </Button>
         </form>
 
         <div className="mt-6 text-center space-y-2">
-          {isResetPassword ? (
+          {isSettingNewPassword ? null : isResetPassword ? (
             <button
               type="button"
               onClick={() => {
