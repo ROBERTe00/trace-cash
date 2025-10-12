@@ -183,8 +183,12 @@ If you can't identify the bank, return "Unknown Bank".`
       console.log("Detected bank:", bankName);
     }
 
-    // Second AI call: Extract ALL transactions with categorization
+    // Second AI call: Extract ALL transactions with categorization + merchant lookup
     console.log("Step 2: Extracting and categorizing all transactions...");
+    
+    // Enhanced extraction with merchant context
+    const merchantHints = extractMerchantHints(extractedText);
+    
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -199,23 +203,29 @@ If you can't identify the bank, return "Unknown Bank".`
             content: `You are an expert financial transaction extractor and categorizer. Your job is to extract EVERY SINGLE transaction from bank statements with high accuracy.
 
 CRITICAL RULES:
-1. Extract ALL transactions - even if there are 50+ transactions
+1. Extract ALL transactions - even if there are 50+ transactions, extract every single one
 2. Return ONLY valid JSON, no markdown, no code blocks, no explanations
 3. NEGATIVE amounts (-) for expenses/debits/outgoing payments
 4. POSITIVE amounts (+) for income/credits/deposits
-5. Normalize dates to YYYY-MM-DD format (use 2024 if year is missing)
+5. Normalize dates to YYYY-MM-DD format (use 2024 if year is missing, or infer from context)
 6. Add confidence score (0.0-1.0) for each categorization
 7. Low confidence (<0.6) = unclear merchant/description
+8. For ambiguous merchants, try to identify from description patterns
+
+MERCHANT IDENTIFICATION:
+- Look for known brands (Esselunga, McDonald's, Netflix, etc.)
+- Identify by context (POS, ATM, CARD, PAYMENT keywords)
+- For unclear items, mark confidence as low (<0.6)
 
 CATEGORIES (use EXACTLY these):
-- "Food & Dining" (restaurants, groceries, food delivery)
-- "Transportation" (fuel, parking, public transport, car maintenance)
-- "Shopping" (clothing, electronics, general retail)
-- "Entertainment" (movies, games, streaming, hobbies)
-- "Healthcare" (pharmacy, doctors, medical)
-- "Bills & Utilities" (rent, electricity, water, gas, internet, phone)
-- "Income" (salary, refunds, transfers in)
-- "Other" (ATM, transfers, unclear items)
+- "Food & Dining" (restaurants, groceries, food delivery, supermarkets, bars, cafés)
+- "Transportation" (fuel, parking, public transport, car maintenance, taxi, ride services)
+- "Shopping" (clothing, electronics, general retail, online shopping)
+- "Entertainment" (movies, games, streaming, hobbies, subscriptions)
+- "Healthcare" (pharmacy, doctors, medical, hospitals)
+- "Bills & Utilities" (rent, electricity, water, gas, internet, phone, insurance)
+- "Income" (salary, refunds, transfers in, deposits)
+- "Other" (ATM, transfers, unclear items, fees)
 
 OUTPUT FORMAT (pure JSON array):
 [
@@ -230,17 +240,25 @@ OUTPUT FORMAT (pure JSON array):
 ]
 
 EXAMPLES:
-"15/03 ESSELUNGA -32.50" → {"date":"2024-03-15","description":"ESSELUNGA","amount":-32.50,"category":"Food & Dining","payee":"Esselunga","confidence":0.95}
-"20/03 ATM PRELIEVO -100.00" → {"date":"2024-03-20","description":"ATM PRELIEVO","amount":-100.00,"category":"Other","payee":"ATM","confidence":1.0}
-"25/03 STIPENDIO +2500.00" → {"date":"2024-03-25","description":"STIPENDIO","amount":2500.00,"category":"Income","payee":"Employer","confidence":1.0}
+"15/03 ESSELUNGA MILANO -32.50" → {"date":"2024-03-15","description":"ESSELUNGA MILANO","amount":-32.50,"category":"Food & Dining","payee":"Esselunga","confidence":0.95}
+"20/03 ATM PRELIEVO VIA ROMA -100.00" → {"date":"2024-03-20","description":"ATM PRELIEVO VIA ROMA","amount":-100.00,"category":"Other","payee":"ATM","confidence":1.0}
+"25/03 STIPENDIO ACCREDITO +2500.00" → {"date":"2024-03-25","description":"STIPENDIO ACCREDITO","amount":2500.00,"category":"Income","payee":"Employer","confidence":1.0}
+"18/03 PAGAM CARTA AMAZON.IT -58.90" → {"date":"2024-03-18","description":"PAGAM CARTA AMAZON.IT","amount":-58.90,"category":"Shopping","payee":"Amazon","confidence":0.9}
 
-IGNORE: Opening/closing balances, summary rows, page headers/footers, non-transaction text.
+IGNORE: Opening/closing balances, summary rows, page headers/footers, non-transaction text, totals.
 
-EXTRACT ALL TRANSACTIONS - DO NOT STOP AT 10 OR 20!`
+EXTRACT ALL TRANSACTIONS - DO NOT STOP AT 10 OR 20! If there are 30 transactions, extract all 30!
+HANDLE MULTI-PAGE STATEMENTS - Continue extracting from all pages!`
           },
           {
             role: "user",
-            content: `Bank: ${bankName}\n\nExtract ALL transactions from this statement:\n\n${extractedText}`
+            content: `Bank: ${bankName}
+
+Merchant hints found: ${merchantHints.length > 0 ? merchantHints.join(', ') : 'None'}
+
+Extract ALL transactions from this statement (including all pages):
+
+${extractedText}`
           }
         ],
         max_tokens: 32000,
@@ -351,3 +369,29 @@ EXTRACT ALL TRANSACTIONS - DO NOT STOP AT 10 OR 20!`
     clearTimeout(timeoutId);
   }
 });
+
+/**
+ * Extract potential merchant hints from text
+ * Helps improve categorization accuracy
+ */
+function extractMerchantHints(text: string): string[] {
+  const hints: Set<string> = new Set();
+  const commonMerchants = [
+    'esselunga', 'coop', 'conad', 'carrefour',
+    'eni', 'agip', 'shell', 'q8',
+    'mcdonald', 'burger king', 'kfc',
+    'amazon', 'ebay', 'zalando',
+    'netflix', 'spotify', 'disney',
+    'farmacia', 'pharmacy',
+    'enel', 'tim', 'vodafone', 'wind',
+  ];
+  
+  const lowerText = text.toLowerCase();
+  for (const merchant of commonMerchants) {
+    if (lowerText.includes(merchant)) {
+      hints.add(merchant);
+    }
+  }
+  
+  return Array.from(hints);
+}

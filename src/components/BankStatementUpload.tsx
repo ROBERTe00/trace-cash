@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, CheckCircle2, AlertTriangle, Building2 } from "lucide-react";
+import { Upload, FileText, CheckCircle2, AlertTriangle, Building2, Trash2, Eye, RefreshCw, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { Expense } from "@/lib/storage";
 import { z } from "zod";
 import { useUpload } from "@/contexts/UploadContext";
 import { useApp } from "@/contexts/AppContext";
+import { PDFParsingHelp } from "@/components/PDFParsingHelp";
 import {
   Dialog,
   DialogContent,
@@ -71,11 +72,21 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
   const [dragActive, setDragActive] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const [editedTransactions, setEditedTransactions] = useState<ExtractedTransaction[]>([]);
+  const [showRawText, setShowRawText] = useState(false);
+  const [rawExtractedText, setRawExtractedText] = useState<string>("");
+  const [showParsingHelp, setShowParsingHelp] = useState(false);
+  const [lastFileName, setLastFileName] = useState<string>("");
 
   useEffect(() => {
     if (extractedTransactions.length > 0 && !showVerification) {
       setEditedTransactions(extractedTransactions);
       setShowVerification(true);
+      setShowParsingHelp(false);
+      
+      // Show help if very few transactions extracted
+      if (extractedTransactions.length < 3) {
+        setShowParsingHelp(true);
+      }
     }
   }, [extractedTransactions]);
 
@@ -108,6 +119,8 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
   };
 
   const handleFile = async (file: File) => {
+    setLastFileName(file.name);
+    setShowParsingHelp(false);
     await uploadFile(file);
   };
 
@@ -160,6 +173,18 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
     const updated = [...editedTransactions];
     updated[index] = { ...updated[index], [field]: value };
     setEditedTransactions(updated);
+  };
+
+  const deleteTransaction = (index: number) => {
+    const updated = editedTransactions.filter((_, i) => i !== index);
+    setEditedTransactions(updated);
+    toast.info("Transaction removed");
+  };
+
+  const handleReparse = () => {
+    setShowVerification(false);
+    clearTransactions();
+    toast.info("Upload a new file to re-parse");
   };
 
   const getConfidenceBadge = (confidence?: number) => {
@@ -249,6 +274,14 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
         </div>
       </Card>
 
+      {showParsingHelp && (
+        <PDFParsingHelp
+          fileName={lastFileName}
+          transactionsFound={editedTransactions.length}
+          errorMessage={editedTransactions.length < 3 ? "Very few transactions extracted. The PDF format may not be fully supported." : undefined}
+        />
+      )}
+
       <Dialog open={showVerification} onOpenChange={setShowVerification}>
         <DialogContent className="max-w-6xl max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
@@ -261,7 +294,7 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
               )}
               Review & Edit Transactions
             </DialogTitle>
-            <DialogDescription className="flex items-center gap-4">
+            <DialogDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
               <span>
                 Found {editedTransactions.length} transaction{editedTransactions.length !== 1 ? 's' : ''}
               </span>
@@ -271,8 +304,32 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
                   {lowConfidenceCount} need review
                 </Badge>
               )}
+              <div className="flex gap-2 ml-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowRawText(!showRawText)}
+                >
+                  <Eye className="h-4 w-4 mr-1" />
+                  {showRawText ? "Hide" : "Show"} Raw Text
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleReparse}
+                >
+                  <RefreshCw className="h-4 w-4 mr-1" />
+                  Re-parse
+                </Button>
+              </div>
             </DialogDescription>
           </DialogHeader>
+
+          {showRawText && (
+            <div className="mx-6 mb-4 p-4 bg-muted rounded-lg max-h-40 overflow-auto">
+              <p className="text-xs font-mono whitespace-pre-wrap">{rawExtractedText || "No raw text available"}</p>
+            </div>
+          )}
 
           <div className="flex-1 overflow-auto rounded-md border">
             <Table>
@@ -283,6 +340,7 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
                   <TableHead className="w-[120px] text-right">Amount</TableHead>
                   <TableHead className="w-[180px]">Category</TableHead>
                   <TableHead className="w-[100px]">Confidence</TableHead>
+                  <TableHead className="w-[60px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -337,20 +395,37 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
                     <TableCell>
                       {getConfidenceBadge(transaction.confidence)}
                     </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteTransaction(index)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
 
-          <DialogFooter className="flex-shrink-0">
+          <DialogFooter className="flex-shrink-0 gap-2">
             <Button variant="outline" onClick={() => {
               setShowVerification(false);
               clearTransactions();
             }}>
               {t("cancel")}
             </Button>
-            <Button onClick={handleConfirm}>
+            <Button 
+              variant="outline"
+              onClick={() => window.open('/upload?tab=csv', '_blank')}
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Upload CSV Instead
+            </Button>
+            <Button onClick={handleConfirm} disabled={editedTransactions.length === 0}>
               {t("confirm")} & {t("add")} {editedTransactions.length} Transactions
             </Button>
           </DialogFooter>
