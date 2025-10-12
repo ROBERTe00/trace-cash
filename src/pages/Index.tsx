@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { OnboardingQuestionnaire, OnboardingAnswers } from "@/components/OnboardingQuestionnaire";
 import { OnboardingGuide } from "@/components/OnboardingGuide";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -31,8 +32,36 @@ const Index = () => {
     checkAuth();
   }, [navigate]);
   
-  const handleOnboardingComplete = (answers: OnboardingAnswers) => {
+  const handleOnboardingComplete = async (answers: OnboardingAnswers) => {
     console.log("Onboarding completed with answers:", answers);
+    
+    // Save answers to user profile in database
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const { error } = await supabase
+          .from('user_profiles')
+          .update({
+            main_goal: answers.mainGoal,
+            investment_interest: answers.investmentInterest,
+            monthly_budget: answers.monthlyBudget,
+            onboarding_completed: true,
+            onboarding_completed_at: new Date().toISOString(),
+          })
+          .eq('user_id', user.id);
+        
+        if (error) {
+          console.error("Error saving onboarding answers:", error);
+          toast.error("Failed to save your preferences");
+        } else {
+          toast.success("Welcome! Your preferences have been saved.");
+        }
+      }
+    } catch (error) {
+      console.error("Error in onboarding completion:", error);
+    }
+    
     setShowOnboarding(false);
     
     // Show guide after questionnaire
