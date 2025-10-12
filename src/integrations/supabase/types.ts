@@ -346,6 +346,9 @@ export type Database = {
           debts: Json | null
           id: string
           income_sources: Json | null
+          investment_interest: string | null
+          main_goal: string | null
+          monthly_budget: string | null
           monthly_income: number | null
           onboarding_completed: boolean | null
           onboarding_completed_at: string | null
@@ -359,6 +362,9 @@ export type Database = {
           debts?: Json | null
           id?: string
           income_sources?: Json | null
+          investment_interest?: string | null
+          main_goal?: string | null
+          monthly_budget?: string | null
           monthly_income?: number | null
           onboarding_completed?: boolean | null
           onboarding_completed_at?: string | null
@@ -372,6 +378,9 @@ export type Database = {
           debts?: Json | null
           id?: string
           income_sources?: Json | null
+          investment_interest?: string | null
+          main_goal?: string | null
+          monthly_budget?: string | null
           monthly_income?: number | null
           onboarding_completed?: boolean | null
           onboarding_completed_at?: string | null
