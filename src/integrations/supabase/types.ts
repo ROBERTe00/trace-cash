@@ -119,6 +119,33 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_limits: {
+        Row: {
+          alert_threshold: number | null
+          category: string
+          created_at: string | null
+          id: string
+          monthly_limit: number
+          user_id: string
+        }
+        Insert: {
+          alert_threshold?: number | null
+          category: string
+          created_at?: string | null
+          id?: string
+          monthly_limit: number
+          user_id: string
+        }
+        Update: {
+          alert_threshold?: number | null
+          category?: string
+          created_at?: string | null
+          id?: string
+          monthly_limit?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       community_comments: {
         Row: {
           content: string
@@ -227,44 +254,145 @@ export type Database = {
         }
         Relationships: []
       }
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string | null
+          date: string
+          description: string
+          id: string
+          linked_investment_id: string | null
+          recurrence_type: string | null
+          recurring: boolean | null
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string | null
+          date: string
+          description: string
+          id?: string
+          linked_investment_id?: string | null
+          recurrence_type?: string | null
+          recurring?: boolean | null
+          type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string | null
+          date?: string
+          description?: string
+          id?: string
+          linked_investment_id?: string | null
+          recurrence_type?: string | null
+          recurring?: boolean | null
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_linked_investment_id_fkey"
+            columns: ["linked_investment_id"]
+            isOneToOne: false
+            referencedRelation: "investments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      investment_suggestions: {
+        Row: {
+          amount_suggested: number | null
+          asset_type: string | null
+          confidence_score: number | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          reasoning: string | null
+          status: string | null
+          suggestion_type: string
+          user_id: string
+        }
+        Insert: {
+          amount_suggested?: number | null
+          asset_type?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          reasoning?: string | null
+          status?: string | null
+          suggestion_type: string
+          user_id: string
+        }
+        Update: {
+          amount_suggested?: number | null
+          asset_type?: string | null
+          confidence_score?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          reasoning?: string | null
+          status?: string | null
+          suggestion_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       investments: {
         Row: {
+          category: string | null
           created_at: string | null
           current_price: number
           id: string
           live_tracking: boolean | null
           name: string
+          notes: string | null
           purchase_date: string | null
           purchase_price: number
           quantity: number
+          sector: string | null
           symbol: string | null
           type: string
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          category?: string | null
           created_at?: string | null
           current_price: number
           id?: string
           live_tracking?: boolean | null
           name: string
+          notes?: string | null
           purchase_date?: string | null
           purchase_price: number
           quantity: number
+          sector?: string | null
           symbol?: string | null
           type: string
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          category?: string | null
           created_at?: string | null
           current_price?: number
           id?: string
           live_tracking?: boolean | null
           name?: string
+          notes?: string | null
           purchase_date?: string | null
           purchase_price?: number
           quantity?: number
+          sector?: string | null
           symbol?: string | null
           type?: string
           updated_at?: string | null
@@ -352,6 +480,8 @@ export type Database = {
           monthly_income: number | null
           onboarding_completed: boolean | null
           onboarding_completed_at: string | null
+          subscription_expires_at: string | null
+          subscription_tier: string | null
           updated_at: string | null
           user_id: string
         }
@@ -368,6 +498,8 @@ export type Database = {
           monthly_income?: number | null
           onboarding_completed?: boolean | null
           onboarding_completed_at?: string | null
+          subscription_expires_at?: string | null
+          subscription_tier?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -384,6 +516,8 @@ export type Database = {
           monthly_income?: number | null
           onboarding_completed?: boolean | null
           onboarding_completed_at?: string | null
+          subscription_expires_at?: string | null
+          subscription_tier?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -466,6 +600,16 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_savings_potential: {
+        Args: { p_threshold?: number; p_user_id: string }
+        Returns: {
+          available_savings: number
+          monthly_expenses: number
+          monthly_income: number
+          savings_rate: number
+          suggestion: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
