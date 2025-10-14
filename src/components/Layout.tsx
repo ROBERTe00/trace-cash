@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { SettingsPanel } from "@/components/SettingsPanel";
+import { NotificationBell } from "@/components/NotificationBell";
 import { useNavigate } from "react-router-dom";
 
 interface LayoutProps {
@@ -44,6 +45,7 @@ export const Layout = ({ children, onLogout }: LayoutProps) => {
             >
               <Home className="h-5 w-5" />
             </Button>
+            <NotificationBell />
             <SettingsPanel />
             <Button
               variant="ghost"

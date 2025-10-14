@@ -215,12 +215,7 @@ export default function DashboardHome() {
         <FinancialProfile />
 
         {/* Financial Goals */}
-        <FinancialGoals
-          goals={goals}
-          onAdd={handleAddGoal}
-          onDelete={handleDeleteGoal}
-          onUpdate={handleUpdateGoal}
-        />
+        <FinancialGoals />
 
         {/* Enhanced AI Insights */}
         <EnhancedAIInsights 

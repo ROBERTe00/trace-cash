@@ -376,12 +376,7 @@ export default function ProgressHub() {
 
         {/* Tab Obiettivi */}
         <TabsContent value="goals" className="space-y-6">
-          <FinancialGoals
-            goals={goals}
-            onAdd={handleAddGoal}
-            onDelete={handleDeleteGoal}
-            onUpdate={handleUpdateGoal}
-          />
+          <FinancialGoals />
           <TrendChart expenses={expenses} />
         </TabsContent>
 
