@@ -307,6 +307,54 @@ export type Database = {
           },
         ]
       }
+      financial_goals: {
+        Row: {
+          created_at: string | null
+          current_amount: number | null
+          deadline: string | null
+          description: string | null
+          goal_type: string
+          id: string
+          linked_asset_type: string | null
+          priority: string | null
+          status: string | null
+          target_amount: number
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_amount?: number | null
+          deadline?: string | null
+          description?: string | null
+          goal_type?: string
+          id?: string
+          linked_asset_type?: string | null
+          priority?: string | null
+          status?: string | null
+          target_amount: number
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_amount?: number | null
+          deadline?: string | null
+          description?: string | null
+          goal_type?: string
+          id?: string
+          linked_asset_type?: string | null
+          priority?: string | null
+          status?: string | null
+          target_amount?: number
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       investment_suggestions: {
         Row: {
           amount_suggested: number | null
