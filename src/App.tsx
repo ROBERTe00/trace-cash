@@ -7,6 +7,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { AccountMenu } from "@/components/AccountMenu";
+import { NotificationBell } from "@/components/NotificationBell";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAOfflineIndicator } from "@/components/PWAOfflineIndicator";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
@@ -79,7 +80,10 @@ function ProtectedRoutes() {
               <SidebarTrigger />
               <GlobalSearch />
             </div>
-            <AccountMenu />
+            <div className="flex items-center gap-2">
+              <NotificationBell />
+              <AccountMenu />
+            </div>
           </header>
           <main className="flex-1 p-6 overflow-auto">
             <Routes>

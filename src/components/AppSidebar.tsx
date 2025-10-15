@@ -8,6 +8,7 @@ import {
   Upload,
   Trophy,
   Users,
+  Target,
 } from "lucide-react";
 import {
   Sidebar,
@@ -48,10 +49,10 @@ export function AppSidebar() {
       tooltip: t("investments")
     },
     { 
-      title: t("future"), 
-      url: "/future-planner", 
+      title: t("insights"), 
+      url: "/insights", 
       icon: Lightbulb,
-      tooltip: t("future")
+      tooltip: t("insights")
     },
     { 
       title: t("progress"), 
