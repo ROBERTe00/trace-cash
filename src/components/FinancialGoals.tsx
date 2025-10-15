@@ -10,12 +10,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFinancialGoals, FinancialGoal } from "@/hooks/useFinancialGoals";
 import { useApp } from "@/contexts/AppContext";
-import { Target, Plus, Trash2, TrendingUp, Calendar, DollarSign } from "lucide-react";
+import { useInvestments } from "@/hooks/useInvestments";
+import { useInvestmentSuggestions } from "@/hooks/useInvestmentSuggestions";
+import { Target, Plus, Trash2, TrendingUp, Calendar, DollarSign, Link2, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 
 export const FinancialGoals = () => {
   const { goals, isLoading, createGoal, updateGoal, deleteGoal } = useFinancialGoals();
   const { formatCurrency } = useApp();
+  const { investments, predictGrowth } = useInvestments();
+  const { suggestions } = useInvestmentSuggestions();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<FinancialGoal>>({
     title: '',
@@ -244,24 +248,49 @@ export const FinancialGoals = () => {
                           {formatCurrency(goal.current_amount)} of {formatCurrency(goal.target_amount)}
                         </span>
                         <span className="text-primary font-medium">
-                          {formatCurrency(remaining)} remaining
-                        </span>
+                      {formatCurrency(remaining)} remaining
+                    </span>
+                  </div>
+                </div>
+
+                {goal.deadline && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Calendar className="h-4 w-4" />
+                    <span>Deadline: {format(new Date(goal.deadline), 'MMM dd, yyyy')}</span>
+                  </div>
+                )}
+
+                {goal.goal_type === 'investment' && remaining > 0 && (
+                  <div className="mt-3 p-3 bg-accent/10 border border-accent rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <Sparkles className="h-4 w-4 text-accent mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Investment Opportunity</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Invest {formatCurrency(remaining)} now for projected growth of{' '}
+                          <span className="font-semibold text-green-600">
+                            {formatCurrency(predictGrowth(remaining, 12))}
+                          </span>{' '}
+                          in 12 months (8% annual return)
+                        </p>
                       </div>
                     </div>
-
-                    {goal.deadline && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <span>Deadline: {format(new Date(goal.deadline), 'MMM dd, yyyy')}</span>
-                      </div>
-                    )}
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })
-        )}
-      </CardContent>
-    </Card>
+                )}
+
+                {goal.investment_link && (
+                  <div className="mt-2 flex items-center gap-2 text-sm text-primary">
+                    <Link2 className="h-4 w-4" />
+                    <span>Linked to portfolio</span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })
+    )}
+  </CardContent>
+</Card>
   );
 };

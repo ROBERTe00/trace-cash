@@ -315,6 +315,7 @@ export type Database = {
           description: string | null
           goal_type: string
           id: string
+          investment_link: string | null
           linked_asset_type: string | null
           priority: string | null
           status: string | null
@@ -330,6 +331,7 @@ export type Database = {
           description?: string | null
           goal_type?: string
           id?: string
+          investment_link?: string | null
           linked_asset_type?: string | null
           priority?: string | null
           status?: string | null
@@ -345,6 +347,7 @@ export type Database = {
           description?: string | null
           goal_type?: string
           id?: string
+          investment_link?: string | null
           linked_asset_type?: string | null
           priority?: string | null
           status?: string | null

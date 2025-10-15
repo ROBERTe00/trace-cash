@@ -12,6 +12,7 @@ export interface FinancialGoal {
   deadline?: string;
   goal_type: 'savings' | 'investment' | 'debt_payoff' | 'purchase' | 'emergency_fund' | 'retirement';
   linked_asset_type?: string;
+  investment_link?: string;
   priority: 'low' | 'medium' | 'high';
   status: 'active' | 'completed' | 'paused' | 'cancelled';
   created_at: string;
