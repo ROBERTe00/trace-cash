@@ -73,71 +73,63 @@ serve(async (req) => {
       );
     }
 
-    // Enhanced PDF text extraction
-    console.log("Extracting text from PDF...");
+    // Enhanced PDF text extraction with MULTI-PAGE SUPPORT
+    console.log("Extracting text from PDF with multi-page detection...");
     const textDecoder = new TextDecoder('utf-8', { fatal: false });
     let extractedText = "";
+    let pageCount = 1;
     
     try {
       // Convert buffer to string
       const pdfContent = textDecoder.decode(uint8Array);
       
-      // Method 1: Extract from BT/ET blocks (Begin Text / End Text)
-      const btEtMatches = pdfContent.matchAll(/BT\s+(.*?)\s+ET/gs);
-      for (const match of btEtMatches) {
-        const textBlock = match[1];
-        
-        // Extract from Tj operators: (text)Tj
-        const tjMatches = textBlock.matchAll(/\((.*?)\)\s*Tj/g);
-        for (const tj of tjMatches) {
-          const text = tj[1]
-            .replace(/\\n/g, '\n')
-            .replace(/\\r/g, '\r')
-            .replace(/\\t/g, '\t')
-            .replace(/\\\(/g, '(')
-            .replace(/\\\)/g, ')')
-            .replace(/\\\\/g, '\\');
-          extractedText += text + " ";
+      // STEP 1: Detect number of pages
+      // Method A: Look for /Count in /Pages object
+      const pagesCountMatch = pdfContent.match(/\/Type\s*\/Pages[^]*?\/Count\s+(\d+)/i);
+      if (pagesCountMatch) {
+        pageCount = parseInt(pagesCountMatch[1], 10);
+        console.log(`PDF has ${pageCount} pages (detected from /Count)`);
+      } else {
+        // Method B: Count /Page objects (not /Pages)
+        const pageMatches = pdfContent.match(/\/Type\s*\/Page(?!\s*s)/gi);
+        if (pageMatches) {
+          pageCount = pageMatches.length;
+          console.log(`PDF has ${pageCount} pages (detected from /Page objects)`);
         }
-        
-        // Extract from TJ operators: [(text)]TJ
-        const tjArrayMatches = textBlock.matchAll(/\[\s*(.*?)\s*\]\s*TJ/g);
-        for (const tjArray of tjArrayMatches) {
-          const arrayContent = tjArray[1];
-          const textMatches = arrayContent.matchAll(/\((.*?)\)/g);
-          for (const tm of textMatches) {
-            extractedText += tm[1] + " ";
+      }
+      
+      // STEP 2: Split content by page markers for better extraction
+      const pageTexts: string[] = [];
+      
+      // Try to split by page boundaries
+      const pageSplitPattern = /\/Type\s*\/Page(?!\s*s)[^]*?(?=\/Type\s*\/Page(?!\s*s)|$)/gi;
+      const pageMatches = Array.from(pdfContent.matchAll(pageSplitPattern));
+      
+      if (pageMatches.length > 0) {
+        console.log(`Splitting into ${pageMatches.length} page sections`);
+        for (let i = 0; i < pageMatches.length; i++) {
+          const pageContent = pageMatches[i][0];
+          const pageText = extractTextFromPageContent(pageContent);
+          if (pageText.length > 50) {
+            pageTexts.push(pageText);
+            console.log(`Page ${i + 1} text length: ${pageText.length}`);
           }
         }
       }
       
-      // Method 2: Extract all text in parentheses (fallback for different PDF structures)
-      if (extractedText.length < 100) {
-        console.log("Using fallback extraction method...");
-        const allTextMatches = pdfContent.matchAll(/\(([^)]{3,}?)\)/g);
-        for (const match of allTextMatches) {
-          extractedText += match[1] + " ";
-        }
+      // If page splitting didn't work well, extract all at once
+      if (pageTexts.length === 0) {
+        console.log("Page splitting unsuccessful, using full document extraction");
+        const fullText = extractTextFromPageContent(pdfContent);
+        pageTexts.push(fullText);
       }
       
-      // Method 3: Look for specific patterns (dates, amounts)
-      // This helps capture tabular data that might be missed
-      const datePattern = /\b(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})\b/g;
-      const amountPattern = /\b(\d{1,3}(?:[.,]\d{3})*[.,]\d{2})\b/g;
+      // Combine all pages with page markers
+      extractedText = pageTexts
+        .map((text, idx) => `\n=== PAGE ${idx + 1} OF ${pageTexts.length} ===\n${text}`)
+        .join('\n\n');
       
-      const dates = Array.from(pdfContent.matchAll(datePattern), m => m[1]);
-      const amounts = Array.from(pdfContent.matchAll(amountPattern), m => m[1]);
-      
-      console.log(`Found ${dates.length} potential dates and ${amounts.length} potential amounts in raw PDF`);
-      
-      // Normalize extracted text
-      extractedText = extractedText
-        .replace(/\\n/g, '\n')
-        .replace(/\\r/g, '\r')
-        .replace(/\s+/g, ' ')
-        .trim();
-      
-      console.log("Extracted text length:", extractedText.length);
+      console.log(`Total extracted text length: ${extractedText.length} chars from ${pageTexts.length} page(s)`);
       console.log("First 500 chars:", extractedText.substring(0, 500));
       
       if (extractedText.length < 50) {
@@ -203,14 +195,19 @@ If you can't identify the bank, return "Unknown Bank".`
             content: `You are an expert financial transaction extractor and categorizer. Your job is to extract EVERY SINGLE transaction from bank statements with high accuracy.
 
 CRITICAL RULES:
-1. Extract ALL transactions - even if there are 50+ transactions, extract every single one
+1. **EXTRACT ALL TRANSACTIONS** - Process EVERY PAGE! If you see "PAGE X OF Y" markers, extract from ALL pages
 2. Return ONLY valid JSON, no markdown, no code blocks, no explanations
 3. NEGATIVE amounts (-) for expenses/debits/outgoing payments
 4. POSITIVE amounts (+) for income/credits/deposits
-5. Normalize dates to YYYY-MM-DD format (use 2024 if year is missing, or infer from context)
+5. Normalize dates to YYYY-MM-DD format (use 2024 if year is missing)
 6. Add confidence score (0.0-1.0) for each categorization
 7. Low confidence (<0.6) = unclear merchant/description
-8. For ambiguous merchants, try to identify from description patterns
+
+MULTI-PAGE HANDLING:
+- The statement may contain multiple pages marked as "=== PAGE X OF Y ==="
+- DO NOT STOP after the first page
+- Continue extracting until you reach the end of ALL pages
+- Typical statements have 30-50 transactions across 2-3 pages
 
 MERCHANT IDENTIFICATION:
 - Look for known brands (Esselunga, McDonald's, Netflix, etc.)
@@ -243,12 +240,10 @@ EXAMPLES:
 "15/03 ESSELUNGA MILANO -32.50" → {"date":"2024-03-15","description":"ESSELUNGA MILANO","amount":-32.50,"category":"Food & Dining","payee":"Esselunga","confidence":0.95}
 "20/03 ATM PRELIEVO VIA ROMA -100.00" → {"date":"2024-03-20","description":"ATM PRELIEVO VIA ROMA","amount":-100.00,"category":"Other","payee":"ATM","confidence":1.0}
 "25/03 STIPENDIO ACCREDITO +2500.00" → {"date":"2024-03-25","description":"STIPENDIO ACCREDITO","amount":2500.00,"category":"Income","payee":"Employer","confidence":1.0}
-"18/03 PAGAM CARTA AMAZON.IT -58.90" → {"date":"2024-03-18","description":"PAGAM CARTA AMAZON.IT","amount":-58.90,"category":"Shopping","payee":"Amazon","confidence":0.9}
 
 IGNORE: Opening/closing balances, summary rows, page headers/footers, non-transaction text, totals.
 
-EXTRACT ALL TRANSACTIONS - DO NOT STOP AT 10 OR 20! If there are 30 transactions, extract all 30!
-HANDLE MULTI-PAGE STATEMENTS - Continue extracting from all pages!`
+**CRITICAL**: If you see 30 transactions across 3 pages, extract ALL 30! Don't stop at 10 or 20!`
           },
           {
             role: "user",
@@ -256,7 +251,9 @@ HANDLE MULTI-PAGE STATEMENTS - Continue extracting from all pages!`
 
 Merchant hints found: ${merchantHints.length > 0 ? merchantHints.join(', ') : 'None'}
 
-Extract ALL transactions from this statement (including all pages):
+Extract ALL transactions from this statement:
+TOTAL PAGES: This statement has ${extractedText.split('=== PAGE').length - 1} pages.
+YOU MUST extract transactions from ALL pages, not just the first one!
 
 ${extractedText}`
           }
@@ -369,6 +366,58 @@ ${extractedText}`
     clearTimeout(timeoutId);
   }
 });
+
+/**
+ * Extract text from a PDF page content section
+ * Handles multiple text encoding methods
+ */
+function extractTextFromPageContent(content: string): string {
+  let text = "";
+  
+  // Method 1: Extract from BT/ET blocks (Begin Text / End Text)
+  const btEtMatches = content.matchAll(/BT\s+(.*?)\s+ET/gs);
+  for (const match of btEtMatches) {
+    const textBlock = match[1];
+    
+    // Extract from Tj operators: (text)Tj
+    const tjMatches = textBlock.matchAll(/\((.*?)\)\s*Tj/g);
+    for (const tj of tjMatches) {
+      const decoded = tj[1]
+        .replace(/\\n/g, '\n')
+        .replace(/\\r/g, '\r')
+        .replace(/\\t/g, '\t')
+        .replace(/\\\(/g, '(')
+        .replace(/\\\)/g, ')')
+        .replace(/\\\\/g, '\\');
+      text += decoded + " ";
+    }
+    
+    // Extract from TJ operators: [(text)]TJ
+    const tjArrayMatches = textBlock.matchAll(/\[\s*(.*?)\s*\]\s*TJ/g);
+    for (const tjArray of tjArrayMatches) {
+      const arrayContent = tjArray[1];
+      const textMatches = arrayContent.matchAll(/\((.*?)\)/g);
+      for (const tm of textMatches) {
+        text += tm[1] + " ";
+      }
+    }
+  }
+  
+  // Method 2: Extract all text in parentheses (fallback)
+  if (text.length < 100) {
+    const allTextMatches = content.matchAll(/\(([^)]{3,}?)\)/g);
+    for (const match of allTextMatches) {
+      text += match[1] + " ";
+    }
+  }
+  
+  // Normalize
+  return text
+    .replace(/\\n/g, '\n')
+    .replace(/\\r/g, '\r')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 /**
  * Extract potential merchant hints from text

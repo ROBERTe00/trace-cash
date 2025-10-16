@@ -127,7 +127,7 @@ export const InvestmentTable = ({
   return (
     <Card className="glass-card p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-card-title">{t('investments.portfolio')}</h3>
+        <h3 className="text-card-title mb-4">{t('investments.portfolio')}</h3>
         {investments.some(inv => inv.liveTracking) && (
           <Button
             variant="outline"

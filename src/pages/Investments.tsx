@@ -282,17 +282,24 @@ export default function Investments() {
         </TabsContent>
 
         <TabsContent value="performance" className="space-y-6">
-          <PortfolioMetricsPanel investments={investments} />
-          
-          <Card className="glass-card">
-            <div className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Calculator className="icon-card text-primary" />
-                <h3 className="text-card-title">Scenario Simulator</h3>
-              </div>
-              <InvestmentScenarioSimulator />
+          {/* Desktop: 2 columns, Mobile: 1 column */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* LEFT COLUMN: Metrics */}
+            <div className="space-y-6">
+              <PortfolioMetricsPanel investments={investments} />
             </div>
-          </Card>
+            
+            {/* RIGHT COLUMN: Simulator */}
+            <Card className="glass-card">
+              <div className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Calculator className="icon-card text-primary" />
+                  <h3 className="text-card-title">Scenario Simulator</h3>
+                </div>
+                <InvestmentScenarioSimulator />
+              </div>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="import" className="space-y-6">

@@ -49,9 +49,9 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
     const cryptoPercentage = ((categoryData["Crypto"] || 0) / totalValue) * 100;
     const stockPercentage = ((categoryData["Stocks"] || 0) / totalValue) * 100;
 
-    if (cryptoPercentage > 40) return { level: "High", color: "text-red-500" };
-    if (cryptoPercentage > 20 || stockPercentage > 60) return { level: "Medium", color: "text-yellow-500" };
-    return { level: "Low", color: "text-green-500" };
+    if (cryptoPercentage > 40) return { level: "High", color: "text-destructive" };
+    if (cryptoPercentage > 20 || stockPercentage > 60) return { level: "Medium", color: "text-warning" };
+    return { level: "Low", color: "text-success" };
   };
 
   // Calculate total yield
@@ -86,12 +86,12 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
   }
 
   return (
-    <Card className="glass-card p-4 md:p-6 animate-fade-in hover-lift border-2 border-primary/10">
-      <h3 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 flex items-center gap-2 md:gap-3">
-        <div className="p-1.5 md:p-2 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5">
-          <Target className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+    <Card className="glass-card p-6 animate-fade-in hover-lift border border-primary/10">
+      <h3 className="text-card-title mb-6 flex items-center gap-2">
+        <div className="p-2 rounded-xl bg-primary/10">
+          <Target className="icon-card text-primary" />
         </div>
-        <span className="gradient-text">{t('portfolio.analysis')}</span>
+        <span>{t('portfolio.analysis')}</span>
       </h3>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -105,7 +105,7 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
           />
           
           {/* Category List */}
-          <div className="space-y-2 mt-6">
+          <div className="space-y-2 mt-4">
             {pieData.map((item, index) => (
               <motion.div
                 key={item.name}
@@ -121,26 +121,26 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
                   />
                   <span className="text-sm font-medium">{item.name}</span>
                 </div>
-                <span className="text-sm font-bold">{item.percentage}%</span>
+                <span className="text-sm font-bold text-primary">{item.percentage}%</span>
               </motion.div>
             ))}
           </div>
         </div>
 
         {/* Metrics */}
-        <div className="space-y-3 lg:space-y-4">
+        <div className="space-y-4">
           {/* Diversification Score */}
-          <div className="p-3 md:p-4 rounded-lg bg-primary/5 border border-primary/10">
+          <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs md:text-sm font-medium flex items-center gap-1.5 md:gap-2">
-                <Shield className="h-3.5 w-3.5 md:h-4 md:w-4" />
+              <span className="text-sm font-medium flex items-center gap-2">
+                <Shield className="icon-button text-primary" />
                 {t('portfolio.diversification')}
               </span>
-              <span className="text-xl md:text-2xl font-bold">{diversificationScore.toFixed(0)}/100</span>
+              <span className="text-medium-number text-primary">{diversificationScore.toFixed(0)}/100</span>
             </div>
-            <div className="w-full bg-muted rounded-full h-1.5 md:h-2">
+            <div className="w-full bg-muted rounded-full h-2">
               <div
-                className="bg-primary h-1.5 md:h-2 rounded-full transition-all duration-500"
+                className="bg-primary h-2 rounded-full transition-all duration-500"
                 style={{ width: `${diversificationScore}%` }}
               />
             </div>
@@ -154,10 +154,10 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
           </div>
 
           {/* Risk Level */}
-          <div className="p-3 md:p-4 rounded-lg bg-card border border-border">
+          <div className="p-4 rounded-lg bg-card border border-border">
             <div className="flex items-center justify-between">
-              <span className="text-xs md:text-sm font-medium">{t('portfolio.riskLevel')}</span>
-              <span className={`text-base md:text-lg font-bold ${riskLevel.color}`}>{riskLevel.level}</span>
+              <span className="text-sm font-medium">{t('portfolio.riskLevel')}</span>
+              <span className={`text-small-number font-bold ${riskLevel.color}`}>{riskLevel.level}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
               {t('portfolio.riskBased')}
@@ -165,13 +165,13 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
           </div>
 
           {/* Total Yield */}
-          <div className="p-3 md:p-4 rounded-lg bg-card border border-border">
+          <div className="p-4 rounded-lg bg-card border border-border">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs md:text-sm font-medium flex items-center gap-1.5 md:gap-2">
-                <TrendingUp className="h-3.5 w-3.5 md:h-4 md:w-4" />
+              <span className="text-sm font-medium flex items-center gap-2">
+                <TrendingUp className="icon-button text-primary" />
                 {t('portfolio.totalYield')}
               </span>
-              <span className={`text-base md:text-lg font-bold ${totalYield >= 0 ? "text-green-500" : "text-red-500"}`}>
+              <span className={`text-small-number font-bold ${totalYield >= 0 ? "text-success" : "text-destructive"}`}>
                 {totalYield >= 0 ? "+" : ""}
                 {formatCurrency(totalYield)}
               </span>

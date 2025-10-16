@@ -55,15 +55,16 @@ export const ExpenseForm = ({ onAdd }: ExpenseFormProps) => {
   };
 
   return (
-    <Card className="glass-card p-6 animate-fade-in hover-lift border-2 border-primary/10">
-      <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+    <Card className="glass-card p-6 animate-fade-in hover-lift border border-primary/10">
+      <h3 className="text-card-title mb-4 flex items-center gap-2">
         <div className="h-2 w-2 bg-primary rounded-full animate-pulse" />
-        Add Transaction
+        Aggiungi Transazione
       </h3>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Compact layout: Date + Category in same row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="date">Date</Label>
+            <Label htmlFor="date">Data</Label>
             <Input
               id="date"
               type="date"
@@ -74,7 +75,7 @@ export const ExpenseForm = ({ onAdd }: ExpenseFormProps) => {
           </div>
 
           <div>
-            <Label htmlFor="category">Category</Label>
+            <Label htmlFor="category">Categoria</Label>
             <Select
               value={formData.category}
               onValueChange={(value) =>
@@ -82,31 +83,34 @@ export const ExpenseForm = ({ onAdd }: ExpenseFormProps) => {
               }
             >
               <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder="Seleziona categoria" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Food">Food</SelectItem>
-                <SelectItem value="Transport">Transport</SelectItem>
-                <SelectItem value="Entertainment">Entertainment</SelectItem>
-                <SelectItem value="Rent">Rent</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
+                <SelectItem value="Food">Cibo</SelectItem>
+                <SelectItem value="Transport">Trasporti</SelectItem>
+                <SelectItem value="Entertainment">Intrattenimento</SelectItem>
+                <SelectItem value="Rent">Affitto</SelectItem>
+                <SelectItem value="Other">Altro</SelectItem>
               </SelectContent>
             </Select>
           </div>
+        </div>
 
+        {/* Description + Amount */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Descrizione</Label>
             <Input
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="e.g., Grocery shopping"
+              placeholder="es., Spesa supermercato"
               className="mt-1"
             />
           </div>
 
           <div>
-            <Label htmlFor="amount">Amount (€)</Label>
+            <Label htmlFor="amount">Importo (€)</Label>
             <Input
               id="amount"
               type="number"
@@ -120,56 +124,59 @@ export const ExpenseForm = ({ onAdd }: ExpenseFormProps) => {
           </div>
         </div>
 
-        <div>
-          <Label>Type</Label>
-          <RadioGroup
-            value={formData.type}
-            onValueChange={(value) =>
-              setFormData({ ...formData, type: value as "Income" | "Expense" })
-            }
-            className="flex gap-4 mt-2"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Expense" id="expense" />
-              <Label htmlFor="expense" className="cursor-pointer">
-                Expense
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Income" id="income" />
-              <Label htmlFor="income" className="cursor-pointer">
-                Income
-              </Label>
-            </div>
-          </RadioGroup>
-        </div>
-
-        <div>
-          <Label htmlFor="recurring">Recurrence</Label>
-          <Select
-            value={formData.recurring ? formData.recurrenceType : "none"}
-            onValueChange={(value) => {
-              if (value === "none") {
-                setFormData({ ...formData, recurring: false });
-              } else {
-                setFormData({ ...formData, recurring: true, recurrenceType: value as "weekly" | "monthly" | "yearly" });
+        {/* Type + Recurrence in same row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <Label>Tipo</Label>
+            <RadioGroup
+              value={formData.type}
+              onValueChange={(value) =>
+                setFormData({ ...formData, type: value as "Income" | "Expense" })
               }
-            }}
-          >
-            <SelectTrigger className="mt-1">
-              <SelectValue />
-            </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">One-time</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-              </SelectContent>
-          </Select>
+              className="flex gap-4 mt-2"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Expense" id="expense" />
+                <Label htmlFor="expense" className="cursor-pointer">
+                  Spesa
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Income" id="income" />
+                <Label htmlFor="income" className="cursor-pointer">
+                  Entrata
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          <div>
+            <Label htmlFor="recurring">Ricorrenza</Label>
+            <Select
+              value={formData.recurring ? formData.recurrenceType : "none"}
+              onValueChange={(value) => {
+                if (value === "none") {
+                  setFormData({ ...formData, recurring: false });
+                } else {
+                  setFormData({ ...formData, recurring: true, recurrenceType: value as "weekly" | "monthly" | "yearly" });
+                }
+              }}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Una tantum</SelectItem>
+                  <SelectItem value="weekly">Settimanale</SelectItem>
+                  <SelectItem value="monthly">Mensile</SelectItem>
+                </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <Button type="submit" className="w-full">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Transaction
+          <Plus className="icon-button mr-2" />
+          Aggiungi Transazione
         </Button>
       </form>
     </Card>
