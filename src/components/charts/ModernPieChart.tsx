@@ -1,5 +1,6 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { motion } from "framer-motion";
+import { useApp } from "@/contexts/AppContext";
 
 interface ModernPieChartProps {
   data: Array<{
@@ -59,6 +60,8 @@ export const ModernPieChart = ({
   showPercentages = true,
   height = 300,
 }: ModernPieChartProps) => {
+  const { formatCurrency } = useApp();
+  
   return (
     <div className="relative">
       <ResponsiveContainer width="100%" height={height}>
@@ -100,12 +103,16 @@ export const ModernPieChart = ({
             ))}
           </Pie>
           <Tooltip
-            formatter={(value: number) => `€${value.toFixed(2)}`}
+            formatter={(value: number) => formatCurrency(value)}
             contentStyle={{
               backgroundColor: "hsl(var(--card))",
               border: "1px solid hsl(var(--border))",
               borderRadius: "12px",
               boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              color: "hsl(var(--foreground))",
+            }}
+            itemStyle={{
+              color: "hsl(var(--foreground))",
             }}
             labelStyle={{
               fontWeight: 600,

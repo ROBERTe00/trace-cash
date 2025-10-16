@@ -50,8 +50,8 @@ export const Layout = () => {
           <AppSidebar />
         </div>
 
-        <main className="flex-1 overflow-auto pb-20 md:pb-0">
-          <div className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl supports-[backdrop-filter]:bg-card/60 border-b px-4 py-3 shadow-sm">
+        <main className="flex-1 w-full overflow-x-hidden overflow-y-auto pb-20 md:pb-0">
+          <div className="sticky top-0 z-50 bg-card/80 backdrop-blur-xl supports-[backdrop-filter]:bg-card/60 border-b px-4 py-3 shadow-sm">
             <div className="flex items-center justify-between max-w-7xl mx-auto">
               <GlobalSearch />
               <div className="flex items-center gap-2">
@@ -60,7 +60,7 @@ export const Layout = () => {
               </div>
             </div>
           </div>
-          <div className="p-4 md:p-6 max-w-7xl mx-auto overflow-hidden">
+          <div className="p-4 md:p-6 max-w-7xl mx-auto w-full">
             <PWAInstallPrompt />
             <PWAOfflineIndicator />
             <PWAUpdateNotification />

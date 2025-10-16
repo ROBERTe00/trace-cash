@@ -60,19 +60,18 @@ const BalanceCard = ({ totalBalance, accounts }: BalanceCardProps) => {
                 >
                   <div className="flex items-center gap-3">
                     <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: `${account.color}20` }}
+                      className="w-10 h-10 rounded-full flex items-center justify-center bg-primary/10"
                     >
-                      <Icon className="w-5 h-5" style={{ color: account.color }} />
+                      <Icon className="icon-card text-primary" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">{account.name}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{account.name}</p>
                       <Badge variant="secondary" className="text-xs mt-0.5">
                         {account.type}
                       </Badge>
                     </div>
                   </div>
-                  <span className="text-base font-semibold">{formatCurrency(account.amount)}</span>
+                  <span className="text-base font-semibold whitespace-nowrap">{formatCurrency(account.amount)}</span>
                 </motion.div>
               );
             })}

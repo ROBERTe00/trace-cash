@@ -23,21 +23,21 @@ export const StatsOverview = ({
       value: formatCurrency(totalInvestments),
       icon: DollarSign,
       trend: monthlyChange,
-      color: "from-blue-500 to-cyan-500",
+      color: "from-info to-info/70",
     },
     {
       title: "Total Yield",
       value: `${totalYield >= 0 ? "+" : ""}${totalYield.toFixed(2)}%`,
       icon: totalYield >= 0 ? TrendingUp : TrendingDown,
       trend: totalYield,
-      color: totalYield >= 0 ? "from-green-500 to-emerald-500" : "from-red-500 to-pink-500",
+      color: totalYield >= 0 ? "from-success to-success/70" : "from-destructive to-destructive/70",
     },
     {
       title: "Goals Progress",
       value: `${goalsProgress.toFixed(0)}%`,
       icon: Target,
       trend: goalsProgress,
-      color: "from-purple-500 to-pink-500",
+      color: "from-accent to-accent/70",
     },
   ];
 
@@ -67,11 +67,11 @@ export const StatsOverview = ({
               {stat.trend !== undefined && (
                 <div className="mt-2 flex items-center gap-1">
                   {stat.trend >= 0 ? (
-                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <TrendingUp className="icon-button text-success" />
                   ) : (
-                    <TrendingDown className="h-4 w-4 text-red-500" />
+                    <TrendingDown className="icon-button text-destructive" />
                   )}
-                  <span className={`text-sm font-medium ${stat.trend >= 0 ? "text-green-500" : "text-red-500"}`}>
+                  <span className={`text-sm font-medium ${stat.trend >= 0 ? "text-success" : "text-destructive"}`}>
                     {stat.trend >= 0 ? "+" : ""}{Math.abs(stat.trend).toFixed(1)}%
                   </span>
                 </div>

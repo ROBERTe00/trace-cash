@@ -74,14 +74,14 @@ const ExpenseBreakdownCard = ({ categories, totalExpenses }: ExpenseBreakdownCar
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.9 + index * 0.1 }}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className="w-3 h-3 rounded-full"
+                      className="w-3 h-3 rounded-full flex-shrink-0"
                       style={{ backgroundColor: category.color }}
                     />
-                    <span className="text-sm font-medium">{category.name}</span>
+                    <span className="text-sm font-medium truncate">{category.name}</span>
                   </div>
-                  <span className="text-sm font-semibold">{percentage}%</span>
+                  <span className="text-sm font-semibold whitespace-nowrap">{percentage}%</span>
                 </motion.div>
               );
             })}

@@ -48,34 +48,62 @@ export default function Transactions() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Hero */}
-      <div>
-        <h1 className="text-4xl font-bold gradient-text">Transactions</h1>
-        <p className="text-muted-foreground mt-1">
-          Track and manage your income & expenses
-        </p>
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-background border border-primary/20 p-6">
+        <div className="relative z-10">
+          <h1 className="text-section">Transactions</h1>
+          <p className="text-muted-foreground mt-1">
+            Track and manage your income & expenses
+          </p>
+        </div>
+        <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(white,transparent_70%)]" />
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview" className="gap-2">
-            <Wallet className="icon-button" />
-            Overview
+        <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl flex-wrap gap-1">
+          <TabsTrigger 
+            value="overview" 
+            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5"
+          >
+            <div className="flex items-center gap-2">
+              <Wallet className="icon-button" />
+              Overview
+            </div>
           </TabsTrigger>
-          <TabsTrigger value="details" className="gap-2">
-            <PieChart className="icon-button" />
-            Details
+          <TabsTrigger 
+            value="details" 
+            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5"
+          >
+            <div className="flex items-center gap-2">
+              <PieChart className="icon-button" />
+              Details
+            </div>
           </TabsTrigger>
-          <TabsTrigger value="insights" className="gap-2">
-            <Lightbulb className="icon-button" />
-            Insights
+          <TabsTrigger 
+            value="insights" 
+            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5"
+          >
+            <div className="flex items-center gap-2">
+              <Lightbulb className="icon-button" />
+              Insights
+            </div>
           </TabsTrigger>
-          <TabsTrigger value="upload" className="gap-2">
-            <UploadIcon className="icon-button" />
-            Import
+          <TabsTrigger 
+            value="upload" 
+            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5"
+          >
+            <div className="flex items-center gap-2">
+              <UploadIcon className="icon-button" />
+              Import
+            </div>
           </TabsTrigger>
-          <TabsTrigger value="settings" className="gap-2">
-            <Settings className="icon-button" />
-            Settings
+          <TabsTrigger 
+            value="settings" 
+            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5"
+          >
+            <div className="flex items-center gap-2">
+              <Settings className="icon-button" />
+              Settings
+            </div>
           </TabsTrigger>
         </TabsList>
 
