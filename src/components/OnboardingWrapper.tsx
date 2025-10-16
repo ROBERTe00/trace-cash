@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingDashboard } from "./LoadingDashboard";
-import { EnhancedOnboarding } from "./EnhancedOnboarding";
+import { AIOnboardingWizard } from "./onboarding/AIOnboardingWizard";
 
 interface OnboardingWrapperProps {
   children: React.ReactNode;
@@ -69,7 +69,7 @@ export const OnboardingWrapper = ({ children }: OnboardingWrapperProps) => {
   }
 
   if (needsOnboarding) {
-    return <EnhancedOnboarding isOpen={true} onComplete={handleOnboardingComplete} />;
+    return <AIOnboardingWizard isOpen={true} onComplete={handleOnboardingComplete} />;
   }
 
   return <>{children}</>;

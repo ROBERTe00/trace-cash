@@ -42,6 +42,16 @@
     line-height: 1.4;
   }
   
+  /* NEW: Metric text for consistent number formatting */
+  .metric-text {
+    @apply font-mono text-lg font-semibold text-primary;
+  }
+  
+  /* NEW: Truncate text utility */
+  .truncate-text {
+    @apply overflow-hidden truncate whitespace-nowrap;
+  }
+  
   /* Icon sizes standardized */
   .icon-hero {
     width: 3rem;
@@ -264,9 +274,13 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-x-hidden antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  
+  html {
+    @apply overflow-x-hidden;
   }
 }
 

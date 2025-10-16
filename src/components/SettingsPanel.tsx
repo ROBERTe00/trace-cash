@@ -1,4 +1,4 @@
-import { Settings } from "lucide-react";
+import { Settings, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,6 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useApp, Currency, Language } from "@/contexts/AppContext";
+import { clearCacheAndReload } from "@/lib/serviceWorkerUtils";
+import { toast } from "sonner";
 
 const currencies: { value: Currency; label: string }[] = [
   { value: "EUR", label: "Euro (€)" },
@@ -28,6 +30,11 @@ const languages: { value: Language; label: string }[] = [
 
 export const SettingsPanel = () => {
   const { currency, language, setCurrency, setLanguage } = useApp();
+
+  const handleClearCache = async () => {
+    toast.loading("Clearing cache...");
+    await clearCacheAndReload();
+  };
 
   return (
     <DropdownMenu>
@@ -58,6 +65,12 @@ export const SettingsPanel = () => {
             {lang.label}
           </DropdownMenuItem>
         ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>Advanced</DropdownMenuLabel>
+        <DropdownMenuItem onClick={handleClearCache} className="text-warning">
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Clear Cache & Reload
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
