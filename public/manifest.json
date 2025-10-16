@@ -1,14 +1,16 @@
 {
-  "name": "Trace-Cash - Gestione Finanziaria Personale",
+  "name": "Trace-Cash - Gestione Finanziaria Intelligente",
   "short_name": "TraceCash",
-  "description": "App intelligente per tracciare spese, investimenti e obiettivi finanziari",
+  "description": "App completa per tracciare spese, investimenti e obiettivi finanziari con AI",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#0F172A",
-  "theme_color": "#6366F1",
+  "background_color": "#ffffff",
+  "theme_color": "#007BFF",
   "orientation": "portrait-primary",
   "prefer_related_applications": false,
+  "dir": "ltr",
+  "lang": "it",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -28,7 +30,14 @@
       "name": "Aggiungi Spesa",
       "short_name": "Spesa",
       "description": "Aggiungi una nuova spesa rapidamente",
-      "url": "/expenses",
+      "url": "/expenses?action=add",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Nuovo Investimento",
+      "short_name": "Investimento",
+      "description": "Aggiungi un nuovo investimento",
+      "url": "/investments?action=add",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
@@ -36,13 +45,6 @@
       "short_name": "Dashboard",
       "description": "Visualizza il tuo riepilogo finanziario",
       "url": "/",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
-    },
-    {
-      "name": "Investimenti",
-      "short_name": "Investimenti",
-      "description": "Monitora il tuo portafoglio",
-      "url": "/investments",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ],

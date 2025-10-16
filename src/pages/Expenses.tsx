@@ -9,13 +9,24 @@ import { ExpenseForm } from "@/components/ExpenseForm";
 import { CategoryManager } from "@/components/CategoryManager";
 import { getExpenses, saveExpenses, Expense } from "@/lib/storage";
 import { toast } from "sonner";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 export default function Expenses() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState("riepilogo");
+  const navigate = useNavigate();
 
   useEffect(() => {
     setExpenses(getExpenses());
-  }, []);
+    
+    // Check if action=add query param exists
+    if (searchParams.get("action") === "add") {
+      setActiveTab("dettagli");
+      // Remove the query param
+      navigate("/expenses", { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   const handleAddExpense = (expense: Omit<Expense, "id">) => {
     const newExpense = { ...expense, id: crypto.randomUUID() };
@@ -43,7 +54,7 @@ export default function Expenses() {
         </div>
       </div>
 
-      <Tabs defaultValue="riepilogo" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="riepilogo">Riepilogo</TabsTrigger>
           <TabsTrigger value="dettagli">Dettagli</TabsTrigger>

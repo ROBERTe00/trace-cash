@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -15,7 +15,12 @@ import { useInvestmentSuggestions } from "@/hooks/useInvestmentSuggestions";
 import { Target, Plus, Trash2, TrendingUp, Calendar, DollarSign, Link2, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 
-export const FinancialGoals = () => {
+interface FinancialGoalsProps {
+  openDialog?: boolean;
+  onDialogChange?: (open: boolean) => void;
+}
+
+export const FinancialGoals = ({ openDialog = false, onDialogChange }: FinancialGoalsProps = {}) => {
   const { goals, isLoading, createGoal, updateGoal, deleteGoal } = useFinancialGoals();
   const { formatCurrency } = useApp();
   const { investments, predictGrowth } = useInvestments();
@@ -31,10 +36,24 @@ export const FinancialGoals = () => {
     status: 'active',
   });
 
+  // Sync with external control
+  useEffect(() => {
+    if (openDialog !== undefined) {
+      setDialogOpen(openDialog);
+    }
+  }, [openDialog]);
+
+  const handleDialogChange = (open: boolean) => {
+    setDialogOpen(open);
+    if (onDialogChange) {
+      onDialogChange(open);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createGoal(formData as any);
-    setDialogOpen(false);
+    handleDialogChange(false);
     setFormData({
       title: '',
       description: '',
@@ -90,7 +109,7 @@ export const FinancialGoals = () => {
               <CardDescription>Track and achieve your financial objectives</CardDescription>
             </div>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
             <DialogTrigger asChild>
               <Button size="sm" className="gap-2">
                 <Plus className="h-4 w-4" />

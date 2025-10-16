@@ -13,6 +13,7 @@ import { AIAdvicePanel } from "@/components/AIAdvicePanel";
 import { useToast } from "@/hooks/use-toast";
 import confetti from "canvas-confetti";
 import jsPDF from "jspdf";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 interface Achievement {
   id: string;
@@ -33,11 +34,23 @@ export default function ProgressHub() {
   const [xp, setXp] = useState(0);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [goals, setGoals] = useState<FinancialGoal[]>([]);
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState("achievements");
+  const [openGoalDialog, setOpenGoalDialog] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     calculateProgress();
     setGoals(getGoals());
-  }, []);
+    
+    // Check if action=create query param exists
+    if (searchParams.get("action") === "create") {
+      setActiveTab("goals");
+      setOpenGoalDialog(true);
+      // Remove the query param
+      navigate("/progress", { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   const handleAddGoal = (goal: Omit<FinancialGoal, "id">) => {
     const newGoal: FinancialGoal = {
@@ -285,7 +298,7 @@ export default function ProgressHub() {
       </div>
 
       {/* Tabs per organizzare meglio il contenuto */}
-      <Tabs defaultValue="achievements" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-6">
           <TabsTrigger value="achievements" className="gap-2">
             <Trophy className="h-4 w-4" />
@@ -376,7 +389,7 @@ export default function ProgressHub() {
 
         {/* Tab Obiettivi */}
         <TabsContent value="goals" className="space-y-6">
-          <FinancialGoals />
+          <FinancialGoals openDialog={openGoalDialog} onDialogChange={setOpenGoalDialog} />
           <TrendChart expenses={expenses} />
         </TabsContent>
 

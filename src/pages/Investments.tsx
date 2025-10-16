@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useApp } from "@/contexts/AppContext";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 export default function Investments() {
   const { t, formatCurrency } = useApp();
@@ -22,10 +23,19 @@ export default function Investments() {
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<string>("all");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadInvestments();
-  }, []);
+    
+    // Check if action=add query param exists
+    if (searchParams.get("action") === "add") {
+      setSheetOpen(true);
+      // Remove the query param
+      navigate("/investments", { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   const loadInvestments = async () => {
     try {

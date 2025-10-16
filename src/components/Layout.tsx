@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { NotificationBell } from "@/components/NotificationBell";
 import { useNavigate } from "react-router-dom";
+import { BottomNav } from "@/components/ui/bottom-nav";
+import { FAB } from "@/components/ui/fab";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -31,7 +33,7 @@ export const Layout = ({ children, onLogout }: LayoutProps) => {
               <span className="text-lg font-bold text-white">€</span>
             </div>
             <h1 className="text-xl font-bold bg-clip-text text-transparent gradient-primary">
-              MyFinance Tracker
+              TraceCash
             </h1>
           </div>
           
@@ -40,7 +42,7 @@ export const Layout = ({ children, onLogout }: LayoutProps) => {
               variant="ghost"
               size="icon"
               onClick={() => navigate('/')}
-              className="rounded-full relative z-50"
+              className="rounded-full relative z-50 hidden md:flex"
               title="Home"
             >
               <Home className="h-5 w-5" />
@@ -74,9 +76,15 @@ export const Layout = ({ children, onLogout }: LayoutProps) => {
         </div>
       </header>
       
-      <main className="container px-4 py-6 animate-fade-in">
+      <main className="container px-4 py-6 pb-24 md:pb-6 animate-fade-in">
         {children}
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <BottomNav />
+
+      {/* Floating Action Button */}
+      <FAB />
     </div>
   );
 };
