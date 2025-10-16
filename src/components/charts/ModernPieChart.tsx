@@ -17,24 +17,39 @@ interface ModernPieChartProps {
 
 const RADIAN = Math.PI / 180;
 
-const CustomLabel = ({ cx, cy, midAngle, outerRadius, percent, name }: any) => {
-  const radius = outerRadius + 35;
+const CustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, data }: any) => {
+  if (percent < 0.05) return null;
+  
+  const radius = innerRadius + (outerRadius - innerRadius) / 2;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-  if (percent < 0.05) return null; // Don't show labels for segments < 5%
+  
+  const color = data[index]?.color || "hsl(var(--primary))";
 
   return (
-    <text
-      x={x}
-      y={y}
-      fill="hsl(var(--foreground))"
-      textAnchor={x > cx ? 'start' : 'end'}
-      dominantBaseline="central"
-      className="font-bold text-sm"
-    >
-      {`${(percent * 100).toFixed(1)}%`}
-    </text>
+    <g>
+      <circle 
+        cx={x} 
+        cy={y} 
+        r={24} 
+        fill="hsl(var(--card))" 
+        opacity="0.98"
+        stroke={color}
+        strokeWidth={2}
+        filter="drop-shadow(0 2px 4px rgba(0,0,0,0.2))"
+      />
+      <text
+        x={x}
+        y={y}
+        fill="hsl(var(--foreground))"
+        textAnchor="middle"
+        dominantBaseline="central"
+        className="font-bold text-xs"
+        style={{ pointerEvents: 'none' }}
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    </g>
   );
 };
 
@@ -48,27 +63,39 @@ export const ModernPieChart = ({
     <div className="relative">
       <ResponsiveContainer width="100%" height={height}>
         <PieChart>
+          <defs>
+            {data.map((entry, index) => (
+              <linearGradient key={`gradient-${index}`} id={`gradient-${index}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={entry.color} stopOpacity={1} />
+                <stop offset="100%" stopColor={entry.color} stopOpacity={0.7} />
+              </linearGradient>
+            ))}
+          </defs>
           <Pie
             data={data}
             cx="50%"
             cy="50%"
             labelLine={false}
-            label={showPercentages ? CustomLabel : false}
-            outerRadius={110}
-            innerRadius={0}
+            label={showPercentages ? (props: any) => <CustomLabel {...props} data={data} /> : false}
+            outerRadius={100}
+            innerRadius={70}
             fill="#8884d8"
             dataKey="value"
-            stroke="#FFFFFF"
-            strokeWidth={3}
+            stroke="hsl(var(--background))"
+            strokeWidth={4}
+            paddingAngle={2}
             animationBegin={0}
-            animationDuration={1200}
-            animationEasing="ease-out"
+            animationDuration={1500}
+            animationEasing="ease-in-out"
           >
             {data.map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
-                fill={entry.color}
-                className="transition-all hover:opacity-80"
+                fill={`url(#gradient-${index})`}
+                className="transition-all hover:opacity-90 cursor-pointer"
+                style={{
+                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.15))',
+                }}
               />
             ))}
           </Pie>

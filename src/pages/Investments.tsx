@@ -226,17 +226,26 @@ export default function Investments() {
 
       {/* 3 Tabs: Portfolio, Performance, Import */}
       <Tabs defaultValue="portfolio" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="portfolio" className="gap-2">
-            <PieChart className="icon-card" />
+        <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl">
+          <TabsTrigger 
+            value="portfolio" 
+            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5 gap-2"
+          >
+            <PieChart className="icon-button" />
             Portfolio
           </TabsTrigger>
-          <TabsTrigger value="performance" className="gap-2">
-            <BarChart3 className="icon-card" />
+          <TabsTrigger 
+            value="performance" 
+            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5 gap-2"
+          >
+            <BarChart3 className="icon-button" />
             Performance
           </TabsTrigger>
-          <TabsTrigger value="import" className="gap-2">
-            <UploadIcon className="icon-card" />
+          <TabsTrigger 
+            value="import" 
+            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5 gap-2"
+          >
+            <UploadIcon className="icon-button" />
             Import
           </TabsTrigger>
         </TabsList>

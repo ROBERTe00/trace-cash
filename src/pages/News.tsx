@@ -71,9 +71,9 @@ export default function News() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in overflow-hidden">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-background border border-blue-500/20 p-8">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-background border border-blue-500/20 p-6">
         <div className="relative z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -81,7 +81,7 @@ export default function News() {
                 <Newspaper className="icon-card text-blue-500" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold gradient-text">Market News & Insights</h1>
+                <h1 className="text-section">Market News & Insights</h1>
                 <p className="text-muted-foreground mt-1">Stay updated with financial markets</p>
               </div>
             </div>
@@ -96,7 +96,7 @@ export default function News() {
       </div>
 
       {/* Filter Bar */}
-      <Card className="glass-card sticky top-20 z-30 backdrop-blur-xl">
+      <Card className="glass-card sticky top-4 z-30 backdrop-blur-xl mt-4">
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
@@ -193,7 +193,7 @@ export default function News() {
       {!loading && filteredArticles.length === 0 && (
         <Card className="glass-card p-12 text-center">
           <Newspaper className="icon-hero text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">No articles found</h3>
+          <h3 className="text-card-title mb-2">No articles found</h3>
           <p className="text-muted-foreground">Try adjusting your filters or search term</p>
         </Card>
       )}

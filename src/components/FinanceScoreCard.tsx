@@ -54,6 +54,41 @@ const FinanceScoreCard = ({ score }: FinanceScoreCardProps) => {
               />
             </div>
           </div>
+
+          {/* Decorative Trend Graph */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mt-4"
+          >
+            <svg width="100%" height="60" className="overflow-visible">
+              <defs>
+                <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.5" />
+                  <stop offset="100%" stopColor="hsl(var(--success))" stopOpacity="0.5" />
+                </linearGradient>
+              </defs>
+              <motion.path
+                d="M 0 40 Q 25 20, 50 30 T 100 15 T 150 25 T 200 10 T 250 20 T 300 5"
+                fill="none"
+                stroke="url(#scoreGradient)"
+                strokeWidth="3"
+                strokeLinecap="round"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 1.5, delay: 0.6 }}
+              />
+              <motion.path
+                d="M 0 40 Q 25 20, 50 30 T 100 15 T 150 25 T 200 10 T 250 20 T 300 5 L 300 60 L 0 60 Z"
+                fill="url(#scoreGradient)"
+                opacity="0.2"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 0.2 }}
+                transition={{ duration: 1.5, delay: 0.7 }}
+              />
+            </svg>
+          </motion.div>
         </CardContent>
       </Card>
     </motion.div>

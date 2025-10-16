@@ -67,6 +67,39 @@
     width: 0.75rem;
     height: 0.75rem;
   }
+  
+  /* Semantic color utilities */
+  .text-success {
+    color: hsl(var(--success));
+  }
+  
+  .bg-success {
+    background-color: hsl(var(--success));
+  }
+  
+  .text-warning {
+    color: hsl(var(--warning));
+  }
+  
+  .bg-warning {
+    background-color: hsl(var(--warning));
+  }
+  
+  .text-info {
+    color: hsl(var(--info));
+  }
+  
+  .bg-info {
+    background-color: hsl(var(--info));
+  }
+  
+  .text-destructive {
+    color: hsl(var(--destructive));
+  }
+  
+  .bg-destructive {
+    background-color: hsl(var(--destructive));
+  }
 }
 
 @layer utilities {

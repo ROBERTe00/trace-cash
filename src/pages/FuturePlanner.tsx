@@ -50,61 +50,61 @@ export default function FuturePlanner() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold gradient-text">Pianificazione Futura</h1>
+          <h1 className="text-section">Pianificazione Futura</h1>
           <p className="text-muted-foreground">Crea e monitora i tuoi obiettivi finanziari con AI</p>
         </div>
         <Button onClick={() => setWizardOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
+          <Plus className="icon-button" />
           Nuovo Obiettivo
         </Button>
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="glass-card p-4 overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <Card className="glass-card p-6 overflow-hidden">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
-              <Target className="h-5 w-5 text-primary" />
+              <Target className="icon-card text-primary" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-sm text-muted-foreground truncate">Obiettivi Attivi</div>
-              <div className="text-2xl font-bold truncate">{activeGoals.length}</div>
+              <div className="text-medium-number truncate">{activeGoals.length}</div>
             </div>
           </div>
         </Card>
 
-        <Card className="glass-card p-4 overflow-hidden">
+        <Card className="glass-card p-6 overflow-hidden">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-green-500/10 flex-shrink-0">
-              <Trophy className="h-5 w-5 text-green-500" />
+            <div className="p-2 rounded-lg bg-success/10 flex-shrink-0">
+              <Trophy className="icon-card text-success" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-sm text-muted-foreground truncate">Completati</div>
-              <div className="text-2xl font-bold truncate">{completedGoals.length}</div>
+              <div className="text-medium-number truncate">{completedGoals.length}</div>
             </div>
           </div>
         </Card>
 
-        <Card className="glass-card p-4 overflow-hidden">
+        <Card className="glass-card p-6 overflow-hidden">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-500/10 flex-shrink-0">
-              <Target className="h-5 w-5 text-blue-500" />
+            <div className="p-2 rounded-lg bg-info/10 flex-shrink-0">
+              <Target className="icon-card text-info" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-sm text-muted-foreground truncate">Progresso Medio</div>
-              <div className="text-2xl font-bold truncate">{totalProgress.toFixed(0)}%</div>
+              <div className="text-medium-number truncate">{totalProgress.toFixed(0)}%</div>
             </div>
           </div>
         </Card>
 
-        <Card className="glass-card p-4 overflow-hidden">
+        <Card className="glass-card p-6 overflow-hidden">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-orange-500/10 flex-shrink-0">
-              <Target className="h-5 w-5 text-orange-500" />
+            <div className="p-2 rounded-lg bg-warning/10 flex-shrink-0">
+              <Target className="icon-card text-warning" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-sm text-muted-foreground truncate">Valore Totale</div>
-              <div className="text-xl font-bold truncate">
+              <div className="text-small-number truncate">
                 €{goals.reduce((sum, g) => sum + g.targetAmount, 0).toLocaleString()}
               </div>
             </div>
@@ -134,14 +134,14 @@ export default function FuturePlanner() {
       {/* Main Content */}
       {goals.length === 0 ? (
         <Card className="glass-card p-12 text-center">
-          <Target className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-2xl font-bold mb-2">Inizia la Tua Pianificazione</h3>
+          <Target className="icon-hero text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-card-title mb-2">Inizia la Tua Pianificazione</h3>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             Crea il tuo primo obiettivo finanziario utilizzando il wizard guidato.
             Definisci importo, scadenza e contributo mensile per iniziare.
           </p>
           <Button onClick={() => setWizardOpen(true)} size="lg" className="gap-2">
-            <Plus className="h-5 w-5" />
+            <Plus className="icon-button" />
             Crea Primo Obiettivo
           </Button>
         </Card>

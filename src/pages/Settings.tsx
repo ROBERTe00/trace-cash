@@ -59,7 +59,7 @@ export default function Settings() {
               <SettingsIcon className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold gradient-text">{t("settings")}</h1>
+              <h1 className="text-section">{t("settings")}</h1>
               <p className="text-muted-foreground mt-1">{t("managePreferences")}</p>
             </div>
           </div>
@@ -75,7 +75,7 @@ export default function Settings() {
             className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5"
           >
             <div className="flex items-center gap-2">
-              <Palette className="h-4 w-4" />
+              <Palette className="icon-button" />
               {t("settings.appearance")}
             </div>
           </TabsTrigger>
@@ -85,7 +85,7 @@ export default function Settings() {
             className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5"
           >
             <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
+              <Shield className="icon-button" />
               {t("settings.security")}
             </div>
           </TabsTrigger>
@@ -95,7 +95,7 @@ export default function Settings() {
             className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5"
           >
             <div className="flex items-center gap-2">
-              <Database className="h-4 w-4" />
+              <Database className="icon-button" />
               {t("settings.data")}
             </div>
           </TabsTrigger>
@@ -105,7 +105,7 @@ export default function Settings() {
             className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5"
           >
             <div className="flex items-center gap-2">
-              <WifiOff className="h-4 w-4" />
+              <WifiOff className="icon-button" />
               {t("settings.offline")}
             </div>
           </TabsTrigger>
@@ -116,8 +116,8 @@ export default function Settings() {
           <Card className="glass-card">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Palette className="h-5 w-5 text-primary" />
-                <CardTitle>{t("settings.appearance")}</CardTitle>
+                <Palette className="icon-card text-primary" />
+                <CardTitle className="text-card-title">{t("settings.appearance")}</CardTitle>
               </div>
               <CardDescription>{t("settings.appearanceDesc")}</CardDescription>
             </CardHeader>
@@ -133,8 +133,8 @@ export default function Settings() {
           <Card className="glass-card">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" />
-                <CardTitle>{t("settings.security")}</CardTitle>
+                <Shield className="icon-card text-primary" />
+                <CardTitle className="text-card-title">{t("settings.security")}</CardTitle>
               </div>
               <CardDescription>{t("settings.securityDesc")}</CardDescription>
             </CardHeader>
@@ -152,8 +152,8 @@ export default function Settings() {
           <Card className="glass-card">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Database className="h-5 w-5 text-primary" />
-                <CardTitle>{t("settings.data")}</CardTitle>
+                <Database className="icon-card text-primary" />
+                <CardTitle className="text-card-title">{t("settings.data")}</CardTitle>
               </div>
               <CardDescription>{t("settings.dataDesc")}</CardDescription>
             </CardHeader>
@@ -188,8 +188,8 @@ export default function Settings() {
           <Card className="glass-card">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <WifiOff className="h-5 w-5 text-primary" />
-                <CardTitle>{t("settings.offline")}</CardTitle>
+                <WifiOff className="icon-card text-primary" />
+                <CardTitle className="text-card-title">{t("settings.offline")}</CardTitle>
               </div>
               <CardDescription>{t("settings.offlineDesc")}</CardDescription>
             </CardHeader>
