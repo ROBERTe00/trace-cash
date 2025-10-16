@@ -198,18 +198,26 @@ self.addEventListener('message', (event) => {
 self.addEventListener('push', (event) => {
   console.log('[SW] Push notification received');
   
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (e) {
+    console.error('[SW] Error parsing push data:', e);
+    data = { title: 'Trace-Cash', message: event.data ? event.data.text() : 'New notification' };
+  }
+  
   const options = {
-    body: event.data ? event.data.text() : 'New notification from Trace-Cash',
+    body: data.message || 'New notification from Trace-Cash',
     icon: '/icon-192.png',
     badge: '/icon-192.png',
     vibrate: [200, 100, 200],
     data: {
+      url: data.action_url || '/',
       dateOfArrival: Date.now(),
-      primaryKey: 1
     },
     actions: [
       {
-        action: 'explore',
+        action: 'open',
         title: 'Open App'
       },
       {
@@ -220,20 +228,37 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification('Trace-Cash', options)
+    self.registration.showNotification(data.title || 'Trace-Cash', options)
   );
 });
 
 // Notification click event
 self.addEventListener('notificationclick', (event) => {
-  console.log('[SW] Notification clicked');
+  console.log('[SW] Notification clicked:', event.action);
   event.notification.close();
 
-  if (event.action === 'explore') {
-    event.waitUntil(
-      clients.openWindow('/')
-    );
-  }
+  const urlToOpen = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then(windowClients => {
+        // Check if there's already a window open
+        for (let client of windowClients) {
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            return client.focus().then(client => {
+              // Navigate to the URL
+              if ('navigate' in client) {
+                return client.navigate(urlToOpen);
+              }
+            });
+          }
+        }
+        // If no window is open, open a new one
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+  );
 });
 
 // Background sync for offline data

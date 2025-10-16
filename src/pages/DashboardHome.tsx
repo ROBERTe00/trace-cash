@@ -13,6 +13,7 @@ import { ImpactOnInvestmentsWidget } from "@/components/ImpactOnInvestmentsWidge
 import { AdvancedInsightsCard } from "@/components/AdvancedInsightsCard";
 import { GamificationPanel } from "@/components/GamificationPanel";
 import { LeaderboardWidget } from "@/components/LeaderboardWidget";
+import { NewsSection } from "@/components/NewsSection";
 import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
 import {
   Wallet,
@@ -247,6 +248,9 @@ export default function DashboardHome() {
           <GamificationPanel />
           <LeaderboardWidget />
         </div>
+
+        {/* News Section */}
+        <NewsSection />
 
         {/* Legacy Enhanced AI Insights (if needed) */}
         <EnhancedAIInsights

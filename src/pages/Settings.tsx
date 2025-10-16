@@ -6,6 +6,7 @@ import { ComplianceBadges } from "@/components/ComplianceBadges";
 import { CategoryManager } from "@/components/CategoryManager";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import { LanguageCurrencySettings } from "@/components/LanguageCurrencySettings";
+import { PushNotificationToggle } from "@/components/PushNotificationToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -140,6 +141,7 @@ export default function Settings() {
             <CardContent className="space-y-6">
               <ComplianceBadges />
               <MFASetup />
+              <PushNotificationToggle />
               <AuditLogViewer />
             </CardContent>
           </Card>

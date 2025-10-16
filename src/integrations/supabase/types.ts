@@ -224,6 +224,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_anonymous: boolean | null
+          parent_id: string | null
           post_id: string | null
           user_id: string | null
         }
@@ -232,6 +233,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_anonymous?: boolean | null
+          parent_id?: string | null
           post_id?: string | null
           user_id?: string | null
         }
@@ -240,10 +242,18 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_anonymous?: boolean | null
+          parent_id?: string | null
           post_id?: string | null
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "community_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "community_comments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "community_comments_post_id_fkey"
             columns: ["post_id"]
@@ -627,6 +637,33 @@ export type Database = {
           read?: boolean | null
           title?: string
           type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          created_at: string | null
+          endpoint: string
+          id: string
+          subscription: Json
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          subscription: Json
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          subscription?: Json
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []

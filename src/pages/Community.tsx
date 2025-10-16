@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +34,14 @@ interface Post {
   portfolio_data?: any;
 }
 
+interface Comment {
+  id: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+  parent_id: string | null;
+}
+
 export default function Community() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState("");
@@ -38,6 +49,10 @@ export default function Community() {
   const [sharePortfolio, setSharePortfolio] = useState(false);
   const [loading, setLoading] = useState(false);
   const [hasConsented, setHasConsented] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<string | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [loadingComments, setLoadingComments] = useState(false);
 
   // Calculate user metrics for leaderboard
   const investments = getInvestments();
@@ -120,6 +135,55 @@ export default function Community() {
       toast.error("Failed to post. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchComments = async (postId: string) => {
+    setLoadingComments(true);
+    try {
+      const { data, error } = await supabase
+        .from("community_comments")
+        .select("*")
+        .eq("post_id", postId)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      setComments(data || []);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      toast.error("Failed to load comments");
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please sign in to comment");
+        return;
+      }
+
+      const { error } = await supabase.from("community_comments").insert({
+        post_id: selectedPost,
+        user_id: user.id,
+        content: newComment.trim(),
+        is_anonymous: true,
+      });
+
+      if (error) throw error;
+
+      setNewComment("");
+      if (selectedPost) {
+        await fetchComments(selectedPost);
+      }
+      toast.success("Comment added!");
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      toast.error("Failed to add comment");
     }
   };
 
@@ -305,9 +369,16 @@ export default function Community() {
                           <Heart className="h-4 w-4 mr-1" />
                           {post.likes_count}
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => {
+                            setSelectedPost(post.id);
+                            fetchComments(post.id);
+                          }}
+                        >
                           <MessageSquare className="h-4 w-4 mr-1" />
-                          Rispondi
+                          Comment
                         </Button>
                       </div>
                     </div>
@@ -318,6 +389,72 @@ export default function Community() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Comments Dialog */}
+      {selectedPost && (
+        <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
+          <DialogContent className="max-w-2xl max-h-[80vh]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" />
+                💬 Comments
+              </DialogTitle>
+            </DialogHeader>
+            
+            <ScrollArea className="h-[400px] pr-4">
+              {loadingComments ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Loading comments...
+                </div>
+              ) : comments.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No comments yet. Be the first to comment!
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {comments.map((comment) => (
+                    <div
+                      key={comment.id}
+                      className="p-3 border rounded-lg bg-muted/50"
+                    >
+                      <div className="flex items-start gap-3">
+                        <Avatar className="w-8 h-8 bg-primary/10">
+                          <div className="w-full h-full flex items-center justify-center text-xs">
+                            👤
+                          </div>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-muted-foreground mb-1">
+                            Anonymous • {new Date(comment.created_at).toLocaleDateString()}
+                          </p>
+                          <p className="text-sm">{comment.content}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+
+            <div className="flex gap-2 pt-4 border-t">
+              <Input
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Write a comment..."
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddComment();
+                  }
+                }}
+              />
+              <Button onClick={handleAddComment} disabled={!newComment.trim()}>
+                Send
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
