@@ -35,7 +35,7 @@ export function InvestmentsStep({ data, setData }: InvestmentsStepProps) {
       <Alert className="bg-success/10 border-success/20">
         <Activity className="w-4 h-4 text-success" />
         <AlertDescription>
-          Import your investments and AI will fetch live prices and calculate performance using GPT-4o.
+          <strong>Optional:</strong> Import your investments and AI will fetch live prices and calculate performance using GPT-4o. You can add investments later from the dashboard.
         </AlertDescription>
       </Alert>
 
@@ -118,9 +118,6 @@ export function InvestmentsStep({ data, setData }: InvestmentsStepProps) {
         </div>
       </Card>
 
-      <Button variant="outline" className="w-full">
-        Skip for Now
-      </Button>
     </div>
   );
 }

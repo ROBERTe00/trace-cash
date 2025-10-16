@@ -1,7 +1,9 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
-import { Sparkles, TrendingUp } from "lucide-react";
+import { Sparkles, TrendingUp, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WelcomeStepProps {
   data: any;
@@ -9,7 +11,33 @@ interface WelcomeStepProps {
 }
 
 export function WelcomeStep({ data, setData }: WelcomeStepProps) {
-  const monthsToGoal = data.monthlyIncome > 0 ? Math.ceil(data.savingsGoal / (data.monthlyIncome * 0.2)) : 0;
+  const [aiInsight, setAiInsight] = useState<string>("");
+  const [loadingInsight, setLoadingInsight] = useState(false);
+
+  useEffect(() => {
+    const fetchAiInsight = async () => {
+      if (data.savingsGoal > 0 && data.monthlyIncome > 0) {
+        setLoadingInsight(true);
+        try {
+          const { data: insightData, error } = await supabase.functions.invoke('onboarding-ai-insights', {
+            body: { data, step: 'welcome' }
+          });
+          
+          if (error) throw error;
+          if (insightData?.insight) {
+            setAiInsight(insightData.insight);
+          }
+        } catch (error) {
+          console.error('Error fetching AI insight:', error);
+        } finally {
+          setLoadingInsight(false);
+        }
+      }
+    };
+
+    const debounce = setTimeout(fetchAiInsight, 1000);
+    return () => clearTimeout(debounce);
+  }, [data.savingsGoal, data.monthlyIncome]);
 
   return (
     <div className="space-y-8">
@@ -57,16 +85,23 @@ export function WelcomeStep({ data, setData }: WelcomeStepProps) {
         </div>
       </div>
 
-      {monthsToGoal > 0 && (
-        <Card className="p-4 bg-primary/5 border-primary/20">
+      {(aiInsight || loadingInsight) && (
+        <Card className="p-4 bg-gradient-to-br from-primary/10 to-purple-500/10 border-primary/20">
           <div className="flex items-start gap-3">
-            <TrendingUp className="w-5 h-5 text-primary mt-0.5" />
+            <div className="p-2 rounded-full bg-primary/20">
+              {loadingInsight ? (
+                <Loader2 className="w-5 h-5 text-primary animate-spin" />
+              ) : (
+                <TrendingUp className="w-5 h-5 text-primary" />
+              )}
+            </div>
             <div>
-              <p className="font-medium text-sm">AI Insight</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Based on a 20% savings rate, you could reach your €{data.savingsGoal.toLocaleString()} goal 
-                in approximately <span className="font-semibold text-primary">{monthsToGoal} months</span>.
-              </p>
+              <p className="font-medium text-sm mb-1">💡 AI Insight (GPT-4o)</p>
+              {loadingInsight ? (
+                <p className="text-sm text-muted-foreground">Analyzing your goals...</p>
+              ) : (
+                <p className="text-sm text-muted-foreground">{aiInsight}</p>
+              )}
             </div>
           </div>
         </Card>

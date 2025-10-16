@@ -39,14 +39,41 @@ export const forceReload = () => {
   window.location.reload();
 };
 
-export const clearCacheAndReload = async () => {
-  const success = await clearServiceWorkerCache();
-  if (success) {
-    console.log('[SW] Cache cleared, reloading...');
-    forceReload();
-  } else {
-    console.error('[SW] Failed to clear cache');
+export const forceHardReload = async (): Promise<void> => {
+  try {
+    // Unregister all service workers
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const registration of registrations) {
+        await registration.unregister();
+        console.log('[SW] Unregistered service worker:', registration.scope);
+      }
+    }
+
+    // Clear all caches
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames.map((cacheName) => {
+          console.log('[Cache] Deleting cache:', cacheName);
+          return caches.delete(cacheName);
+        })
+      );
+    }
+
+    // Force reload with cache bust
+    const cacheBustUrl = `${window.location.href}${window.location.href.includes('?') ? '&' : '?'}cache-bust=${Date.now()}`;
+    window.location.href = cacheBustUrl;
+  } catch (error) {
+    console.error('[SW] Error in forceHardReload:', error);
+    // Fallback to regular reload
+    window.location.reload();
   }
+};
+
+export const clearCacheAndReload = async () => {
+  console.log('[SW] Starting clearCacheAndReload with forceHardReload...');
+  await forceHardReload();
 };
 
 /**

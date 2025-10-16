@@ -20,6 +20,7 @@ export function EssentialsStep({ data, setData }: EssentialsStepProps) {
       key: "monthlyIncome",
       color: "text-success",
       bgColor: "bg-success/10",
+      required: true,
     },
     {
       icon: Wallet,
@@ -27,6 +28,7 @@ export function EssentialsStep({ data, setData }: EssentialsStepProps) {
       key: "liquidity",
       color: "text-info",
       bgColor: "bg-info/10",
+      required: false,
     },
     {
       icon: Coins,
@@ -34,6 +36,7 @@ export function EssentialsStep({ data, setData }: EssentialsStepProps) {
       key: "assets",
       color: "text-warning",
       bgColor: "bg-warning/10",
+      required: false,
     },
     {
       icon: CreditCard,
@@ -41,6 +44,7 @@ export function EssentialsStep({ data, setData }: EssentialsStepProps) {
       key: "debts",
       color: "text-destructive",
       bgColor: "bg-destructive/10",
+      required: false,
     },
   ];
 
@@ -61,6 +65,7 @@ export function EssentialsStep({ data, setData }: EssentialsStepProps) {
                   <Icon className={`w-4 h-4 ${field.color}`} />
                 </div>
                 {field.label}
+                {field.required && <span className="text-destructive ml-1">*</span>}
               </Label>
               <Input
                 id={field.key}

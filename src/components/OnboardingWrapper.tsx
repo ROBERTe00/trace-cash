@@ -69,7 +69,11 @@ export const OnboardingWrapper = ({ children }: OnboardingWrapperProps) => {
   }
 
   if (needsOnboarding) {
-    return <AIOnboardingWizard isOpen={true} onComplete={handleOnboardingComplete} />;
+    return (
+      <div className="fixed inset-0 bg-background z-50 flex items-center justify-center">
+        <AIOnboardingWizard isOpen={true} onComplete={handleOnboardingComplete} />
+      </div>
+    );
   }
 
   return <>{children}</>;

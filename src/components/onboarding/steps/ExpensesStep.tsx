@@ -33,7 +33,7 @@ export function ExpensesStep({ data, setData }: ExpensesStepProps) {
       <Alert className="bg-info/10 border-info/20">
         <TrendingDown className="w-4 h-4 text-info" />
         <AlertDescription>
-          Upload your bank statement (PDF/CSV) and AI will automatically categorize your expenses using GPT-4o.
+          <strong>Optional:</strong> Upload your bank statement (PDF/CSV) and AI will automatically categorize your expenses using GPT-4o. You can add expenses later from the dashboard.
         </AlertDescription>
       </Alert>
 
@@ -114,9 +114,6 @@ export function ExpensesStep({ data, setData }: ExpensesStepProps) {
         </div>
       </Card>
 
-      <Button variant="outline" className="w-full">
-        Skip for Now
-      </Button>
     </div>
   );
 }

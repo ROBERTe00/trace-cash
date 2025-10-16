@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v2.3.0';
+const CACHE_VERSION = 'v2.4.0';
 const CACHE_NAME = `trace-cash-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `trace-cash-runtime-${CACHE_VERSION}`;
 
@@ -86,7 +86,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Aggressive network-first strategy for HTML, JS, CSS (core app files)
+  // Stale-while-revalidate strategy for HTML, JS, CSS (core app files)
   if (
     request.destination === 'document' ||
     request.url.includes('.js') ||
@@ -95,37 +95,36 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/assets/')
   ) {
     event.respondWith(
-      fetch(request, {
-        cache: 'no-cache', // Force fresh fetch, bypass HTTP cache
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      })
-        .then(response => {
-          // Cache the new version only if successful
-          if (response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(request, responseClone);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          // Fallback to cache only if network fails
-          console.log('[SW] Network failed, using cache for:', request.url);
-          return caches.match(request).then(cachedResponse => {
+      caches.open(CACHE_NAME).then(cache => {
+        return cache.match(request).then(cachedResponse => {
+          const fetchPromise = fetch(request, {
+            cache: 'no-cache',
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache'
+            }
+          }).then(networkResponse => {
+            // Update cache in background
+            if (networkResponse.status === 200) {
+              cache.put(request, networkResponse.clone());
+            }
+            return networkResponse;
+          }).catch(() => {
+            // If network fails and we have cache, return it
             if (cachedResponse) {
               return cachedResponse;
             }
             // Return offline page for navigation requests
             if (request.destination === 'document') {
-              return caches.match('/index.html');
+              return cache.match('/index.html');
             }
             return new Response('Offline', { status: 503 });
           });
-        })
+
+          // Return cached response immediately if available, otherwise wait for network
+          return cachedResponse || fetchPromise;
+        });
+      })
     );
     return;
   }

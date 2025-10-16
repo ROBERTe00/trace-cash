@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, ArrowLeft, Sparkles, TrendingUp, PiggyBank, Target, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Sparkles, TrendingUp, PiggyBank, Target, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { WelcomeStep } from "./steps/WelcomeStep";
@@ -50,6 +51,17 @@ export function AIOnboardingWizard({ isOpen, onComplete }: AIOnboardingWizardPro
     { icon: CheckCircle2, label: "Summary" },
   ];
 
+  const canProceed = () => {
+    switch (step) {
+      case 1: return data.savingsGoal > 0 && data.monthlyIncome > 0;
+      case 2: return data.liquidity >= 0 && data.assets >= 0 && data.debts >= 0 && data.monthlyIncome > 0;
+      case 3: return true;
+      case 4: return true;
+      case 5: return true;
+      default: return false;
+    }
+  };
+
   const handleNext = async () => {
     if (step < totalSteps) {
       setStep(step + 1);
@@ -62,17 +74,12 @@ export function AIOnboardingWizard({ isOpen, onComplete }: AIOnboardingWizardPro
     if (step > 1) setStep(step - 1);
   };
 
-  const handleSkip = async () => {
-    await completeOnboarding();
-  };
-
   const completeOnboarding = async () => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      // Update user profile
       const { error } = await supabase
         .from("user_profiles")
         .update({
@@ -107,22 +114,21 @@ export function AIOnboardingWizard({ isOpen, onComplete }: AIOnboardingWizardPro
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
+        <Dialog 
+          open={isOpen} 
+          onOpenChange={(open) => {
+            if (!open) {
+              toast({
+                title: "⚠️ Complete Setup Required",
+                description: "Please finish the onboarding to use Trace-Cash",
+                variant: "destructive"
+              });
+            }
+          }}
         >
-          <motion.div
-            initial={{ scale: 0.95, y: 20 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.95, y: 20 }}
-            transition={{ type: "spring", duration: 0.5 }}
-            className="w-full max-w-2xl"
-          >
-            <Card className="shadow-2xl border-primary/20">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" onInteractOutside={(e) => e.preventDefault()}>
+            <Card className="border-0 shadow-none">
               <CardHeader className="space-y-4">
-                {/* Progress Dots */}
                 <div className="flex items-center justify-center gap-3">
                   {stepIcons.map((item, idx) => {
                     const StepIcon = item.icon;
@@ -153,7 +159,6 @@ export function AIOnboardingWizard({ isOpen, onComplete }: AIOnboardingWizardPro
                   })}
                 </div>
 
-                {/* Progress Bar */}
                 <Progress value={progress} className="h-2" />
 
                 <div className="text-center">
@@ -167,8 +172,8 @@ export function AIOnboardingWizard({ isOpen, onComplete }: AIOnboardingWizardPro
                   <CardDescription className="text-base mt-2">
                     {step === 1 && "AI-powered financial tracking starts here"}
                     {step === 2 && "Set up your core financial data"}
-                    {step === 3 && "Import or add expenses manually"}
-                    {step === 4 && "Track your portfolio performance"}
+                    {step === 3 && "Import or add expenses manually (optional)"}
+                    {step === 4 && "Track your portfolio performance (optional)"}
                     {step === 5 && "Review and start using the app"}
                   </CardDescription>
                 </div>
@@ -191,42 +196,43 @@ export function AIOnboardingWizard({ isOpen, onComplete }: AIOnboardingWizardPro
                   </motion.div>
                 </AnimatePresence>
 
-                {/* Navigation */}
-                <div className="flex justify-between items-center pt-8 mt-8 border-t">
-                  <div>
-                    {step > 1 ? (
+                <div className="flex flex-col gap-3 pt-8 mt-8 border-t">
+                  <div className="flex gap-3">
+                    {step > 1 && (
                       <Button variant="outline" onClick={handleBack} disabled={loading}>
-                        <ArrowLeft className="w-4 h-4 mr-2" />
                         Back
                       </Button>
-                    ) : (
-                      <Button variant="ghost" onClick={handleSkip} disabled={loading}>
-                        Skip All
-                      </Button>
                     )}
+                    <Button 
+                      onClick={handleNext} 
+                      disabled={loading || !canProceed()} 
+                      className="flex-1"
+                    >
+                      {loading ? (
+                        "Processing..."
+                      ) : step === totalSteps ? (
+                        "Complete & Start Using Trace-Cash"
+                      ) : (
+                        <>
+                          Next
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </>
+                      )}
+                    </Button>
                   </div>
-
-                  <span className="text-sm text-muted-foreground">
+                  {!canProceed() && step <= 2 && (
+                    <p className="text-xs text-destructive text-center">
+                      Please fill in all required fields to continue
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground text-center">
                     Step {step} of {totalSteps}
-                  </span>
-
-                  <Button onClick={handleNext} disabled={loading}>
-                    {loading ? (
-                      "Processing..."
-                    ) : step === totalSteps ? (
-                      <>Start Using App</>
-                    ) : (
-                      <>
-                        Next
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </>
-                    )}
-                  </Button>
+                  </p>
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
-        </motion.div>
+          </DialogContent>
+        </Dialog>
       )}
     </AnimatePresence>
   );

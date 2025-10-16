@@ -1,17 +1,44 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { Sparkles, TrendingUp, PiggyBank, Wallet, Target, ArrowUpCircle } from "lucide-react";
+import { Sparkles, TrendingUp, PiggyBank, Wallet, Target, ArrowUpCircle, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SummaryStepProps {
   data: any;
 }
 
 export function SummaryStep({ data }: SummaryStepProps) {
+  const [aiProjections, setAiProjections] = useState<any>(null);
+  const [loadingProjections, setLoadingProjections] = useState(false);
+  
   const netWorth = data.liquidity + data.assets - data.debts;
   const savingsRate = data.monthlyIncome > 0 
     ? ((data.savingsGoal / data.monthlyIncome) * 100).toFixed(0) 
     : "0";
+
+  useEffect(() => {
+    const fetchProjections = async () => {
+      setLoadingProjections(true);
+      try {
+        const { data: insightData, error } = await supabase.functions.invoke('onboarding-ai-insights', {
+          body: { data, step: 'summary' }
+        });
+        
+        if (error) throw error;
+        if (insightData?.insight) {
+          setAiProjections(insightData.insight);
+        }
+      } catch (error) {
+        console.error('Error fetching AI projections:', error);
+      } finally {
+        setLoadingProjections(false);
+      }
+    };
+
+    fetchProjections();
+  }, []);
 
   const stats = [
     {
@@ -85,55 +112,49 @@ export function SummaryStep({ data }: SummaryStepProps) {
       </div>
 
       {/* AI Projections */}
-      <Card className="p-5 bg-gradient-to-br from-primary/5 via-purple-500/5 to-secondary/5 border-primary/20">
-        <div className="space-y-4">
+      <Card className="p-4 bg-gradient-to-br from-success/10 to-info/10 border-success/20">
+        <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-primary" />
-            <h4 className="font-semibold">AI Financial Projections</h4>
+            <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+            <p className="font-medium text-sm">💡 AI Financial Projections (GPT-4o)</p>
           </div>
-
-          <div className="space-y-3">
-            <div className="flex items-start gap-2">
-              <Badge variant="secondary" className="mt-0.5">1Y</Badge>
-              <div className="flex-1">
-                <p className="text-sm">
-                  If you maintain your savings goal, you'll accumulate approximately{" "}
-                  <span className="font-bold text-success">
-                    €{(data.savingsGoal * 12).toLocaleString()}
-                  </span>{" "}
-                  in 12 months.
+          
+          {loadingProjections ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <span className="ml-2 text-sm text-muted-foreground">Calculating projections...</span>
+            </div>
+          ) : aiProjections ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">1 Year Projection</p>
+                <p className="text-lg font-bold text-success">
+                  {aiProjections.oneYear || `€${(data.savingsGoal * 12).toLocaleString()}`}
                 </p>
               </div>
-            </div>
-
-            <div className="flex items-start gap-2">
-              <Badge variant="secondary" className="mt-0.5">3Y</Badge>
-              <div className="flex-1">
-                <p className="text-sm">
-                  With a conservative 5% annual return on investments, your net worth could reach{" "}
-                  <span className="font-bold text-primary">
-                    €{(netWorth + data.savingsGoal * 36 * 1.05).toLocaleString()}
-                  </span>{" "}
-                  in 3 years.
+              
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">3 Year Projection</p>
+                <p className="text-lg font-bold text-success">
+                  {aiProjections.threeYear || `€${(netWorth + data.savingsGoal * 36 * 1.05).toLocaleString()}`}
                 </p>
               </div>
-            </div>
 
-            <div className="flex items-start gap-2">
-              <Badge variant="secondary" className="mt-0.5">Tip</Badge>
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground">
-                  Consider increasing your savings rate to {parseInt(savingsRate) + 5}% to reach financial goals faster.
-                </p>
-              </div>
+              {aiProjections.tip && (
+                <div className="col-span-2 pt-3 border-t">
+                  <p className="text-xs text-muted-foreground">
+                    💡 <strong>AI Tip:</strong> {aiProjections.tip}
+                  </p>
+                </div>
+              )}
             </div>
-          </div>
+          ) : null}
         </div>
       </Card>
 
       <div className="text-center text-sm text-muted-foreground">
         <p>🎉 Your personalized dashboard is ready!</p>
-        <p className="mt-1">Click "Start Using App" to begin tracking your finances.</p>
+        <p className="mt-1">Complete setup to begin tracking your finances with AI insights.</p>
       </div>
     </div>
   );
