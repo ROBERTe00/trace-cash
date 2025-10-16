@@ -228,15 +228,15 @@ export default function Investments() {
       <Tabs defaultValue="portfolio" className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="portfolio" className="gap-2">
-            <PieChart className="icon-button" />
+            <PieChart className="icon-card" />
             Portfolio
           </TabsTrigger>
           <TabsTrigger value="performance" className="gap-2">
-            <BarChart3 className="icon-button" />
+            <BarChart3 className="icon-card" />
             Performance
           </TabsTrigger>
           <TabsTrigger value="import" className="gap-2">
-            <UploadIcon className="icon-button" />
+            <UploadIcon className="icon-card" />
             Import
           </TabsTrigger>
         </TabsList>
@@ -279,7 +279,7 @@ export default function Investments() {
             <div className="p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Calculator className="icon-card text-primary" />
-                <h3 className="text-lg font-semibold">Scenario Simulator</h3>
+                <h3 className="text-card-title">Scenario Simulator</h3>
               </div>
               <InvestmentScenarioSimulator />
             </div>

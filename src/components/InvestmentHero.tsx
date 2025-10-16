@@ -49,24 +49,24 @@ export function InvestmentHero({
               {formatCurrency(totalValue)}
             </h2>
             <div className="flex items-center gap-4 mb-6">
-              <div className={`flex items-center gap-2 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                {isPositive ? <TrendingUp className="icon-card" /> : <TrendingDown className="icon-card" />}
+              <div className={`flex items-center gap-2 ${isPositive ? 'text-success' : 'text-destructive'}`}>
+                {isPositive ? <TrendingUp className="icon-hero" /> : <TrendingDown className="icon-hero" />}
                 <span className="text-large-number font-bold">
                   {isPositive ? '+' : ''}{formatCurrency(totalGain)}
                 </span>
               </div>
-              <Badge className={isPositive ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}>
+              <Badge className={isPositive ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}>
                 {isPositive ? '+' : ''}{gainPercentage.toFixed(2)}%
               </Badge>
             </div>
 
             {bestPerformer && (
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-primary/10 border border-primary/20">
-                <Trophy className="icon-button text-primary" />
+                <Trophy className="icon-card text-primary" />
                 <span className="text-sm font-medium">
                   Best: {bestPerformer.name}
                 </span>
-                <span className="text-sm font-bold text-green-500">
+                <span className="text-sm font-bold text-success">
                   +{bestPerformer.gainPercent.toFixed(1)}%
                 </span>
               </div>

@@ -53,7 +53,7 @@ export const PortfolioChart = ({ investments }: PortfolioChartProps) => {
 
   return (
     <Card className="p-6">
-      <h3 className="text-xl font-bold mb-6">Asset Allocation</h3>
+      <h3 className="text-section mb-6">Asset Allocation</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Modern Pie Chart */}
         <div>
@@ -85,8 +85,8 @@ export const PortfolioChart = ({ investments }: PortfolioChartProps) => {
                   <span className="font-medium">{category.name}</span>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold">{formatCurrency(category.value)}</p>
-                  <p className="text-sm text-muted-foreground">{percentage}%</p>
+                  <p className="text-small-number">{formatCurrency(category.value)}</p>
+                  <p className="text-base font-semibold text-muted-foreground">{percentage}%</p>
                 </div>
               </motion.div>
             );

@@ -44,26 +44,26 @@ export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProp
 
   const getMetricColor = (value: number, isPositive: boolean = true) => {
     if (isPositive) {
-      return value > 0 ? 'text-green-500' : 'text-red-500';
+      return value > 0 ? 'text-success' : 'text-destructive';
     }
-    return value < 30 ? 'text-green-500' : 'text-red-500';
+    return value < 30 ? 'text-success' : 'text-destructive';
   };
 
   return (
     <div className="space-y-6">
       {/* Alerts */}
       {alerts.length > 0 && (
-        <Card className="border-orange-500/50 bg-orange-500/5">
+        <Card className="border-warning/50 bg-warning/5">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-orange-500">
-              <AlertTriangle className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-warning">
+              <AlertTriangle className="icon-card" />
               {t('metrics.alerts')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {alerts.map((alert, i) => (
               <div key={i} className="flex items-start gap-2 text-sm">
-                <span className="text-orange-500">•</span>
+                <span className="text-warning">•</span>
                 <p>{alert}</p>
               </div>
             ))}
@@ -78,14 +78,14 @@ export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProp
             <CardDescription>{t('metrics.totalValue')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-medium-number">
               {formatCurrency(metrics.totalValue)}
             </div>
             <div className={`text-sm flex items-center gap-1 ${getMetricColor(metrics.totalGainLossPercent)}`}>
               {metrics.totalGainLoss > 0 ? (
-                <TrendingUp className="h-4 w-4" />
+                <TrendingUp className="icon-button" />
               ) : (
-                <TrendingDown className="h-4 w-4" />
+                <TrendingDown className="icon-button" />
               )}
               {metrics.totalGainLossPercent.toFixed(2)}%
             </div>
@@ -97,7 +97,7 @@ export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProp
             <CardDescription>{t('metrics.annualizedReturn')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${getMetricColor(metrics.annualizedReturn)}`}>
+            <div className={`text-medium-number ${getMetricColor(metrics.annualizedReturn)}`}>
               {metrics.annualizedReturn.toFixed(2)}%
             </div>
             <div className="text-sm text-muted-foreground">
@@ -109,12 +109,12 @@ export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProp
         <Card>
           <CardHeader className="pb-3">
             <CardDescription className="flex items-center gap-1">
-              <Activity className="h-3 w-3" />
+              <Activity className="icon-small" />
               {t('metrics.volatility')}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-medium-number">
               {metrics.volatility.toFixed(2)}%
             </div>
             <div className="text-sm text-muted-foreground">
@@ -128,7 +128,7 @@ export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProp
             <CardDescription>{t('metrics.sharpeRatio')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-medium-number">
               {metrics.sharpeRatio.toFixed(2)}
             </div>
             <div className="text-sm text-muted-foreground">
@@ -144,7 +144,7 @@ export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProp
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <PieChart className="h-5 w-5" />
+                <PieChart className="icon-card" />
                 {t('metrics.diversification')}
               </CardTitle>
               <CardDescription className="mt-1">

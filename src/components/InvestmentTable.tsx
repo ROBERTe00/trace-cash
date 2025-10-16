@@ -127,7 +127,7 @@ export const InvestmentTable = ({
   return (
     <Card className="glass-card p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">{t('investments.portfolio')}</h3>
+        <h3 className="text-card-title">{t('investments.portfolio')}</h3>
         {investments.some(inv => inv.liveTracking) && (
           <Button
             variant="outline"
@@ -136,7 +136,7 @@ export const InvestmentTable = ({
             disabled={updating}
             className="gap-2"
           >
-            <Zap className={`h-4 w-4 ${updating ? 'animate-spin' : ''}`} />
+            <Zap className={`icon-button ${updating ? 'animate-spin' : ''}`} />
             {t('investments.syncPrices')}
           </Button>
         )}
@@ -181,7 +181,7 @@ export const InvestmentTable = ({
                         {investment.name}
                         {investment.liveTracking && (
                           <Badge variant="outline" className="text-xs gap-1">
-                            <Zap className="h-3 w-3 text-primary" />
+                            <Zap className="icon-small text-primary" />
                             Live
                           </Badge>
                         )}
@@ -202,7 +202,7 @@ export const InvestmentTable = ({
                     <TableCell className="text-right">
                       {formatCurrency(initialValue)}
                     </TableCell>
-                    <TableCell className="text-right font-medium">
+                    <TableCell className="text-right text-base font-bold">
                       {formatCurrency(currentValue)}
                     </TableCell>
                     <TableCell className="text-right">
@@ -212,11 +212,11 @@ export const InvestmentTable = ({
                         }`}
                       >
                         {isPositive ? (
-                          <TrendingUp className="h-4 w-4" />
+                          <TrendingUp className="icon-button" />
                         ) : (
-                          <TrendingDown className="h-4 w-4" />
+                          <TrendingDown className="icon-button" />
                         )}
-                        {yieldPercent.toFixed(2)}%
+                        <span className="text-base font-bold">{yieldPercent.toFixed(2)}%</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -225,7 +225,7 @@ export const InvestmentTable = ({
                         size="icon"
                         onClick={() => onDelete(investment.id)}
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <Trash2 className="icon-button text-destructive" />
                       </Button>
                     </TableCell>
                   </TableRow>
