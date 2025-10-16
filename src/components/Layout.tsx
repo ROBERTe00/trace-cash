@@ -12,6 +12,7 @@ import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAOfflineIndicator } from "@/components/PWAOfflineIndicator";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { Home, Wallet, TrendingUp, Users, Settings, Plus } from "lucide-react";
+import WaveBackground from "@/components/WaveBackground";
 
 export const Layout = () => {
   const navigate = useNavigate();
@@ -42,14 +43,15 @@ export const Layout = () => {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <WaveBackground variant="default" />
+      <div className="flex min-h-screen w-full relative">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
           <AppSidebar />
         </div>
 
         <main className="flex-1 overflow-auto pb-20 md:pb-0">
-          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b px-4 py-3">
+          <div className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl supports-[backdrop-filter]:bg-card/60 border-b px-4 py-3 shadow-sm">
             <div className="flex items-center justify-between max-w-7xl mx-auto">
               <GlobalSearch />
               <div className="flex items-center gap-2">
@@ -69,7 +71,7 @@ export const Layout = () => {
         {/* Mobile Bottom Nav with FAB */}
         <BottomNav
           items={navItems}
-          fabAction={() => navigate("/expenses")}
+          fabAction={() => setShowAddDialog(true)}
           fabIcon={Plus}
         />
       </div>

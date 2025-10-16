@@ -1,0 +1,11 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g opacity="0.4">
+    <path d="M0 200C320 120 640 280 960 200C1280 120 1600 280 1920 200V1080H0V200Z" fill="#C8E6C9"/>
+  </g>
+  <g opacity="0.3">
+    <path d="M0 350C400 250 800 450 1200 350C1600 250 1920 400 1920 400V1080H0V350Z" fill="#A5D6A7"/>
+  </g>
+  <g opacity="0.2">
+    <path d="M0 500C480 400 960 600 1440 500C1920 400 1920 550 1920 550V1080H0V500Z" fill="#81C784"/>
+  </g>
+</svg>

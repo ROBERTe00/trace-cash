@@ -1,90 +1,49 @@
-import { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
-import { KPICard } from "@/components/KPICard";
-import { IncomeTracker } from "@/components/IncomeTracker";
-import { FinancialGoals } from "@/components/FinancialGoals";
-import { ExpenseDonutChart } from "@/components/ExpenseDonutChart";
-import { InteractiveInvestmentChart } from "@/components/InteractiveInvestmentChart";
-import { EnhancedAIInsights } from "@/components/EnhancedAIInsights";
-import { FinancialProfile } from "@/components/FinancialProfile";
-import { NetWorthHeroCard } from "@/components/NetWorthHeroCard";
-import { SavingsAllocationCard } from "@/components/SavingsAllocationCard";
-import { ImpactOnInvestmentsWidget } from "@/components/ImpactOnInvestmentsWidget";
-import { AdvancedInsightsCard } from "@/components/AdvancedInsightsCard";
-import { GamificationPanel } from "@/components/GamificationPanel";
-import { LeaderboardWidget } from "@/components/LeaderboardWidget";
-import { NewsSection } from "@/components/NewsSection";
-import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
-import {
-  Wallet,
-  TrendingUp,
-  TrendingDown,
-  PiggyBank,
-  ArrowRight,
-  Download,
-  FileText,
-  RefreshCw,
-} from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  getExpenses,
-  saveExpenses,
-  getInvestments,
-  saveInvestments,
-  getGoals,
-  saveGoals,
-  Expense,
-  Investment,
-  FinancialGoal,
-  calculatePortfolioValue,
-} from "@/lib/storage";
+import { Download, RefreshCw, DollarSign, TrendingUp, PiggyBank, Target } from "lucide-react";
 import { toast } from "sonner";
-import { useApp } from "@/contexts/AppContext";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useExpenses } from "@/hooks/useExpenses";
+import { useInvestments } from "@/hooks/useInvestments";
 import { useSavingsPotential } from "@/hooks/useSavingsPotential";
 import { useExpenseCorrelation } from "@/hooks/useExpenseCorrelation";
 import { useInvestmentSuggestions } from "@/hooks/useInvestmentSuggestions";
-import { migrateLocalStorageToDatabase, hasPendingMigration } from "@/lib/migrateExpenses";
-import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLivePricePolling, useManualPriceRefresh } from "@/hooks/useLivePricePolling";
-import { useInvestments } from "@/hooks/useInvestments";
-import { useExpenses } from "@/hooks/useExpenses";
-import { Badge } from "@/components/ui/badge";
+import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
+import { migrateLocalStorageToDatabase, hasPendingMigration } from "@/lib/migrateExpenses";
+import { getGoals, saveGoals, FinancialGoal } from "@/lib/storage";
+import FinanceScoreCard from "@/components/FinanceScoreCard";
+import BalanceCard from "@/components/BalanceCard";
+import StatCard from "@/components/StatCard";
+import ExpenseBreakdownCard from "@/components/ExpenseBreakdownCard";
+import CashflowCard from "@/components/CashflowCard";
+import SavingPlansCard from "@/components/SavingPlansCard";
+import { FinancialGoals } from "@/components/FinancialGoals";
+import { useApp } from "@/contexts/AppContext";
 
 export default function DashboardHome() {
   const { formatCurrency } = useApp();
   const [goals, setGoals] = useState<FinancialGoal[]>([]);
-  const [showInvestDialog, setShowInvestDialog] = useState(false);
+  const [showSuggestionDialog, setShowSuggestionDialog] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // Use new hooks for real-time data
   const { expenses } = useExpenses();
-  const { investments, totalValue, totalCost, totalGain, gainPercentage } = useInvestments();
-  
-  const { data: savingsData } = useSavingsPotential();
-  const { data: correlationData, isLoading: correlationLoading } = useExpenseCorrelation();
-  const { suggestions, acceptSuggestion, rejectSuggestion } = useInvestmentSuggestions();
+  const { investments, totalValue } = useInvestments();
+  const { suggestions: investmentSuggestions } = useInvestmentSuggestions();
   const { refreshPrices } = useManualPriceRefresh();
 
-  // Enable automatic price polling (every 5 minutes)
   useLivePricePolling(true);
 
   useEffect(() => {
     const initData = async () => {
-      // Check for pending migration
       const { data: { user } } = await supabase.auth.getUser();
       if (user && hasPendingMigration()) {
         await migrateLocalStorageToDatabase(user.id);
       }
-      
       setGoals(getGoals());
     };
-    
     initData();
   }, []);
 
@@ -112,21 +71,24 @@ export default function DashboardHome() {
     toast.success("Goal updated!");
   };
 
-  // Calculate KPIs using real-time data from hooks
-  const totalIncome = expenses
-    .filter((e) => e.type === "Income")
-    .reduce((sum, e) => sum + e.amount, 0);
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshPrices();
+    setIsRefreshing(false);
+    toast.success("Prices refreshed!");
+  };
 
   const totalExpenses = expenses
     .filter((e) => e.type === "Expense")
     .reduce((sum, e) => sum + e.amount, 0);
 
-  const netBalance = totalIncome - totalExpenses;
+  const totalIncome = expenses
+    .filter((e) => e.type === "Income")
+    .reduce((sum, e) => sum + e.amount, 0);
 
-  // Calculate net worth: cash balance + investment value
-  const netWorth = useMemo(() => {
-    return netBalance + totalValue;
-  }, [netBalance, totalValue]);
+  const netBalance = totalIncome - totalExpenses;
+  const totalInvestments = totalValue;
+  const totalNetWorth = netBalance + totalInvestments;
 
   const handleExportCSV = () => {
     exportToCSV({
@@ -135,7 +97,7 @@ export default function DashboardHome() {
       goals,
       summary: { totalIncome, totalExpenses, netBalance, portfolioValue: totalValue },
     });
-    toast.success("CSV exported successfully!");
+    toast.success("CSV exported!");
   };
 
   const handleExportPDF = () => {
@@ -148,223 +110,153 @@ export default function DashboardHome() {
     toast.success("PDF report generated!");
   };
 
+  const financeScore = 75;
+  const totalBalance = totalNetWorth;
+  const accounts = [
+    { name: "Premium Plus", amount: totalInvestments * 0.6, type: "Investment", icon: 'card' as const, color: "#10b981" },
+    { name: "Cash Account", amount: totalInvestments * 0.4, type: "Savings", icon: 'wallet' as const, color: "#3b82f6" },
+  ];
+
+  const categoryBreakdown = expenses.reduce((acc, expense) => {
+    const existing = acc.find(c => c.name === expense.category);
+    if (existing) {
+      existing.amount += expense.amount;
+    } else {
+      acc.push({
+        name: expense.category,
+        amount: expense.amount,
+        color: ['#1E3A26', '#81C784', '#9C27B0', '#BDBDBD'][acc.length % 4]
+      });
+    }
+    return acc;
+  }, [] as Array<{ name: string; amount: number; color: string }>).slice(0, 4);
+
+  const cashflowData = [
+    { day: 'Mon', income: 4200, expense: 2400 },
+    { day: 'Tue', income: 3800, expense: 2200 },
+    { day: 'Wed', income: 5000, expense: 2800 },
+    { day: 'Thu', income: 4600, expense: 2600 },
+    { day: 'Fri', income: 5200, expense: 3000 },
+    { day: 'Sat', income: 3200, expense: 1800 },
+    { day: 'Sun', income: 2800, expense: 1500 },
+  ];
+
+  const savingPlans = [
+    { name: "Emergency Fund", current: 8000, target: 20000, color: "#81C784" },
+    { name: "Retirement", current: 15000, target: 60000, color: "#9C27B0" },
+  ];
+
+  const monthlyIncome = 18000;
+  const monthlyExpenses = totalExpenses / 12;
+  const monthlySavingsAmount = monthlyIncome - monthlyExpenses;
+
   return (
     <TooltipProvider>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between animate-fade-in">
-          <div className="space-y-2">
-            <h1 className="text-5xl md:text-6xl font-black tracking-tight">
-              <span className="gradient-text animate-float">Trace</span>
-              <span className="text-foreground/80"> Cash</span>
+      <div className="space-y-6 p-4 md:p-8 max-w-[1600px] mx-auto">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">
+              Dashboard
             </h1>
-            <p className="text-muted-foreground text-lg flex items-center gap-2">
-              <span className="inline-block w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              Complete Financial Management
-            </p>
+            <p className="text-muted-foreground text-base">Your complete financial overview</p>
           </div>
+          
           <div className="flex gap-2">
             <Button 
               variant="outline" 
-              size="sm" 
-              onClick={refreshPrices}
-              className="gap-2"
+              size="sm"
+              onClick={handleExportCSV}
+              className="gap-2 rounded-2xl"
             >
-              <RefreshCw className="h-4 w-4" />
-              Aggiorna Prezzi
+              <Download className="h-4 w-4" />
+              CSV
             </Button>
-            <Button variant="outline" size="sm" onClick={handleExportCSV}>
-              <FileText className="h-4 w-4 mr-2" />
-              Export CSV
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleExportPDF}
+              className="gap-2 rounded-2xl"
+            >
+              <Download className="h-4 w-4" />
+              PDF
             </Button>
-            <Button variant="outline" size="sm" onClick={handleExportPDF}>
-              <Download className="h-4 w-4 mr-2" />
-              Export PDF
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="gap-2 rounded-2xl"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh
             </Button>
           </div>
         </div>
 
-        {/* Net Worth Hero Card with AI Insight */}
-        <NetWorthHeroCard
-          netWorth={netWorth}
-          cashBalance={netBalance}
-          investmentsValue={totalValue}
-          monthlyChange={gainPercentage}
-          onRefreshPrices={refreshPrices}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <FinanceScoreCard score={financeScore} />
+          <BalanceCard totalBalance={totalBalance} accounts={accounts} />
+          <ExpenseBreakdownCard categories={categoryBreakdown} totalExpenses={totalExpenses} />
+        </div>
 
-        {/* Savings & Quick Stats Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SavingsAllocationCard
-            availableSavings={savingsData?.available_savings || 0}
-            savingsRate={savingsData?.savings_rate || 0}
-            suggestion={savingsData?.suggestion || 'Inizia a tracciare per suggerimenti'}
-            onInvestClick={() => setShowInvestDialog(true)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard
+            icon={DollarSign}
+            label="Monthly Income"
+            value={formatCurrency(monthlyIncome)}
+            change={8.2}
+            changeType="increase"
+            delay={0.3}
           />
-          <KPICard
-            title="Valore Portfolio"
-            value={formatCurrency(totalValue)}
+          <StatCard
             icon={TrendingUp}
-            change={`${totalGain > 0 ? "+" : ""}${gainPercentage.toFixed(2)}%`}
-            changeType={totalGain > 0 ? "positive" : "negative"}
-            tooltip="Rendimento totale investimenti"
+            label="Monthly Expenses"
+            value={formatCurrency(monthlyExpenses)}
+            change={3.1}
+            changeType="decrease"
+            delay={0.4}
           />
-          <KPICard
-            title="Net Balance"
-            value={formatCurrency(netBalance)}
-            icon={Wallet}
-            change={`${netBalance >= 0 ? "Positive" : "Negative"} balance`}
-            changeType={netBalance >= 0 ? "positive" : "negative"}
-            tooltip="Income minus expenses"
-          />
-          <KPICard
-            title="Savings Rate"
-            value={`${(savingsData?.savings_rate || 0).toFixed(1)}%`}
+          <StatCard
             icon={PiggyBank}
-            change={savingsData?.savings_rate >= 20 ? "Excellent" : savingsData?.savings_rate >= 10 ? "Good" : "Needs improvement"}
-            changeType={savingsData?.savings_rate >= 20 ? "positive" : savingsData?.savings_rate >= 10 ? "neutral" : "negative"}
-            tooltip="Percentage of income saved"
+            label="Monthly Savings"
+            value={formatCurrency(monthlySavingsAmount)}
+            change={12.5}
+            changeType="increase"
+            delay={0.5}
+          />
+          <StatCard
+            icon={Target}
+            label="Investment"
+            value={formatCurrency(totalInvestments)}
+            change={5.8}
+            changeType="increase"
+            delay={0.6}
           />
         </div>
 
-        {/* Impact Analysis Widget */}
-        <ImpactOnInvestmentsWidget
-          correlationData={correlationData || null}
-          loading={correlationLoading}
-          onViewRecommendations={() => window.location.href = '/insights'}
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <CashflowCard data={cashflowData} />
+          </div>
+          <SavingPlansCard plans={savingPlans} />
+        </div>
 
-        {/* Financial Profile */}
-        <FinancialProfile />
-
-        {/* Financial Goals */}
         <FinancialGoals />
 
-        {/* Advanced AI Insights */}
-        <AdvancedInsightsCard />
-
-        {/* Gamification & Leaderboard */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <GamificationPanel />
-          <LeaderboardWidget />
-        </div>
-
-        {/* News Section */}
-        <NewsSection />
-
-        {/* Legacy Enhanced AI Insights (if needed) */}
-        <EnhancedAIInsights
-          expenses={expenses as any}
-          investments={investments as any}
-        />
-
-        {/* Interactive Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ExpenseDonutChart expenses={expenses as any} />
-          <InteractiveInvestmentChart investments={investments as any} />
-        </div>
-
-        {/* Income Tracker */}
-        <IncomeTracker expenses={expenses as any} />
-
-        {/* Quick Links */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link to="/expenses">
-            <div className="glass-card p-6 hover-lift cursor-pointer group">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-bold mb-2">Track Expenses</h3>
-                  <p className="text-sm text-muted-foreground">
-                    View detailed spending analysis
-                  </p>
-                </div>
-                <ArrowRight className="h-6 w-6 text-primary group-hover:translate-x-1 transition-transform" />
-              </div>
-            </div>
-          </Link>
-
-          <Link to="/investments">
-            <div className="glass-card p-6 hover-lift cursor-pointer group">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-bold mb-2">
-                    Manage Investments
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Portfolio analysis & live prices
-                  </p>
-                </div>
-                <ArrowRight className="h-6 w-6 text-primary group-hover:translate-x-1 transition-transform" />
-              </div>
-            </div>
-          </Link>
-
-          <Link to="/insights">
-            <div className="glass-card p-6 hover-lift cursor-pointer group">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-bold mb-2">View Insights</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Smart recommendations & tips
-                  </p>
-                </div>
-                <ArrowRight className="h-6 w-6 text-primary group-hover:translate-x-1 transition-transform" />
-              </div>
-            </div>
-          </Link>
-        </div>
-
-        {/* Investment Suggestions Dialog */}
-        <Dialog open={showInvestDialog} onOpenChange={setShowInvestDialog}>
+        <Dialog open={showSuggestionDialog} onOpenChange={setShowSuggestionDialog}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Investment Suggestions</DialogTitle>
-              <DialogDescription>
-                AI-powered recommendations based on your savings
-              </DialogDescription>
             </DialogHeader>
-            
             <div className="space-y-4">
-              {suggestions && suggestions.length > 0 ? (
-                suggestions.map(suggestion => (
-                  <div key={suggestion.id} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-primary">
-                        {suggestion.asset_type}
-                      </span>
-                      <span className="text-lg font-bold">
-                        {formatCurrency(suggestion.amount_suggested)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {suggestion.reasoning}
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          acceptSuggestion(suggestion.id);
-                          setShowInvestDialog(false);
-                        }}
-                        className="flex-1"
-                      >
-                        Accept
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => rejectSuggestion(suggestion.id)}
-                        className="flex-1"
-                      >
-                        Dismiss
-                      </Button>
-                    </div>
+              {investmentSuggestions && investmentSuggestions.length > 0 ? (
+                investmentSuggestions.map((suggestion: any) => (
+                  <div key={suggestion.id} className="border rounded-lg p-4">
+                    <p className="text-sm">{suggestion.reasoning}</p>
                   </div>
                 ))
               ) : (
-                <p className="text-center text-sm text-muted-foreground py-8">
-                  No suggestions available yet. Keep saving to receive investment recommendations!
-                </p>
+                <p className="text-sm text-muted-foreground">No suggestions available</p>
               )}
             </div>
           </DialogContent>
