@@ -1,11 +1,13 @@
 import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileSpreadsheet, Upload, Loader2, AlertCircle } from "lucide-react";
+import { FileSpreadsheet, Upload, Loader2, AlertCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { AIFeedbackModal } from "@/components/AIFeedbackModal";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ParsedTransaction {
   date: string;
@@ -31,7 +33,10 @@ interface CSVExcelUploadProps {
 export const CSVExcelUpload = ({ onTransactionsParsed }: CSVExcelUploadProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [parsedTransactions, setParsedTransactions] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -66,50 +71,76 @@ export const CSVExcelUpload = ({ onTransactionsParsed }: CSVExcelUploadProps) =>
     setIsProcessing(true);
 
     try {
-      const toastId = toast.loading(`Parsing ${file.name}...`, {
-        description: 'AI is analyzing your transactions'
+      const toastId = toast.loading(`Analizzando ${file.name}...`, {
+        description: 'AI sta categorizzando le transazioni'
       });
 
-      // Create FormData and send to edge function
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const { data, error } = await supabase.functions.invoke('parse-csv-excel', {
-        body: formData,
-      });
-
-      toast.dismiss(toastId);
-
-      if (error) {
-        console.error('Parse error:', error);
-        throw error;
-      }
-
-      if (!data || !data.transactions || data.transactions.length === 0) {
-        toast.error('No valid transactions found in file', {
-          description: data.error || 'Please check the file format'
-        });
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("Devi effettuare il login");
         setIsProcessing(false);
         return;
       }
 
-      onTransactionsParsed(data as ParseResult);
+      // Read file content
+      const reader = new FileReader();
       
-      toast.success(
-        `Parsed ${data.stats.valid} transactions successfully!`,
-        { 
-          description: data.stats.invalid > 0 
-            ? `${data.stats.invalid} rows had errors` 
-            : 'AI categorization complete'
+      reader.onload = async (e) => {
+        const fileContent = e.target?.result as string;
+        const fileType = file.name.endsWith('.csv') ? 'csv' : 'excel';
+
+        // Call new smart AI function
+        const { data, error } = await supabase.functions.invoke('parse-smart-transactions', {
+          body: {
+            fileContent,
+            fileType,
+            userId: user.id,
+          },
+        });
+
+        toast.dismiss(toastId);
+
+        if (error || !data?.success) {
+          console.error('Parse error:', error || data?.error);
+          toast.error(data?.error || "Errore durante l'elaborazione del file");
+          setIsProcessing(false);
+          return;
         }
-      );
+
+        if (!data.transactions || data.transactions.length === 0) {
+          toast.error('Nessuna transazione valida trovata nel file');
+          setIsProcessing(false);
+          return;
+        }
+
+        // Store transactions for feedback modal
+        setParsedTransactions(data.transactions);
+        
+        // Show success toast
+        toast.success(data.message, {
+          description: `${data.stats.expenses} spese, ${data.stats.income} entrate`
+        });
+
+        // Refresh expenses query
+        queryClient.invalidateQueries({ queryKey: ['expenses'] });
+
+        // Show feedback modal for corrections
+        setShowFeedbackModal(true);
+        setIsProcessing(false);
+      };
+
+      reader.onerror = () => {
+        toast.error('Errore nella lettura del file');
+        setIsProcessing(false);
+      };
+
+      reader.readAsText(file);
 
     } catch (error) {
       console.error('File processing error:', error);
-      toast.error('Failed to parse file', {
-        description: 'Please check the format and try again'
-      });
-    } finally {
+      toast.error('Errore nell\'elaborazione del file');
       setIsProcessing(false);
     }
   };
@@ -136,29 +167,31 @@ export const CSVExcelUpload = ({ onTransactionsParsed }: CSVExcelUploadProps) =>
   };
 
   return (
-    <Card className="glass-card p-6 animate-fade-in">
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <FileSpreadsheet className="h-5 w-5 text-primary" />
-              CSV / Excel Import
-            </h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Upload your bank transactions file for automatic parsing
-            </p>
+    <>
+      <Card className="glass-card p-6 animate-fade-in">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <FileSpreadsheet className="h-5 w-5 text-primary" />
+                Import CSV / Excel con AI
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Carica il file delle tue transazioni per l'analisi automatica
+              </p>
+            </div>
+            <Badge variant="outline" className="text-xs gap-1">
+              <Sparkles className="w-3 h-3" />
+              AI Powered
+            </Badge>
           </div>
-          <Badge variant="outline" className="text-xs">
-            AI Powered
-          </Badge>
-        </div>
 
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="text-xs">
-            <strong>Smart Features:</strong> Auto-detects columns, AI categorization, and duplicate detection
-          </AlertDescription>
-        </Alert>
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-xs">
+              <strong>Funzionalità Smart:</strong> Rilevamento automatico colonne, categorizzazione AI con feedback loop
+            </AlertDescription>
+          </Alert>
 
         <div
           className={`
@@ -184,22 +217,22 @@ export const CSVExcelUpload = ({ onTransactionsParsed }: CSVExcelUploadProps) =>
           {isProcessing ? (
             <div className="space-y-2">
               <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto" />
-              <p className="text-sm font-medium">Processing...</p>
-              <p className="text-xs text-muted-foreground">Parsing and AI categorizing</p>
+              <p className="text-sm font-medium">Elaborazione in corso...</p>
+              <p className="text-xs text-muted-foreground">Parsing e categorizzazione AI</p>
             </div>
           ) : (
             <div className="space-y-2">
               <Upload className="h-10 w-10 text-muted-foreground mx-auto" />
               <div>
                 <p className="text-sm font-medium">
-                  Drop your CSV or Excel file here
+                  Trascina qui il tuo file CSV o Excel
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  or click to browse (max 5MB)
+                  oppure clicca per selezionare (max 5MB)
                 </p>
               </div>
               <Button variant="outline" size="sm" className="mt-2">
-                Select File
+                Seleziona File
               </Button>
             </div>
           )}
@@ -207,20 +240,28 @@ export const CSVExcelUpload = ({ onTransactionsParsed }: CSVExcelUploadProps) =>
 
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="space-y-1">
-            <p className="font-medium">Supported Formats</p>
+            <p className="font-medium">Formati Supportati</p>
             <div className="flex flex-wrap gap-1">
               <Badge variant="secondary" className="text-xs">.csv</Badge>
               <Badge variant="secondary" className="text-xs">.xlsx</Badge>
             </div>
           </div>
           <div className="space-y-1">
-            <p className="font-medium">Auto-Detection</p>
+            <p className="font-medium">Rilevamento Automatico</p>
             <p className="text-muted-foreground text-xs">
-              Finds date, description, amount columns automatically
+              Trova automaticamente colonne data, descrizione e importo
             </p>
           </div>
         </div>
       </div>
     </Card>
+
+    {/* AI Feedback Modal */}
+    <AIFeedbackModal 
+      open={showFeedbackModal}
+      onClose={() => setShowFeedbackModal(false)}
+      transactions={parsedTransactions}
+    />
+  </>
   );
 };
