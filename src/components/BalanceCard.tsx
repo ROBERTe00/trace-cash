@@ -33,13 +33,13 @@ const BalanceCard = ({ totalBalance, accounts }: BalanceCardProps) => {
       whileHover={{ scale: 1.02, y: -4 }}
       className="h-full"
     >
-      <Card className="h-full border-none shadow-lg hover:shadow-2xl transition-all duration-300 rounded-3xl bg-card">
+      <Card className="h-full border-none shadow-lg hover:shadow-2xl transition-all duration-300 rounded-3xl bg-card overflow-hidden">
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold text-muted-foreground">Total Balance</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <motion.div
-            className="text-7xl font-extrabold tracking-tighter leading-none"
+            className="text-large-number break-words leading-none"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 150, delay: 0.3 }}

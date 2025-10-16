@@ -27,10 +27,10 @@ const CashflowCard = ({ data }: CashflowCardProps) => {
       whileHover={{ scale: 1.01, y: -4 }}
       className="h-full"
     >
-      <Card className="h-full border-none shadow-lg hover:shadow-2xl transition-all duration-300 rounded-3xl bg-card">
+      <Card className="h-full border-none shadow-lg hover:shadow-2xl transition-all duration-300 rounded-3xl bg-card overflow-hidden">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold">Cashflow Overview</CardTitle>
+            <CardTitle className="text-base font-semibold truncate">Cashflow Overview</CardTitle>
             <ToggleGroup type="single" value={view} onValueChange={(v) => v && setView(v as 'income' | 'expense')}>
               <ToggleGroupItem value="income" className="text-xs">Income</ToggleGroupItem>
               <ToggleGroupItem value="expense" className="text-xs">Expense</ToggleGroupItem>

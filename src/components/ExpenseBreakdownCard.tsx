@@ -46,7 +46,7 @@ const ExpenseBreakdownCard = ({ categories, totalExpenses }: ExpenseBreakdownCar
       whileHover={{ scale: 1.02, y: -4 }}
       className="h-full"
     >
-      <Card className="h-full border-none shadow-lg hover:shadow-2xl transition-all duration-300 rounded-3xl bg-card">
+      <Card className="h-full border-none shadow-lg hover:shadow-2xl transition-all duration-300 rounded-3xl bg-card overflow-hidden">
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold text-muted-foreground">Expense Breakdown</CardTitle>
         </CardHeader>

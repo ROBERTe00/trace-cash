@@ -21,13 +21,13 @@ const StatCard = ({ icon: Icon, label, value, change, changeType, delay = 0 }: S
       whileHover={{ scale: 1.02, y: -4 }}
       className="h-full"
     >
-      <Card className="h-full border-none shadow-lg hover:shadow-2xl transition-all duration-300 rounded-3xl bg-card">
+      <Card className="h-full border-none shadow-lg hover:shadow-2xl transition-all duration-300 rounded-3xl bg-card overflow-hidden">
         <CardContent className="p-6">
           <div className="flex items-start justify-between mb-4">
             <div 
               className="w-12 h-12 rounded-full flex items-center justify-center border-2 border-primary/20"
             >
-              <Icon className="w-6 h-6 text-primary" />
+              <Icon className="icon-card text-primary" />
             </div>
             {change !== undefined && (
               <Badge 
@@ -44,10 +44,10 @@ const StatCard = ({ icon: Icon, label, value, change, changeType, delay = 0 }: S
             )}
           </div>
           
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{label}</p>
+          <div className="space-y-1 min-w-0">
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider truncate">{label}</p>
             <motion.p
-              className="text-3xl font-extrabold tracking-tight"
+              className="text-small-number break-words"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 200, delay: delay + 0.2 }}

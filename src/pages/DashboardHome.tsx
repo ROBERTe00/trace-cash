@@ -152,13 +152,13 @@ export default function DashboardHome() {
 
   return (
     <TooltipProvider>
-      <div className="space-y-6 p-4 md:p-8 max-w-[1600px] mx-auto">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">
+      <div className="space-y-6 p-4 md:p-8 max-w-[1600px] mx-auto overflow-hidden">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between min-w-0">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-section font-extrabold tracking-tight mb-2 break-words">
               Dashboard
             </h1>
-            <p className="text-muted-foreground text-base">Your complete financial overview</p>
+            <p className="text-muted-foreground text-base truncate">Your complete financial overview</p>
           </div>
           
           <div className="flex gap-2">

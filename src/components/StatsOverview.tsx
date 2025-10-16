@@ -54,14 +54,14 @@ export const StatsOverview = ({
             <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-5 group-hover:opacity-10 transition-opacity duration-500`} />
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-4">
-                <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide truncate">
                   {stat.title}
                 </p>
                 <div className={`p-2 rounded-xl bg-gradient-to-br ${stat.color} opacity-20 group-hover:opacity-30 transition-opacity`}>
-                  <Icon className="h-5 w-5 text-foreground" />
+                  <Icon className="icon-card text-foreground" />
                 </div>
               </div>
-              <p className="text-3xl font-black bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text">
+              <p className="text-medium-number bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text break-words">
                 {stat.value}
               </p>
               {stat.trend !== undefined && (

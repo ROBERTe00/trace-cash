@@ -27,10 +27,10 @@ const SavingPlansCard = ({ plans, onAddPlan }: SavingPlansCardProps) => {
       whileHover={{ scale: 1.02, y: -4 }}
       className="h-full"
     >
-      <Card className="h-full border-none shadow-lg hover:shadow-2xl transition-all duration-300 rounded-3xl bg-card">
+      <Card className="h-full border-none shadow-lg hover:shadow-2xl transition-all duration-300 rounded-3xl bg-card overflow-hidden">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold">Saving Plans</CardTitle>
+            <CardTitle className="text-base font-semibold truncate">Saving Plans</CardTitle>
             <Button 
               variant="ghost" 
               size="sm" 
