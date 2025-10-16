@@ -72,7 +72,7 @@ export function InsightsHero({ score, trend, summary }: InsightsHeroProps) {
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <p className={`text-4xl font-bold ${getScoreColor(score)}`}>{score}</p>
+                  <p className={`text-6xl font-bold ${getScoreColor(score)}`}>{score}</p>
                   <p className="text-xs text-muted-foreground">Score</p>
                 </div>
               </div>

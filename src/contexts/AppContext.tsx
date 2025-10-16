@@ -139,6 +139,27 @@ const translations: Record<Language, Record<string, string>> = {
     "ai.typeSuccess": "Success",
     "ai.typeInfo": "Info",
     
+    // Onboarding
+    "onboarding.welcome": "Welcome to Trace-Cash",
+    "onboarding.essentials": "Let's Set Your Essentials",
+    "onboarding.expenses": "Track Your Expenses",
+    "onboarding.investments": "Manage Your Investments",
+    "onboarding.summary": "Financial Summary",
+    "onboarding.ai_powered": "AI-powered financial tracking",
+    "onboarding.core_data": "Set up your core financial data",
+    "onboarding.import_expenses": "Import or add expenses manually (optional)",
+    "onboarding.track_portfolio": "Track your portfolio performance (optional)",
+    "onboarding.review_start": "Review and start using the app",
+    "onboarding.complete": "Completing...",
+    "onboarding.complete_button": "Complete & Start Using Trace-Cash",
+
+    // Insights
+    "insights.health_score": "Financial Health Score",
+    "insights.excellent": "Excellent",
+    "insights.good": "Good",
+    "insights.fair": "Fair",
+    "insights.needs_improvement": "Needs Improvement",
+    
     // Charts
     "chart.expenseAnalysis": "Interactive Expense Analysis",
     "chart.investmentPerformance": "Investment Performance",
@@ -380,6 +401,27 @@ const translations: Record<Language, Record<string, string>> = {
     "ai.typeTip": "Suggerimento",
     "ai.typeSuccess": "Successo",
     "ai.typeInfo": "Info",
+    
+    // Onboarding
+    "onboarding.welcome": "Benvenuto su Trace-Cash",
+    "onboarding.essentials": "Impostiamo i Dati Essenziali",
+    "onboarding.expenses": "Traccia le Tue Spese",
+    "onboarding.investments": "Gestisci i Tuoi Investimenti",
+    "onboarding.summary": "Riepilogo Finanziario",
+    "onboarding.ai_powered": "Tracciamento finanziario basato su AI",
+    "onboarding.core_data": "Imposta i tuoi dati finanziari principali",
+    "onboarding.import_expenses": "Importa o aggiungi spese manualmente (opzionale)",
+    "onboarding.track_portfolio": "Traccia la performance del tuo portafoglio (opzionale)",
+    "onboarding.review_start": "Rivedi e inizia a usare l'app",
+    "onboarding.complete": "Completamento in corso...",
+    "onboarding.complete_button": "Completa e Inizia a Usare Trace-Cash",
+
+    // Insights
+    "insights.health_score": "Punteggio di Salute Finanziaria",
+    "insights.excellent": "Eccellente",
+    "insights.good": "Buono",
+    "insights.fair": "Discreto",
+    "insights.needs_improvement": "Necessita Miglioramenti",
     
     // Charts
     "chart.expenseAnalysis": "Analisi Spese Interattiva",

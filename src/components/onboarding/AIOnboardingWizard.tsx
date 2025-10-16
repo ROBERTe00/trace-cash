@@ -12,6 +12,7 @@ import { EssentialsStep } from "./steps/EssentialsStep";
 import { ExpensesStep } from "./steps/ExpensesStep";
 import { InvestmentsStep } from "./steps/InvestmentsStep";
 import { SummaryStep } from "./steps/SummaryStep";
+import { useApp } from "@/contexts/AppContext";
 
 interface OnboardingData {
   savingsGoal: number;
@@ -29,6 +30,7 @@ interface AIOnboardingWizardProps {
 }
 
 export function AIOnboardingWizard({ isOpen, onComplete }: AIOnboardingWizardProps) {
+  const { t } = useApp();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -163,18 +165,18 @@ export function AIOnboardingWizard({ isOpen, onComplete }: AIOnboardingWizardPro
 
                 <div className="text-center">
                   <CardTitle className="text-2xl">
-                    {step === 1 && "Welcome to Trace-Cash"}
-                    {step === 2 && "Let's Set Your Essentials"}
-                    {step === 3 && "Track Your Expenses"}
-                    {step === 4 && "Manage Your Investments"}
-                    {step === 5 && "Your Financial Overview"}
+                    {step === 1 && t("onboarding.welcome")}
+                    {step === 2 && t("onboarding.essentials")}
+                    {step === 3 && t("onboarding.expenses")}
+                    {step === 4 && t("onboarding.investments")}
+                    {step === 5 && t("onboarding.summary")}
                   </CardTitle>
                   <CardDescription className="text-base mt-2">
-                    {step === 1 && "AI-powered financial tracking starts here"}
-                    {step === 2 && "Set up your core financial data"}
-                    {step === 3 && "Import or add expenses manually (optional)"}
-                    {step === 4 && "Track your portfolio performance (optional)"}
-                    {step === 5 && "Review and start using the app"}
+                    {step === 1 && t("onboarding.ai_powered")}
+                    {step === 2 && t("onboarding.core_data")}
+                    {step === 3 && t("onboarding.import_expenses")}
+                    {step === 4 && t("onboarding.track_portfolio")}
+                    {step === 5 && t("onboarding.review_start")}
                   </CardDescription>
                 </div>
               </CardHeader>
@@ -209,9 +211,9 @@ export function AIOnboardingWizard({ isOpen, onComplete }: AIOnboardingWizardPro
                       className="flex-1"
                     >
                       {loading ? (
-                        "Processing..."
+                        t("onboarding.complete")
                       ) : step === totalSteps ? (
-                        "Complete & Start Using Trace-Cash"
+                        t("onboarding.complete_button")
                       ) : (
                         <>
                           Next

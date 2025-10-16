@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Expense, Investment } from "@/lib/storage";
 import { Activity, AlertCircle, CheckCircle2, TrendingUp, Info } from "lucide-react";
+import { useApp } from "@/contexts/AppContext";
 
 interface FinancialHealthScoreProps {
   expenses: Expense[];
@@ -12,6 +13,7 @@ export const FinancialHealthScore = ({
   expenses,
   investments,
 }: FinancialHealthScoreProps) => {
+  const { t } = useApp();
   const totalIncome = expenses
     .filter((e) => e.type === "Income")
     .reduce((sum, e) => sum + e.amount, 0);
@@ -55,10 +57,10 @@ export const FinancialHealthScore = ({
   };
 
   const getScoreLabel = () => {
-    if (healthScore >= 80) return "Excellent";
-    if (healthScore >= 60) return "Good";
-    if (healthScore >= 40) return "Fair";
-    return "Needs Improvement";
+    if (healthScore >= 80) return t("insights.excellent");
+    if (healthScore >= 60) return t("insights.good");
+    if (healthScore >= 40) return t("insights.fair");
+    return t("insights.needs_improvement");
   };
 
   const metrics = [
@@ -89,7 +91,7 @@ export const FinancialHealthScore = ({
     <Card className="glass-card p-6">
       <div className="flex items-center gap-2 mb-4">
         <Activity className="h-6 w-6 text-primary" />
-        <h2 className="text-2xl font-bold">Financial Health Score</h2>
+        <h2 className="text-2xl font-bold">{t("insights.health_score")}</h2>
       </div>
 
       <div className="mb-6 p-3 rounded-lg bg-info/10 border border-info/20 flex items-start gap-2">

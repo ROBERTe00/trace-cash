@@ -14,10 +14,9 @@ interface OnboardingData {
 
 interface ModernOnboardingProps {
   onComplete: (data: OnboardingData) => void;
-  onSkip: () => void;
 }
 
-export function ModernOnboarding({ onComplete, onSkip }: ModernOnboardingProps) {
+export function ModernOnboarding({ onComplete }: ModernOnboardingProps) {
   const { formatCurrency } = useApp();
   const [step, setStep] = useState(1);
   const [data, setData] = useState<OnboardingData>({
@@ -123,9 +122,7 @@ export function ModernOnboarding({ onComplete, onSkip }: ModernOnboardingProps) 
                 Back
               </Button>
             ) : (
-              <Button variant="ghost" onClick={onSkip}>
-                Skip personalization
-              </Button>
+              <div />
             )}
             <Button onClick={handleNext}>
               {step === totalSteps ? "Get Started" : "Next"}

@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v2.4.0';
+const CACHE_VERSION = 'v2.5.0';
 const CACHE_NAME = `trace-cash-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `trace-cash-runtime-${CACHE_VERSION}`;
 
@@ -86,7 +86,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-while-revalidate strategy for HTML, JS, CSS (core app files)
+  // Network-first strategy for app files (HTML, JS, CSS)
   if (
     request.destination === 'document' ||
     request.url.includes('.js') ||
@@ -95,35 +95,34 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/assets/')
   ) {
     event.respondWith(
-      caches.open(CACHE_NAME).then(cache => {
-        return cache.match(request).then(cachedResponse => {
-          const fetchPromise = fetch(request, {
-            cache: 'no-cache',
-            headers: {
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Pragma': 'no-cache'
-            }
-          }).then(networkResponse => {
-            // Update cache in background
-            if (networkResponse.status === 200) {
+      Promise.race([
+        // Try network first
+        fetch(request, {
+          cache: 'no-cache',
+          headers: { 'Cache-Control': 'no-cache' }
+        }).then(networkResponse => {
+          if (networkResponse.status === 200) {
+            caches.open(CACHE_NAME).then(cache => {
               cache.put(request, networkResponse.clone());
-            }
-            return networkResponse;
-          }).catch(() => {
-            // If network fails and we have cache, return it
-            if (cachedResponse) {
-              return cachedResponse;
-            }
-            // Return offline page for navigation requests
-            if (request.destination === 'document') {
-              return cache.match('/index.html');
-            }
-            return new Response('Offline', { status: 503 });
-          });
-
-          // Return cached response immediately if available, otherwise wait for network
-          return cachedResponse || fetchPromise;
-        });
+            });
+          }
+          return networkResponse;
+        }),
+        // Fallback to cache after 2s
+        new Promise((resolve, reject) => {
+          setTimeout(() => {
+            caches.match(request).then(cachedResponse => {
+              if (cachedResponse) {
+                console.log('[SW] Network slow, using cache for:', request.url);
+                resolve(cachedResponse);
+              } else {
+                reject(new Error('No cache available'));
+              }
+            });
+          }, 2000);
+        })
+      ]).catch(() => {
+        return caches.match(request) || caches.match('/index.html');
       })
     );
     return;

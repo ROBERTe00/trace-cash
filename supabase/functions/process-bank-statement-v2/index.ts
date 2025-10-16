@@ -262,7 +262,18 @@ ${extractedText}`
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error("AI API error:", aiResponse.status, errorText);
+      console.error("GPT-4o API error:", aiResponse.status, errorText);
+      
+      if (aiResponse.status === 429) {
+        throw new Error("⏱️ Too many requests to OpenAI. Please wait 1 minute and retry.");
+      }
+      if (aiResponse.status === 402) {
+        throw new Error("💳 OpenAI credits exhausted. Please add funds to your account.");
+      }
+      if (aiResponse.status === 401) {
+        throw new Error("🔑 Invalid OpenAI API key. Contact support.");
+      }
+      
       throw new Error(`AI service error: ${aiResponse.status}`);
     }
 
@@ -273,13 +284,36 @@ ${extractedText}`
 
     let transactions = [];
     try {
-      // Try to extract JSON array from response
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        transactions = JSON.parse(jsonMatch[0]);
-      } else {
-        // Try direct parse
-        transactions = JSON.parse(content);
+      // Extract JSON from GPT-4o response (handles markdown wrappers)
+      // Step 1: Strip ALL markdown code fences
+      let cleaned = content
+        .replace(/```json\s*/gi, '')
+        .replace(/```\s*/gi, '')
+        .trim();
+      
+      // Step 2: Extract JSON array with multiple patterns
+      const patterns = [
+        /\[[\s\S]*\]/,  // Standard array
+        /\{[\s\S]*"transactions"[\s\S]*\}/,  // Wrapped in object
+      ];
+      
+      for (const pattern of patterns) {
+        const match = cleaned.match(pattern);
+        if (match) {
+          try {
+            const parsed = JSON.parse(match[0]);
+            transactions = Array.isArray(parsed) ? parsed : parsed.transactions || [];
+            if (transactions.length > 0) break;
+          } catch (e) { 
+            continue; 
+          }
+        }
+      }
+      
+      if (transactions.length === 0) {
+        console.error("❌ No transactions found. Raw GPT-4o response:");
+        console.error(content.substring(0, 1000));
+        throw new Error("Failed to extract transactions from AI response");
       }
       
       // Validate and clean transactions
@@ -299,22 +333,8 @@ ${extractedText}`
       console.log(`Successfully extracted ${transactions.length} valid transactions`);
       
     } catch (e) {
-      console.error("Failed to parse AI response as JSON:", e);
-      console.error("Raw response:", content);
-      
-      // Try one more time with error recovery
-      try {
-        // Remove any markdown code block markers
-        const cleaned = content
-          .replace(/```json\s*/g, '')
-          .replace(/```\s*/g, '')
-          .trim();
-        transactions = JSON.parse(cleaned);
-        console.log("Recovered transactions after cleaning:", transactions.length);
-      } catch (e2) {
-        console.error("Recovery failed:", e2);
-        transactions = [];
-      }
+      console.error("JSON parsing failed:", e);
+      throw new Error("Invalid AI response format");
     }
 
     if (transactions.length === 0) {

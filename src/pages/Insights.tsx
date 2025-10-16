@@ -170,15 +170,29 @@ export default function Insights() {
 
   // Calculate overall health score
   const calculateHealthScore = () => {
-    const criticalCount = insights.filter((i) => i.type === "critical").length;
-    const opportunityCount = insights.filter((i) => i.type === "opportunity").length;
-    const successCount = insights.filter((i) => i.type === "success").length;
-
-    let score = 70; // Base score
-    score -= criticalCount * 15; // -15 per critical
-    score -= opportunityCount * 5; // -5 per opportunity
-    score += successCount * 10; // +10 per success
-
+    // Delegate to FinancialHealthScore component logic
+    const totalIncome = expenses.filter(e => e.type === "Income").reduce((sum, e) => sum + e.amount, 0);
+    const totalExpenses = expenses.filter(e => e.type === "Expense").reduce((sum, e) => sum + e.amount, 0);
+    const investmentValue = investments.reduce((sum, inv) => sum + inv.quantity * inv.current_price, 0);
+    
+    const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
+    const investmentRatio = totalIncome > 0 ? (investmentValue / totalIncome) * 100 : 0;
+    const expenseRatio = totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 0;
+    
+    let score = 0;
+    if (savingsRate >= 20) score += 40;
+    else if (savingsRate >= 15) score += 30;
+    else if (savingsRate >= 10) score += 20;
+    else if (savingsRate >= 5) score += 10;
+    
+    if (investmentRatio >= 100) score += 30;
+    else if (investmentRatio >= 50) score += 20;
+    else if (investmentRatio >= 25) score += 10;
+    
+    if (expenseRatio <= 50) score += 30;
+    else if (expenseRatio <= 70) score += 20;
+    else if (expenseRatio <= 85) score += 10;
+    
     return Math.max(0, Math.min(100, score));
   };
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingDashboard } from "./LoadingDashboard";
 import { AIOnboardingWizard } from "./onboarding/AIOnboardingWizard";
@@ -8,12 +9,18 @@ interface OnboardingWrapperProps {
 }
 
 export const OnboardingWrapper = ({ children }: OnboardingWrapperProps) => {
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   useEffect(() => {
     checkOnboardingStatus();
   }, []);
+
+  useEffect(() => {
+    console.log('[OnboardingWrapper] Route changed, re-checking onboarding');
+    checkOnboardingStatus();
+  }, [location.pathname]);
 
   const checkOnboardingStatus = async () => {
     try {
