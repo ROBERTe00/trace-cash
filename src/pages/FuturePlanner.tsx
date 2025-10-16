@@ -99,12 +99,12 @@ export default function FuturePlanner() {
 
         <Card className="glass-card p-6 overflow-hidden">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-warning/10 flex-shrink-0">
-              <Target className="icon-card text-warning" />
+            <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
+              <Target className="icon-card text-primary" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-sm text-muted-foreground truncate">Valore Totale</div>
-              <div className="text-small-number truncate">
+              <div className="text-small-number text-primary truncate">
                 €{goals.reduce((sum, g) => sum + g.targetAmount, 0).toLocaleString()}
               </div>
             </div>

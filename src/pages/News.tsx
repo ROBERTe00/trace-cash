@@ -73,12 +73,12 @@ export default function News() {
   return (
     <div className="space-y-6 animate-fade-in w-full">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-info/10 via-accent/10 to-background border border-info/20 p-6">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-background border border-primary/20 p-6">
         <div className="relative z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-info/20 flex items-center justify-center">
-                <Newspaper className="icon-card text-info" />
+              <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center">
+                <Newspaper className="icon-card text-primary" />
               </div>
               <div>
                 <h1 className="text-section">Market News & Insights</h1>

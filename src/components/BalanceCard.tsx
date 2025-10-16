@@ -39,7 +39,7 @@ const BalanceCard = ({ totalBalance, accounts }: BalanceCardProps) => {
         </CardHeader>
         <CardContent className="space-y-6">
           <motion.div
-            className="text-large-number break-words leading-none"
+            className="text-medium-number break-words leading-none"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: "spring", stiffness: 150, delay: 0.3 }}

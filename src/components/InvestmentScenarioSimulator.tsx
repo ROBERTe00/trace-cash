@@ -123,28 +123,28 @@ export function InvestmentScenarioSimulator() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">{t('simulator.projectedValue')}</p>
-                <p className="text-2xl font-bold text-green-500">
+                <p className="text-medium-number text-success">
                   {formatCurrency(simulation.projectedValue)}
                 </p>
               </div>
 
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">{t('simulator.totalContributions')}</p>
-                <p className="text-lg font-semibold">
+                <p className="text-small-number text-primary">
                   {formatCurrency(simulation.totalContributions)}
                 </p>
               </div>
 
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">{t('simulator.totalGains')}</p>
-                <p className="text-lg font-semibold text-blue-500">
+                <p className="text-small-number text-primary">
                   {formatCurrency(simulation.totalGains)}
                 </p>
               </div>
 
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">{t('simulator.taxLiability')}</p>
-                <p className="text-lg font-semibold text-orange-500">
+                <p className="text-small-number text-destructive">
                   -{formatCurrency(simulation.taxLiability)}
                 </p>
               </div>
@@ -181,10 +181,10 @@ export function InvestmentScenarioSimulator() {
 
             <div className="bg-primary/5 p-4 rounded-lg border border-primary/10">
               <h4 className="font-semibold mb-2 flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
+                <TrendingUp className="icon-button text-primary" />
                 {t('simulator.netValue')}
               </h4>
-              <p className="text-3xl font-bold text-green-500">
+              <p className="text-large-number text-success">
                 {formatCurrency(simulation.netValue)}
               </p>
               <p className="text-sm text-muted-foreground mt-1">

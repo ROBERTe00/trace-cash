@@ -109,13 +109,13 @@ export function ScenarioSimulator({ goal }: ScenarioSimulatorProps) {
               className="my-4"
             />
             {additionalMonthly > 0 && (
-              <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-sm">
+              <div className="p-3 rounded-lg bg-success/10 border border-success/20 text-sm">
                 <div className="flex items-center gap-2 mb-1">
-                  <TrendingUp className="h-4 w-4 text-green-500" />
+                  <TrendingUp className="icon-button text-success" />
                   <span className="font-medium">Impatto Positivo</span>
                 </div>
                 <p className="text-muted-foreground">
-                  Raggiungerai l'obiettivo <span className="font-bold text-green-600">{monthsSavedDiff} mesi prima</span> ({new Date(Date.now() + monthsSaved * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('it-IT')})
+                  Raggiungerai l'obiettivo <span className="font-bold text-success">{monthsSavedDiff} mesi prima</span> ({new Date(Date.now() + monthsSaved * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('it-IT')})
                 </p>
               </div>
             )}
@@ -169,26 +169,26 @@ export function ScenarioSimulator({ goal }: ScenarioSimulatorProps) {
               <div className="text-xs text-muted-foreground">No cambiamenti</div>
             </div>
             
-            <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+            <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
               <div className="text-xs text-muted-foreground mb-1">Con +€{additionalMonthly}</div>
-              <div className="text-lg font-bold text-blue-600">€{finalScenario.enhanced.toLocaleString()}</div>
-              <div className="text-xs text-green-600">
+              <div className="text-small-number text-primary">€{finalScenario.enhanced.toLocaleString()}</div>
+              <div className="text-xs text-success">
                 +€{(finalScenario.enhanced - finalScenario.base).toLocaleString()}
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+            <div className="p-3 rounded-lg bg-success/10 border border-success/20">
               <div className="text-xs text-muted-foreground mb-1">Con Investimenti</div>
-              <div className="text-lg font-bold text-green-600">€{finalScenario.investment.toLocaleString()}</div>
-              <div className="text-xs text-green-600">
+              <div className="text-small-number text-success">€{finalScenario.investment.toLocaleString()}</div>
+              <div className="text-xs text-success">
                 +€{(finalScenario.investment - finalScenario.enhanced).toLocaleString()}
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+            <div className="p-3 rounded-lg bg-warning/10 border border-warning/20">
               <div className="text-xs text-muted-foreground mb-1">Target Adeguato</div>
-              <div className="text-lg font-bold text-orange-600">€{finalScenario.adjustedTarget.toLocaleString()}</div>
-              <div className="text-xs text-orange-600">
+              <div className="text-small-number text-warning">€{finalScenario.adjustedTarget.toLocaleString()}</div>
+              <div className="text-xs text-warning">
                 +€{(finalScenario.adjustedTarget - goal.targetAmount).toLocaleString()}
               </div>
             </div>
@@ -280,7 +280,7 @@ export function ScenarioSimulator({ goal }: ScenarioSimulatorProps) {
             <ul className="space-y-2 text-sm text-muted-foreground">
               {additionalMonthly > 0 && (
                 <li className="flex items-start gap-2">
-                  <TrendingUp className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                  <TrendingUp className="icon-button text-success mt-0.5 shrink-0" />
                   <span>
                     Aumentando il contributo mensile di €{additionalMonthly}, raggiungerai l'obiettivo 
                     <span className="font-bold text-foreground"> {monthsSavedDiff} mesi prima</span>.
@@ -290,7 +290,7 @@ export function ScenarioSimulator({ goal }: ScenarioSimulatorProps) {
               
               {expectedReturn > 0 && finalScenario.investment > finalScenario.enhanced && (
                 <li className="flex items-start gap-2">
-                  <TrendingUp className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
+                  <TrendingUp className="icon-button text-primary mt-0.5 shrink-0" />
                   <span>
                     Investendo con rendimento del {expectedReturn}%, potresti guadagnare 
                     <span className="font-bold text-foreground"> €{(finalScenario.investment - finalScenario.enhanced).toLocaleString()} in più</span>.
@@ -300,7 +300,7 @@ export function ScenarioSimulator({ goal }: ScenarioSimulatorProps) {
 
               {inflationRate > 0 && finalScenario.adjustedTarget > goal.targetAmount && (
                 <li className="flex items-start gap-2">
-                  <TrendingDown className="h-4 w-4 text-orange-500 mt-0.5 shrink-0" />
+                  <TrendingDown className="icon-button text-warning mt-0.5 shrink-0" />
                   <span>
                     Con inflazione al {inflationRate}%, considera di aumentare il target a 
                     <span className="font-bold text-foreground"> €{finalScenario.adjustedTarget.toLocaleString()}</span> 

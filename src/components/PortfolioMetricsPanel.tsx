@@ -53,20 +53,20 @@ export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProp
     <div className="space-y-6">
       {/* Alerts */}
       {alerts.length > 0 && (
-        <Card className="border-warning/50 bg-warning/5">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-warning">
+        <Card className="glass-card border-primary/50 bg-primary/5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-primary">
               <AlertTriangle className="icon-card" />
               {t('metrics.alerts')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {alerts.map((alert, i) => (
-              <div key={i} className="flex items-start gap-2 text-sm">
-                <span className="text-warning">•</span>
-                <p>{alert}</p>
-              </div>
-            ))}
+            </div>
+            <div className="space-y-2 mt-3">
+              {alerts.map((alert, i) => (
+                <div key={i} className="flex items-start gap-2 text-sm">
+                  <span className="text-primary">•</span>
+                  <p>{alert}</p>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
@@ -97,7 +97,7 @@ export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProp
             <CardDescription>{t('metrics.annualizedReturn')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className={`text-medium-number ${getMetricColor(metrics.annualizedReturn)}`}>
+            <div className="text-medium-number text-primary">
               {metrics.annualizedReturn.toFixed(2)}%
             </div>
             <div className="text-sm text-muted-foreground">
@@ -114,7 +114,7 @@ export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProp
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-medium-number">
+            <div className="text-medium-number text-primary">
               {metrics.volatility.toFixed(2)}%
             </div>
             <div className="text-sm text-muted-foreground">
@@ -128,7 +128,7 @@ export function PortfolioMetricsPanel({ investments }: PortfolioMetricsPanelProp
             <CardDescription>{t('metrics.sharpeRatio')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-medium-number">
+            <div className="text-medium-number text-primary">
               {metrics.sharpeRatio.toFixed(2)}
             </div>
             <div className="text-sm text-muted-foreground">

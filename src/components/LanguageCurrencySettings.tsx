@@ -105,9 +105,11 @@ export function LanguageCurrencySettings() {
         <CardContent>
           <div className="space-y-2">
             <Select value={language} onValueChange={handleLanguageChange}>
-              <SelectTrigger className="bg-background">
-                <SelectValue />
-              </SelectTrigger>
+            <SelectTrigger className="bg-background">
+              <SelectValue>
+                {language && languages.find(l => l.value === language)?.label}
+              </SelectValue>
+            </SelectTrigger>
               <SelectContent className="bg-popover z-[100]">
                 {languages.map((lang) => (
                   <SelectItem key={lang.value} value={lang.value}>
