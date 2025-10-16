@@ -21,19 +21,24 @@ export const PWAUpdateNotification = () => {
       setRegistration(reg);
       setUpdateAvailable(true);
 
-      // Auto-update on Android/desktop after a short delay
+      // Auto-update on Android/desktop after a countdown
       if (!isIOS() && isAppInstalled()) {
-        console.log('[PWA Update] Auto-updating on Android/Desktop');
+        console.log('[PWA Update] Auto-updating on Android/Desktop in 3 seconds...');
+        toast({
+          title: "New version available!",
+          description: "Updating automatically in 3 seconds...",
+          duration: 3000,
+        });
         setTimeout(() => {
           handleUpdateAction();
-        }, 2000);
+        }, 3000);
       } else {
         toast({
-          title: "New version available",
+          title: "🎉 New version available",
           description: isIOS() 
-            ? "Tap the button below to update the app"
+            ? "Tap the button below to update and get the latest features"
             : "The app will update automatically",
-          duration: 5000,
+          duration: 6000,
         });
       }
     };
@@ -86,12 +91,13 @@ export const PWAUpdateNotification = () => {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Check for updates every 30 seconds when app is active
+    // Check for updates every 10 seconds when app is active (aggressive for development)
     const updateInterval = setInterval(() => {
       if (document.visibilityState === 'visible') {
+        console.log('[PWA Update] Periodic check (10s interval)');
         navigator.serviceWorker.ready.then(reg => reg.update());
       }
-    }, 30000);
+    }, 10000);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -160,21 +166,21 @@ export const PWAUpdateNotification = () => {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 flex justify-center animate-in slide-in-from-bottom-4 md:left-auto md:right-4 md:w-96">
-      <Card className="w-full p-4 shadow-lg border-primary/20 bg-card/95 backdrop-blur-md">
+      <Card className="w-full p-5 shadow-2xl border-2 border-primary/40 bg-card backdrop-blur-xl animate-pulse">
         <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Download className="h-5 w-5 text-primary" />
+          <div className="p-3 rounded-xl bg-primary/20 animate-bounce">
+            <Download className="h-6 w-6 text-primary" />
           </div>
           
-          <div className="flex-1 space-y-2">
+          <div className="flex-1 space-y-3">
             <div>
-              <h3 className="font-semibold text-sm">
-                {isIOS() ? "New version available" : "Updating app..."}
+              <h3 className="font-bold text-base text-primary">
+                {isIOS() ? "🚀 New Version Available!" : "⚡ Updating App..."}
               </h3>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground mt-1.5 font-medium">
                 {isIOS() 
-                  ? "Tap update to get the latest features and improvements"
-                  : "The app will update automatically in a moment"}
+                  ? "Update now to get the latest features and improvements"
+                  : "Your app will update automatically in 3 seconds"}
               </p>
             </div>
 

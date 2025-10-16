@@ -34,13 +34,13 @@ export const registerServiceWorker = async (): Promise<ServiceWorkerRegistration
         }
       });
       
-      // Check for updates periodically (every 30 seconds when app is active)
+      // Check for updates periodically (every 10 seconds when app is active - aggressive for development)
       setInterval(() => {
         if (document.visibilityState === 'visible') {
           console.log('[PWA] Periodic update check');
           registration.update();
         }
-      }, 30000);
+      }, 10000);
       
       // Listen for new service worker
       registration.addEventListener('updatefound', () => {
@@ -291,4 +291,33 @@ export const getIOSVersion = (): number | null => {
   
   const match = navigator.userAgent.match(/OS (\d+)_/);
   return match ? parseInt(match[1], 10) : null;
+};
+
+/**
+ * Clear all caches and unregister service worker
+ */
+export const clearCacheAndReload = async (): Promise<void> => {
+  console.log('[PWA] Clearing all caches and unregistering service worker...');
+  
+  try {
+    // Clear all caches
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map(name => caches.delete(name)));
+      console.log('[PWA] All caches cleared');
+    }
+    
+    // Unregister all service workers
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(reg => reg.unregister()));
+      console.log('[PWA] All service workers unregistered');
+    }
+    
+    // Hard reload
+    window.location.reload();
+  } catch (error) {
+    console.error('[PWA] Error clearing cache:', error);
+    throw error;
+  }
 };

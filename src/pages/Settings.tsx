@@ -12,10 +12,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { clearUser, exportToCSV } from "@/lib/storage";
 import { supabase } from "@/integrations/supabase/client";
-import { Download, LogOut, Palette, Shield, Database, WifiOff, Settings as SettingsIcon } from "lucide-react";
+import { Download, LogOut, Palette, Shield, Database, WifiOff, Settings as SettingsIcon, Trash2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { AuditLogger } from "@/lib/auditLogger";
 import { useApp } from "@/contexts/AppContext";
+import { clearCacheAndReload } from "@/lib/pwaUtils";
 
 export default function Settings() {
   const { t } = useApp();
@@ -46,6 +47,16 @@ export default function Settings() {
     } catch (error) {
       console.error("Logout error:", error);
       toast.error(t("logoutError"));
+    }
+  };
+
+  const handleClearCache = async () => {
+    try {
+      toast.loading("Clearing cache and reloading...", { duration: 2000 });
+      await clearCacheAndReload();
+    } catch (error) {
+      console.error("Clear cache error:", error);
+      toast.error("Failed to clear cache. Try manually refreshing the page.");
     }
   };
 
@@ -193,8 +204,26 @@ export default function Settings() {
               </div>
               <CardDescription>{t("settings.offlineDesc")}</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
               <OfflineModeToggle />
+              
+              {/* Cache Management */}
+              <div className="pt-6 border-t space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-1">Developer Tools</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Clear all cached data and force a fresh reload of the app
+                  </p>
+                </div>
+                <Button 
+                  onClick={handleClearCache} 
+                  variant="outline" 
+                  className="gap-2 border-destructive/50 text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Clear Cache & Reload
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

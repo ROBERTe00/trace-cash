@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v2.1.0';
+const CACHE_VERSION = 'v2.2.0';
 const CACHE_NAME = `trace-cash-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `trace-cash-runtime-${CACHE_VERSION}`;
 
@@ -72,7 +72,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first strategy for HTML, JS, CSS (core app files)
+  // Aggressive network-first strategy for HTML, JS, CSS (core app files)
   if (
     request.destination === 'document' ||
     request.url.includes('.js') ||
@@ -81,9 +81,15 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/assets/')
   ) {
     event.respondWith(
-      fetch(request)
+      fetch(request, {
+        cache: 'no-cache', // Force fresh fetch, bypass HTTP cache
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      })
         .then(response => {
-          // Cache the new version
+          // Cache the new version only if successful
           if (response.status === 200) {
             const responseClone = response.clone();
             caches.open(CACHE_NAME).then(cache => {
@@ -93,7 +99,8 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // Fallback to cache if network fails
+          // Fallback to cache only if network fails
+          console.log('[SW] Network failed, using cache for:', request.url);
           return caches.match(request).then(cachedResponse => {
             if (cachedResponse) {
               return cachedResponse;
@@ -191,6 +198,20 @@ self.addEventListener('message', (event) => {
   if (event.data.type === 'CHECK_UPDATE') {
     console.log('[SW] Update check requested by client');
     self.registration.update();
+  }
+  
+  if (event.data.type === 'CLEAR_CACHE') {
+    console.log('[SW] Clear cache requested by client');
+    event.waitUntil(
+      caches.keys().then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cacheName => {
+            console.log('[SW] Deleting cache:', cacheName);
+            return caches.delete(cacheName);
+          })
+        );
+      })
+    );
   }
 });
 
