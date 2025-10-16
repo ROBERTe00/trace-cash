@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')!;
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -89,22 +89,21 @@ Return JSON format:
   "confidence_score": 0.9
 }`;
 
-    console.log('Calling Lovable AI for allocation suggestion...');
+    console.log('Calling OpenAI GPT-4o for allocation suggestion...');
 
-    // Call Lovable AI
-    const aiResponse = await fetch('https://api.lovable.app/v1/ai/chat/completions', {
+    // Call OpenAI API
+    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
+        'Authorization': `Bearer ${openaiApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'gpt-4o',
         messages: [
           { role: 'system', content: 'You are a certified financial advisor. Always respond with valid JSON. This is informational only, not financial advice.' },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.7,
       }),
     });
 

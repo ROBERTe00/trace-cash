@@ -15,10 +15,10 @@ serve(async (req) => {
 
   try {
     const { fileUrl, fileName } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    if (!OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY is not configured");
     }
 
     console.log("Starting bank statement processing:", fileName);
@@ -68,16 +68,16 @@ serve(async (req) => {
 
     console.log("Converted to base64, length:", base64.length);
 
-    // Call AI API with timeout
-    console.log("Calling Lovable AI API...");
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Call OpenAI API with timeout
+    console.log("Calling OpenAI GPT-4o API...");
+    const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -118,8 +118,6 @@ CRITICAL RULES:
             ]
           }
         ],
-        max_tokens: 16000,
-        temperature: 0.1
       }),
       signal: controller.signal
     });

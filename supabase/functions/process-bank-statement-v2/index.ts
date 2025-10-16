@@ -37,10 +37,10 @@ serve(async (req) => {
     }
     
     const { fileUrl, fileName } = validation.data;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    if (!OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY is not configured");
     }
 
     console.log("Starting bank statement processing:", fileName);
@@ -142,14 +142,14 @@ serve(async (req) => {
 
     // First AI call: Detect bank name
     console.log("Step 1: Detecting bank name...");
-    const bankDetectionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const bankDetectionResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -162,8 +162,6 @@ If you can't identify the bank, return "Unknown Bank".`
             content: `Identify the bank from this statement:\n\n${extractedText.substring(0, 2000)}`
           }
         ],
-        max_tokens: 50,
-        temperature: 0.1
       }),
       signal: controller.signal
     });
@@ -181,14 +179,14 @@ If you can't identify the bank, return "Unknown Bank".`
     // Enhanced extraction with merchant context
     const merchantHints = extractMerchantHints(extractedText);
     
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "Authorization": `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -258,8 +256,6 @@ YOU MUST extract transactions from ALL pages, not just the first one!
 ${extractedText}`
           }
         ],
-        max_tokens: 32000,
-        temperature: 0.1
       }),
       signal: controller.signal
     });
