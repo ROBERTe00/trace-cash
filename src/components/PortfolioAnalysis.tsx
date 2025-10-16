@@ -1,8 +1,10 @@
 import { Card } from "@/components/ui/card";
 import { Investment } from "@/lib/storage";
 import { useApp } from "@/contexts/AppContext";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { ModernPieChart } from "@/components/charts/ModernPieChart";
+import { aggregateSmallCategories, calculateDiversificationScore, assignCategoryColors } from "@/lib/chartUtils";
 import { TrendingUp, Shield, Target } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface PortfolioAnalysisProps {
   investments: Investment[];
@@ -20,25 +22,27 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
     return acc;
   }, {} as Record<string, number>);
 
-  const pieData = Object.entries(categoryData).map(([name, value]) => ({
+  const rawPieData = Object.entries(categoryData).map(([name, value]) => ({
     name,
     value,
-    percentage: ((value / totalValue) * 100).toFixed(1),
   }));
 
-  // Diversification score (0-100)
-  const calculateDiversificationScore = () => {
-    const categories = Object.keys(categoryData).length;
-    const percentages = Object.values(categoryData).map((v) => (v / totalValue) * 100);
-    const maxPercentage = Math.max(...percentages);
+  // Aggregate small categories
+  const aggregatedPieData = aggregateSmallCategories(rawPieData, 0.05);
 
-    // Penalize concentration in one category
-    const concentrationPenalty = maxPercentage > 50 ? (maxPercentage - 50) * 0.5 : 0;
-    const categoryBonus = categories * 15;
+  // Assign colors
+  const colorMap = assignCategoryColors(aggregatedPieData.map(d => d.name));
+  const pieData = aggregatedPieData.map(item => ({
+    name: item.name,
+    value: item.value,
+    color: colorMap[item.name],
+    percentage: ((item.value / totalValue) * 100).toFixed(1),
+  }));
 
-    const score = Math.min(100, categoryBonus - concentrationPenalty);
-    return Math.max(0, score);
-  };
+  // Calculate diversification score using utility
+  const diversificationScore = calculateDiversificationScore(
+    Object.values(categoryData).map(value => ({ value }))
+  );
 
   // Risk level based on category allocation
   const calculateRiskLevel = () => {
@@ -63,10 +67,7 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
     return sum + ((current - initial) / initial) * 100;
   }, 0) / Math.max(investments.length, 1);
 
-  const diversificationScore = calculateDiversificationScore();
   const riskLevel = calculateRiskLevel();
-
-  const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 
   const { t } = useApp();
 
@@ -93,46 +94,37 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
         <span className="gradient-text">{t('portfolio.analysis')}</span>
       </h3>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
-        {/* Pie Chart */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Modern Pie Chart */}
         <div>
-          <h4 className="text-sm font-medium mb-3 md:mb-4 text-muted-foreground">{t('portfolio.assetAllocation')}</h4>
-          <ResponsiveContainer width="100%" height={200} className="md:h-[250px]">
-            <PieChart>
-              <Pie
-                data={pieData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ percentage }) => `${percentage}%`}
-                outerRadius={60}
-                innerRadius={0}
-                fill="#8884d8"
-                dataKey="value"
-                className="md:!r-[80px]"
+          <h4 className="text-sm font-medium mb-4 text-muted-foreground">{t('portfolio.assetAllocation')}</h4>
+          <ModernPieChart
+            data={pieData}
+            showPercentages={true}
+            height={280}
+          />
+          
+          {/* Category List */}
+          <div className="space-y-2 mt-6">
+            {pieData.map((item, index) => (
+              <motion.div
+                key={item.name}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 + index * 0.08 }}
+                className="flex items-center justify-between p-2 rounded-lg hover:bg-accent/50 transition-colors"
               >
-                {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(value: number) => formatCurrency(value)}
-                contentStyle={{
-                  backgroundColor: "hsl(var(--background))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                }}
-              />
-              <Legend 
-                wrapperStyle={{
-                  fontSize: "11px",
-                  paddingTop: "8px",
-                }}
-                iconSize={10}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-sm font-medium">{item.name}</span>
+                </div>
+                <span className="text-sm font-bold">{item.percentage}%</span>
+              </motion.div>
+            ))}
+          </div>
         </div>
 
         {/* Metrics */}

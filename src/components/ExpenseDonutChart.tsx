@@ -1,22 +1,13 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { ModernPieChart } from "@/components/charts/ModernPieChart";
+import { aggregateSmallCategories, assignCategoryColors } from "@/lib/chartUtils";
 import { useApp } from "@/contexts/AppContext";
+import { motion } from "framer-motion";
 
 interface ExpenseDonutChartProps {
   expenses: Array<{ category: string; amount: number }>;
 }
-
-const CATEGORY_COLORS: Record<string, string> = {
-  "Food": "hsl(142, 76%, 36%)",
-  "Transport": "hsl(217, 91%, 60%)",
-  "Entertainment": "hsl(0, 84%, 60%)",
-  "Healthcare": "hsl(262, 83%, 58%)",
-  "Shopping": "hsl(280, 100%, 70%)",
-  "Bills": "hsl(43, 96%, 56%)",
-  "Groceries": "hsl(142, 76%, 46%)",
-  "Other": "hsl(220, 9%, 46%)",
-};
 
 export function ExpenseDonutChart({ expenses }: ExpenseDonutChartProps) {
   const { formatCurrency } = useApp();
@@ -27,65 +18,72 @@ export function ExpenseDonutChart({ expenses }: ExpenseDonutChartProps) {
       return acc;
     }, {} as Record<string, number>);
 
-    return Object.entries(categoryTotals)
-      .map(([name, value]) => ({
-        name,
-        value,
-        color: CATEGORY_COLORS[name] || CATEGORY_COLORS.Other,
+    const rawData = Object.entries(categoryTotals).map(([name, value]) => ({
+      name,
+      value,
+    }));
+
+    // Aggregate small categories
+    const aggregated = aggregateSmallCategories(rawData, 0.05);
+
+    // Assign colors
+    const colorMap = assignCategoryColors(aggregated.map(d => d.name));
+
+    return aggregated
+      .map(item => ({
+        name: item.name,
+        value: item.value,
+        color: colorMap[item.name],
       }))
       .sort((a, b) => b.value - a.value);
   }, [expenses]);
 
   const total = chartData.reduce((sum, item) => sum + item.value, 0);
-  const remaining = Math.max(0, total * 0.1); // Mock remaining budget
 
   return (
-    <Card className="glass-card">
+    <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
       <CardHeader>
         <CardTitle>Expense Breakdown</CardTitle>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              innerRadius={70}
-              outerRadius={100}
-              paddingAngle={2}
-              dataKey="value"
-              animationBegin={0}
-              animationDuration={800}
-            >
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(value: number) => formatCurrency(value)}
-              contentStyle={{
-                backgroundColor: "hsl(var(--card))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "0.5rem",
-              }}
-            />
-            <Legend
-              verticalAlign="bottom"
-              height={36}
-              formatter={(value, entry: any) => (
-                <span className="text-sm">
-                  {value}: {formatCurrency(entry.payload.value)}
-                </span>
-              )}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="text-center mt-4">
-          <div className="text-3xl font-bold">{formatCurrency(total)}</div>
-          <div className="text-sm text-muted-foreground mt-1">
-            {formatCurrency(remaining)} remaining
-          </div>
+      <CardContent className="space-y-6">
+        {/* Modern Pie Chart */}
+        <ModernPieChart
+          data={chartData}
+          centerLabel={{
+            title: "Total Expenses",
+            value: formatCurrency(total),
+          }}
+          showPercentages={true}
+          height={320}
+        />
+
+        {/* Category List */}
+        <div className="space-y-3 pt-4 border-t">
+          {chartData.map((category, index) => {
+            const percentage = ((category.value / total) * 100).toFixed(1);
+            return (
+              <motion.div
+                key={category.name}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 + index * 0.08 }}
+                whileHover={{ x: 4 }}
+                className="flex items-center justify-between p-2 rounded-lg hover:bg-accent/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-4 h-4 rounded-full"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  <span className="font-medium text-sm">{category.name}</span>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-sm">{formatCurrency(category.value)}</p>
+                  <p className="text-xs text-muted-foreground">{percentage}%</p>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </CardContent>
     </Card>

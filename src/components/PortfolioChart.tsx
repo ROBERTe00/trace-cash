@@ -1,27 +1,17 @@
 import { Card } from "@/components/ui/card";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Legend,
-  Tooltip,
-} from "recharts";
 import { Investment } from "@/lib/storage";
+import { ModernPieChart } from "@/components/charts/ModernPieChart";
+import { aggregateSmallCategories, assignCategoryColors } from "@/lib/chartUtils";
+import { motion } from "framer-motion";
+import { useApp } from "@/contexts/AppContext";
 
 interface PortfolioChartProps {
   investments: Investment[];
 }
 
-const COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-];
-
 export const PortfolioChart = ({ investments }: PortfolioChartProps) => {
+  const { formatCurrency } = useApp();
+
   // Group investments by category
   const categoryData = investments.reduce((acc, inv) => {
     const value = inv.quantity * inv.currentPrice;
@@ -33,15 +23,27 @@ export const PortfolioChart = ({ investments }: PortfolioChartProps) => {
     return acc;
   }, {} as Record<string, number>);
 
-  const chartData = Object.entries(categoryData).map(([name, value]) => ({
+  const rawChartData = Object.entries(categoryData).map(([name, value]) => ({
     name,
     value: Math.round(value * 100) / 100,
   }));
 
+  // Aggregate small categories
+  const aggregatedData = aggregateSmallCategories(rawChartData, 0.05);
+  
+  // Assign colors
+  const colorMap = assignCategoryColors(aggregatedData.map(d => d.name));
+  const chartData = aggregatedData.map(d => ({
+    ...d,
+    color: colorMap[d.name],
+  }));
+
+  const totalValue = chartData.reduce((sum, item) => sum + item.value, 0);
+
   if (chartData.length === 0) {
     return (
-      <Card className="glass-card p-6">
-        <h3 className="text-lg font-semibold mb-4">Portfolio Allocation</h3>
+      <Card className="p-6">
+        <h3 className="text-xl font-bold mb-4">Asset Allocation</h3>
         <div className="h-64 flex items-center justify-center text-muted-foreground">
           No investments yet
         </div>
@@ -50,42 +52,46 @@ export const PortfolioChart = ({ investments }: PortfolioChartProps) => {
   }
 
   return (
-    <Card className="glass-card p-6">
-      <h3 className="text-lg font-semibold mb-4">Portfolio Allocation</h3>
-      <div className="w-full overflow-hidden">
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={false}
-              outerRadius={70}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {chartData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(value: number) => `€${value.toFixed(2)}`}
-              contentStyle={{
-                backgroundColor: "hsl(var(--card))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "8px",
-              }}
-            />
-            <Legend 
-              wrapperStyle={{ paddingTop: '10px' }}
-              iconSize={10}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+    <Card className="p-6">
+      <h3 className="text-xl font-bold mb-6">Asset Allocation</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Modern Pie Chart */}
+        <div>
+          <ModernPieChart
+            data={chartData}
+            showPercentages={true}
+            height={300}
+          />
+        </div>
+
+        {/* Category List */}
+        <div className="space-y-4">
+          {chartData.map((category, index) => {
+            const percentage = ((category.value / totalValue) * 100).toFixed(1);
+            return (
+              <motion.div
+                key={category.name}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 + index * 0.1 }}
+                whileHover={{ x: 4 }}
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-accent/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-4 h-4 rounded-full"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  <span className="font-medium">{category.name}</span>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold">{formatCurrency(category.value)}</p>
+                  <p className="text-sm text-muted-foreground">{percentage}%</p>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </Card>
   );

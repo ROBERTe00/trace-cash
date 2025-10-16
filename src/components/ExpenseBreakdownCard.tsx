@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { ModernPieChart } from "@/components/charts/ModernPieChart";
+import { aggregateSmallCategories } from "@/lib/chartUtils";
 import { useApp } from "@/contexts/AppContext";
 
 interface CategoryData {
@@ -17,7 +18,25 @@ interface ExpenseBreakdownCardProps {
 const ExpenseBreakdownCard = ({ categories, totalExpenses }: ExpenseBreakdownCardProps) => {
   const { formatCurrency } = useApp();
 
-  const total = categories.reduce((sum, cat) => sum + cat.amount, 0);
+  // Aggregate small categories
+  const rawData = categories.map(cat => ({
+    name: cat.name,
+    value: cat.amount,
+  }));
+
+  const aggregatedData = aggregateSmallCategories(rawData, 0.05);
+  
+  // Map back to include colors
+  const chartData = aggregatedData.map(item => {
+    const original = categories.find(cat => cat.name === item.name);
+    return {
+      name: item.name,
+      value: item.value,
+      color: original?.color || "#64748b",
+    };
+  });
+
+  const total = chartData.reduce((sum, cat) => sum + cat.value, 0);
 
   return (
     <motion.div
@@ -32,47 +51,28 @@ const ExpenseBreakdownCard = ({ categories, totalExpenses }: ExpenseBreakdownCar
           <CardTitle className="text-base font-semibold text-muted-foreground">Expense Breakdown</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="relative">
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie
-                  data={categories}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="amount"
-                >
-                  {categories.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <motion.div
-                className="text-center"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", stiffness: 200, delay: 0.5 }}
-              >
-                <p className="text-xs text-muted-foreground">Total</p>
-                <p className="text-3xl font-extrabold tracking-tight">{formatCurrency(totalExpenses)}</p>
-              </motion.div>
-            </div>
-          </div>
+          {/* Modern Pie Chart with Center Label */}
+          <ModernPieChart
+            data={chartData}
+            centerLabel={{
+              title: "Total",
+              value: formatCurrency(totalExpenses),
+            }}
+            showPercentages={true}
+            height={280}
+          />
 
+          {/* Category List */}
           <div className="space-y-3">
-            {categories.map((category, index) => {
-              const percentage = ((category.amount / total) * 100).toFixed(0);
+            {chartData.map((category, index) => {
+              const percentage = ((category.value / total) * 100).toFixed(1);
               return (
                 <motion.div
                   key={category.name}
                   className="flex items-center justify-between"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6 + index * 0.1 }}
+                  transition={{ delay: 0.9 + index * 0.1 }}
                 >
                   <div className="flex items-center gap-3">
                     <div
