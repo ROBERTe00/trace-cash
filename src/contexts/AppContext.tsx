@@ -671,7 +671,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const formatCurrency = (amount: number) => {
     const symbol = currencySymbols[currency];
-    return `${symbol}${amount.toFixed(2)}`;
+    const value = amount ?? 0;
+    if (isNaN(value) || !isFinite(value)) return `${symbol}0.00`;
+    return `${symbol}${value.toFixed(2)}`;
   };
 
   const t = (key: string) => {

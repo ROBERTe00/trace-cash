@@ -20,3 +20,18 @@ verify_jwt = true
 
 [functions.categorize-transactions]
 verify_jwt = true
+
+[functions.parse-smart-transactions]
+verify_jwt = true
+
+[functions.update-live-prices]
+verify_jwt = true
+
+[functions.analyze-expense-investment-correlation]
+verify_jwt = true
+
+[functions.suggest-investment-allocation]
+verify_jwt = true
+
+[functions.process-bank-statement-v2]
+verify_jwt = true

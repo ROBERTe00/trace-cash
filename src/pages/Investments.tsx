@@ -8,7 +8,7 @@ import { InvestmentScenarioSimulator } from "@/components/InvestmentScenarioSimu
 import { Investment } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Download, FileSpreadsheet, Plus, PieChart, BarChart3, Calculator, Upload as UploadIcon, TrendingUp } from "lucide-react";
+import { Download, FileSpreadsheet, Plus, PieChart, BarChart3, Calculator, Upload as UploadIcon, TrendingUp, RefreshCw } from "lucide-react";
 import { exportInvestmentReport, exportInvestmentCSV } from "@/lib/investmentExport";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useApp } from "@/contexts/AppContext";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useLivePricePolling, useManualPriceRefresh } from "@/hooks/useLivePricePolling";
+import { Badge } from "@/components/ui/badge";
 
 export default function Investments() {
   const { t, formatCurrency } = useApp();
@@ -25,6 +27,12 @@ export default function Investments() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  
+  // Enable live price polling
+  useLivePricePolling(true);
+  const { refreshPrices } = useManualPriceRefresh();
+  
+  const liveTrackingCount = investments.filter(inv => inv.liveTracking).length;
 
   useEffect(() => {
     loadInvestments();
@@ -233,16 +241,36 @@ export default function Investments() {
         <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(white,transparent_70%)]" />
       </div>
 
-      {/* Export Actions */}
-      <div className="flex gap-2 justify-end">
-        <Button onClick={handleExportCSV} variant="outline" size="sm">
-          <FileSpreadsheet className="h-4 w-4 mr-2" />
-          {t('common.exportCSV')}
-        </Button>
-        <Button onClick={handleExportPDF} variant="outline" size="sm">
-          <Download className="h-4 w-4 mr-2" />
-          {t('common.exportPDF')}
-        </Button>
+      {/* Live Tracking Info + Export Actions */}
+      <div className="flex items-center justify-between gap-4">
+        {liveTrackingCount > 0 && (
+          <div className="flex items-center gap-3">
+            <Badge variant="secondary" className="gap-2">
+              <TrendingUp className="w-3 h-3" />
+              {liveTrackingCount} {t('investments.liveTracking')}
+            </Badge>
+            <Button 
+              onClick={refreshPrices} 
+              variant="outline" 
+              size="sm"
+              className="gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              {t('investments.refreshPrices')}
+            </Button>
+          </div>
+        )}
+        
+        <div className="flex gap-2 ml-auto">
+          <Button onClick={handleExportCSV} variant="outline" size="sm">
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            {t('common.exportCSV')}
+          </Button>
+          <Button onClick={handleExportPDF} variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            {t('common.exportPDF')}
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
