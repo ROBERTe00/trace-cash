@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { KPICard } from "@/components/KPICard";
 import { IncomeTracker } from "@/components/IncomeTracker";
@@ -7,9 +7,10 @@ import { InteractiveExpenseChart } from "@/components/InteractiveExpenseChart";
 import { InteractiveInvestmentChart } from "@/components/InteractiveInvestmentChart";
 import { EnhancedAIInsights } from "@/components/EnhancedAIInsights";
 import { FinancialProfile } from "@/components/FinancialProfile";
-import { NetWorthSummary } from "@/components/NetWorthSummary";
+import { NetWorthHeroCard } from "@/components/NetWorthHeroCard";
 import { SavingsAllocationCard } from "@/components/SavingsAllocationCard";
 import { ImpactOnInvestmentsWidget } from "@/components/ImpactOnInvestmentsWidget";
+import { AdvancedInsightsCard } from "@/components/AdvancedInsightsCard";
 import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
 import {
   Wallet,
@@ -19,6 +20,7 @@ import {
   ArrowRight,
   Download,
   FileText,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,17 +49,27 @@ import { useInvestmentSuggestions } from "@/hooks/useInvestmentSuggestions";
 import { migrateLocalStorageToDatabase, hasPendingMigration } from "@/lib/migrateExpenses";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useLivePricePolling, useManualPriceRefresh } from "@/hooks/useLivePricePolling";
+import { useInvestments } from "@/hooks/useInvestments";
+import { useExpenses } from "@/hooks/useExpenses";
+import { Badge } from "@/components/ui/badge";
 
 export default function DashboardHome() {
   const { formatCurrency } = useApp();
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [investments, setInvestments] = useState<Investment[]>([]);
   const [goals, setGoals] = useState<FinancialGoal[]>([]);
   const [showInvestDialog, setShowInvestDialog] = useState(false);
+  
+  // Use new hooks for real-time data
+  const { expenses } = useExpenses();
+  const { investments, totalValue, totalCost, totalGain, gainPercentage } = useInvestments();
   
   const { data: savingsData } = useSavingsPotential();
   const { data: correlationData, isLoading: correlationLoading } = useExpenseCorrelation();
   const { suggestions, acceptSuggestion, rejectSuggestion } = useInvestmentSuggestions();
+  const { refreshPrices } = useManualPriceRefresh();
+
+  // Enable automatic price polling (every 5 minutes)
+  useLivePricePolling(true);
 
   useEffect(() => {
     const initData = async () => {
@@ -67,8 +79,6 @@ export default function DashboardHome() {
         await migrateLocalStorageToDatabase(user.id);
       }
       
-      setExpenses(getExpenses());
-      setInvestments(getInvestments());
       setGoals(getGoals());
     };
     
@@ -99,7 +109,7 @@ export default function DashboardHome() {
     toast.success("Goal updated!");
   };
 
-  // Calculate KPIs
+  // Calculate KPIs using real-time data from hooks
   const totalIncome = expenses
     .filter((e) => e.type === "Income")
     .reduce((sum, e) => sum + e.amount, 0);
@@ -110,33 +120,27 @@ export default function DashboardHome() {
 
   const netBalance = totalIncome - totalExpenses;
 
-  const portfolioValue = calculatePortfolioValue(investments);
-
-  const averageYield =
-    investments.length > 0
-      ? investments.reduce((sum, inv) => {
-          const initial = inv.quantity * inv.purchasePrice;
-          const current = inv.quantity * inv.currentPrice;
-          return sum + ((current - initial) / initial) * 100;
-        }, 0) / investments.length
-      : 0;
+  // Calculate net worth: cash balance + investment value
+  const netWorth = useMemo(() => {
+    return netBalance + totalValue;
+  }, [netBalance, totalValue]);
 
   const handleExportCSV = () => {
     exportToCSV({
-      expenses,
-      investments,
+      expenses: expenses as any,
+      investments: investments as any,
       goals,
-      summary: { totalIncome, totalExpenses, netBalance, portfolioValue },
+      summary: { totalIncome, totalExpenses, netBalance, portfolioValue: totalValue },
     });
     toast.success("CSV exported successfully!");
   };
 
   const handleExportPDF = () => {
     exportToPDF({
-      expenses,
-      investments,
+      expenses: expenses as any,
+      investments: investments as any,
       goals,
-      summary: { totalIncome, totalExpenses, netBalance, portfolioValue },
+      summary: { totalIncome, totalExpenses, netBalance, portfolioValue: totalValue },
     });
     toast.success("PDF report generated!");
   };
@@ -157,6 +161,15 @@ export default function DashboardHome() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={refreshPrices}
+              className="gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Aggiorna Prezzi
+            </Button>
             <Button variant="outline" size="sm" onClick={handleExportCSV}>
               <FileText className="h-4 w-4 mr-2" />
               Export CSV
@@ -168,23 +181,30 @@ export default function DashboardHome() {
           </div>
         </div>
 
-        {/* Net Worth Summary - Hero Section */}
-        <NetWorthSummary
-          totalValue={portfolioValue + netBalance}
-          expenses={totalExpenses}
-          investments={portfolioValue}
-          trend={netBalance > 0 ? 'up' : netBalance < 0 ? 'down' : 'neutral'}
-          onConnectBroker={() => window.location.href = '/investments'}
-          hasInvestments={investments.length > 0}
+        {/* Net Worth Hero Card with AI Insight */}
+        <NetWorthHeroCard
+          netWorth={netWorth}
+          cashBalance={netBalance}
+          investmentsValue={totalValue}
+          monthlyChange={gainPercentage}
+          onRefreshPrices={refreshPrices}
         />
 
         {/* Savings & Quick Stats Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <SavingsAllocationCard
             availableSavings={savingsData?.available_savings || 0}
             savingsRate={savingsData?.savings_rate || 0}
-            suggestion={savingsData?.suggestion || 'Start tracking to see suggestions'}
+            suggestion={savingsData?.suggestion || 'Inizia a tracciare per suggerimenti'}
             onInvestClick={() => setShowInvestDialog(true)}
+          />
+          <KPICard
+            title="Valore Portfolio"
+            value={formatCurrency(totalValue)}
+            icon={TrendingUp}
+            change={`${totalGain > 0 ? "+" : ""}${gainPercentage.toFixed(2)}%`}
+            changeType={totalGain > 0 ? "positive" : "negative"}
+            tooltip="Rendimento totale investimenti"
           />
           <KPICard
             title="Net Balance"
@@ -217,20 +237,23 @@ export default function DashboardHome() {
         {/* Financial Goals */}
         <FinancialGoals />
 
-        {/* Enhanced AI Insights */}
-        <EnhancedAIInsights 
-          expenses={expenses}
-          investments={investments}
+        {/* Advanced AI Insights */}
+        <AdvancedInsightsCard />
+
+        {/* Legacy Enhanced AI Insights (if needed) */}
+        <EnhancedAIInsights
+          expenses={expenses as any}
+          investments={investments as any}
         />
 
         {/* Interactive Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <InteractiveExpenseChart expenses={expenses} />
-          <InteractiveInvestmentChart investments={investments} />
+          <InteractiveExpenseChart expenses={expenses as any} />
+          <InteractiveInvestmentChart investments={investments as any} />
         </div>
 
         {/* Income Tracker */}
-        <IncomeTracker expenses={expenses} />
+        <IncomeTracker expenses={expenses as any} />
 
         {/* Quick Links */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
