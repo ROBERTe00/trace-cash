@@ -6,9 +6,6 @@ import { ExpenseInsights } from "@/components/ExpenseInsights";
 import { BankStatementUpload } from "@/components/BankStatementUpload";
 import { CSVExcelUpload } from "@/components/CSVExcelUpload";
 import { VoiceExpenseInput } from "@/components/VoiceExpenseInput";
-import { BudgetLimitsManager } from "@/components/BudgetLimitsManager";
-import { CategoryManager } from "@/components/CategoryManager";
-import { Separator } from "@/components/ui/separator";
 import { useExpenses } from "@/hooks/useExpenses";
 import { Wallet, BarChart3, Upload } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -80,31 +77,19 @@ export default function Transactions() {
           <ExpenseInsights expenses={expenses as any} />
         </TabsContent>
 
-        {/* TAB 3: Import - Compact 2-column layout */}
+        {/* TAB 3: Import - Clean, focused layout */}
         <TabsContent value="import" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Left: Import Methods */}
-            <Card className="glass-card p-4">
-              <h3 className="text-card-title mb-3 flex items-center gap-2">
-                <Upload className="icon-card text-primary" />
-                Importa Dati
-              </h3>
-              <div className="space-y-3">
-                <VoiceExpenseInput onExpenseDetected={handleAddExpense} />
-                <CSVExcelUpload onTransactionsParsed={() => {}} />
-                <BankStatementUpload onTransactionsExtracted={handleTransactionsExtracted} />
-              </div>
-            </Card>
-
-            {/* Right: Configuration */}
-            <Card className="glass-card p-4">
-              <h3 className="text-card-title mb-3">Configurazione</h3>
-              <div className="space-y-4">
-                <BudgetLimitsManager expenses={expenses as any} />
-                <CategoryManager />
-              </div>
-            </Card>
-          </div>
+          <Card className="glass-card p-6">
+            <h3 className="text-card-title mb-4 flex items-center gap-2">
+              <Upload className="icon-card text-primary" />
+              Importa Transazioni
+            </h3>
+            <div className="space-y-4">
+              <VoiceExpenseInput onExpenseDetected={handleAddExpense} />
+              <CSVExcelUpload onTransactionsParsed={() => {}} />
+              <BankStatementUpload onTransactionsExtracted={handleTransactionsExtracted} />
+            </div>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
