@@ -11,6 +11,8 @@ import { NetWorthHeroCard } from "@/components/NetWorthHeroCard";
 import { SavingsAllocationCard } from "@/components/SavingsAllocationCard";
 import { ImpactOnInvestmentsWidget } from "@/components/ImpactOnInvestmentsWidget";
 import { AdvancedInsightsCard } from "@/components/AdvancedInsightsCard";
+import { GamificationPanel } from "@/components/GamificationPanel";
+import { LeaderboardWidget } from "@/components/LeaderboardWidget";
 import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
 import {
   Wallet,
@@ -239,6 +241,12 @@ export default function DashboardHome() {
 
         {/* Advanced AI Insights */}
         <AdvancedInsightsCard />
+
+        {/* Gamification & Leaderboard */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <GamificationPanel />
+          <LeaderboardWidget />
+        </div>
 
         {/* Legacy Enhanced AI Insights (if needed) */}
         <EnhancedAIInsights
