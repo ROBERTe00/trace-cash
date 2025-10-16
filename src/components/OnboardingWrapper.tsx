@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingDashboard } from "./LoadingDashboard";
-import { ImprovedOnboardingWizard } from "./ImprovedOnboardingWizard";
-import { FinancialOnboarding } from "./FinancialOnboarding";
+import { EnhancedOnboarding } from "./EnhancedOnboarding";
 
 interface OnboardingWrapperProps {
   children: React.ReactNode;
@@ -11,8 +10,6 @@ interface OnboardingWrapperProps {
 export const OnboardingWrapper = ({ children }: OnboardingWrapperProps) => {
   const [loading, setLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
-  const [showWizard, setShowWizard] = useState(true);
-  const [showFinancial, setShowFinancial] = useState(false);
 
   useEffect(() => {
     checkOnboardingStatus();
@@ -62,41 +59,9 @@ export const OnboardingWrapper = ({ children }: OnboardingWrapperProps) => {
     }
   };
 
-  const handleWizardComplete = () => {
-    console.log('[OnboardingWrapper] Wizard completed, showing financial onboarding');
-    setShowWizard(false);
-    setShowFinancial(true);
-  };
-
-  const handleFinancialComplete = async () => {
-    console.log('[OnboardingWrapper] Financial onboarding completed');
-    
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Update user profile to mark onboarding as completed
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({
-          onboarding_completed: true,
-          onboarding_completed_at: new Date().toISOString(),
-        })
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('[OnboardingWrapper] Error updating profile:', error);
-        return;
-      }
-
-      console.log('[OnboardingWrapper] Onboarding completed successfully');
-      
-      // Hide onboarding and show main app
-      setNeedsOnboarding(false);
-      setShowFinancial(false);
-    } catch (error) {
-      console.error('[OnboardingWrapper] Error completing onboarding:', error);
-    }
+  const handleOnboardingComplete = () => {
+    console.log('[OnboardingWrapper] Onboarding completed successfully');
+    setNeedsOnboarding(false);
   };
 
   if (loading) {
@@ -104,13 +69,7 @@ export const OnboardingWrapper = ({ children }: OnboardingWrapperProps) => {
   }
 
   if (needsOnboarding) {
-    if (showWizard) {
-      return <ImprovedOnboardingWizard isOpen={true} onComplete={handleWizardComplete} />;
-    }
-    
-    if (showFinancial) {
-      return <FinancialOnboarding isOpen={true} onComplete={handleFinancialComplete} />;
-    }
+    return <EnhancedOnboarding isOpen={true} onComplete={handleOnboardingComplete} />;
   }
 
   return <>{children}</>;
