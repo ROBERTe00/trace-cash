@@ -10,6 +10,7 @@ import { useApp } from "@/contexts/AppContext";
 import { FinancialGoals } from "@/components/FinancialGoals";
 import { TrendChart } from "@/components/TrendChart";
 import { AIAdvicePanel } from "@/components/AIAdvicePanel";
+import { AchievementsList } from "@/components/AchievementsList";
 import { useToast } from "@/hooks/use-toast";
 import confetti from "canvas-confetti";
 import jsPDF from "jspdf";
@@ -331,6 +332,9 @@ export default function ProgressHub() {
             </div>
             <Progress value={overallProgress} className="h-3" />
           </Card>
+
+          {/* Database Achievements */}
+          <AchievementsList />
 
           {/* Achievements Essenziali */}
           {essentialAchievements.length > 0 && (

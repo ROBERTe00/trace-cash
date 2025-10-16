@@ -116,7 +116,7 @@ Return JSON format:
     console.log('Calling Lovable AI for analysis...');
 
     // Call Lovable AI
-    const aiResponse = await fetch('https://api.lovable.app/v1/ai/chat/completions', {
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${lovableApiKey}`,

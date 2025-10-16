@@ -16,7 +16,7 @@ const financialDataSchema = z.object({
     })).max(1000),
     investments: z.array(z.object({
       type: z.string().max(50),
-      value: z.number().min(0).max(100000000)
+      value: z.number().min(0).max(100000000).nullable()
     })).max(200),
     summary: z.object({
       totalIncome: z.number().min(0).max(100000000),
@@ -100,7 +100,7 @@ ${topCategories.map(([cat, amt]) => `- ${cat}: €${amt.toFixed(2)} (${((amt / d
 
 Investment Portfolio:
 ${data.investments.length > 0 
-  ? data.investments.map(inv => `- ${inv.type}: €${inv.value.toFixed(2)}`).join('\n')
+  ? data.investments.map(inv => `- ${inv.type}: €${(inv.value || 0).toFixed(2)}`).join('\n')
   : '- No investments yet'}
 `;
 
