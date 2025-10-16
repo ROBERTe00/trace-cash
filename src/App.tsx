@@ -22,14 +22,12 @@ import { Session } from "@supabase/supabase-js";
 import { LoadingDashboard } from "@/components/LoadingDashboard";
 import Index from "./pages/Index";
 import DashboardHome from "./pages/DashboardHome";
-import Expenses from "./pages/Expenses";
+import Transactions from "./pages/Transactions";
 import Investments from "./pages/Investments";
 import Insights from "./pages/Insights";
 import FuturePlanner from "./pages/FuturePlanner";
-import ProgressHub from "./pages/ProgressHub";
-import Upload from "./pages/Upload";
+import News from "./pages/News";
 import Settings from "./pages/Settings";
-import Community from "./pages/Community";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import { ImprovedOnboardingWizard } from "./components/ImprovedOnboardingWizard";
@@ -88,13 +86,11 @@ function ProtectedRoutes() {
           <main className="flex-1 p-6 overflow-auto">
             <Routes>
               <Route path="/" element={<DashboardHome />} />
-              <Route path="/expenses" element={<Expenses />} />
+              <Route path="/transactions" element={<Transactions />} />
               <Route path="/investments" element={<Investments />} />
               <Route path="/insights" element={<Insights />} />
-              <Route path="/future-planner" element={<FuturePlanner />} />
-              <Route path="/progress" element={<ProgressHub />} />
-              <Route path="/community" element={<Community />} />
-              <Route path="/upload" element={<Upload />} />
+              <Route path="/goals" element={<FuturePlanner />} />
+              <Route path="/news" element={<News />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

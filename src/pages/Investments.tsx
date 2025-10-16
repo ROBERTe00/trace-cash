@@ -5,42 +5,31 @@ import { PortfolioAnalysis } from "@/components/PortfolioAnalysis";
 import { BrokerIntegration } from "@/components/BrokerIntegration";
 import { PortfolioMetricsPanel } from "@/components/PortfolioMetricsPanel";
 import { InvestmentScenarioSimulator } from "@/components/InvestmentScenarioSimulator";
+import { InvestmentHero } from "@/components/InvestmentHero";
 import { Investment } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Download, FileSpreadsheet, Plus, PieChart, BarChart3, Calculator, Upload as UploadIcon, TrendingUp, RefreshCw } from "lucide-react";
+import { Plus, PieChart, BarChart3, Calculator, Upload as UploadIcon } from "lucide-react";
 import { exportInvestmentReport, exportInvestmentCSV } from "@/lib/investmentExport";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { useApp } from "@/contexts/AppContext";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useLivePricePolling, useManualPriceRefresh } from "@/hooks/useLivePricePolling";
-import { Badge } from "@/components/ui/badge";
 
 export default function Investments() {
-  const { t, formatCurrency } = useApp();
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<string>("all");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  
-  // Enable live price polling
-  useLivePricePolling(true);
-  const { refreshPrices } = useManualPriceRefresh();
-  
-  const liveTrackingCount = investments.filter(inv => inv.liveTracking).length;
 
   useEffect(() => {
     loadInvestments();
     
-    // Check if action=add query param exists
     if (searchParams.get("action") === "add") {
       setSheetOpen(true);
-      // Remove the query param
       navigate("/investments", { replace: true });
     }
   }, [searchParams, navigate]);
@@ -76,7 +65,7 @@ export default function Investments() {
       setInvestments(mapped);
     } catch (error) {
       console.error('Failed to load investments');
-      toast.error(t("loadFailed"));
+      toast.error("Failed to load investments");
     } finally {
       setLoading(false);
     }
@@ -86,7 +75,7 @@ export default function Investments() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error(t("loginRequired"));
+        toast.error("Please sign in");
         return;
       }
 
@@ -122,10 +111,10 @@ export default function Investments() {
 
       setInvestments([newInv, ...investments]);
       setSheetOpen(false);
-      toast.success(t("investmentAdded"));
+      toast.success("Investment added!");
     } catch (error) {
       console.error('Failed to add investment');
-      toast.error(t("investmentFailed"));
+      toast.error("Failed to add investment");
     }
   };
 
@@ -139,10 +128,10 @@ export default function Investments() {
       if (error) throw error;
 
       setInvestments(investments.filter((i) => i.id !== id));
-      toast.success(t("investmentDeleted"));
+      toast.success("Investment deleted");
     } catch (error) {
       console.error('Failed to delete investment');
-      toast.error(t("investmentFailed"));
+      toast.error("Failed to delete investment");
     }
   };
 
@@ -160,236 +149,167 @@ export default function Investments() {
       ));
     } catch (error) {
       console.error('Failed to update price');
-      toast.error(t("priceUpdateFailed"));
+      toast.error("Failed to update price");
     }
   };
 
   const handleExportPDF = () => {
     exportInvestmentReport(investments);
-    toast.success(t("exportSuccess"));
+    toast.success("PDF exported!");
   };
 
   const handleExportCSV = () => {
     exportInvestmentCSV(investments);
-    toast.success(t("exportSuccess"));
+    toast.success("CSV exported!");
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  const totalCost = investments.reduce(
+    (sum, inv) => sum + inv.quantity * inv.purchasePrice,
+    0
+  );
+  
+  const totalValue = investments.reduce(
+    (sum, inv) => sum + inv.quantity * inv.currentPrice,
+    0
+  );
+  
+  const totalReturn = totalValue - totalCost;
+  const returnPercentage = totalCost > 0 ? (totalReturn / totalCost) * 100 : 0;
+  
+  const bestPerformer = investments.length > 0 
+    ? investments.reduce((best, inv) => {
+        const gainPercent = ((inv.currentPrice - inv.purchasePrice) / inv.purchasePrice) * 100;
+        const bestGainPercent = ((best.currentPrice - best.purchasePrice) / best.purchasePrice) * 100;
+        return gainPercent > bestGainPercent ? inv : best;
+      })
+    : null;
 
-  // Filter investments based on selected type
   const filteredInvestments = filterType === "all" 
     ? investments 
     : investments.filter(inv => inv.type === filterType);
 
-  // Calculate portfolio stats
-  const totalValue = investments.reduce((sum, inv) => sum + inv.quantity * inv.currentPrice, 0);
-  const totalYield = investments.reduce((sum, inv) => {
-    const initial = inv.quantity * inv.purchasePrice;
-    const current = inv.quantity * inv.currentPrice;
-    return sum + current - initial;
-  }, 0);
-  const yieldPercent = investments.length > 0
-    ? (totalYield / investments.reduce((sum, inv) => sum + inv.quantity * inv.purchasePrice, 0)) * 100
-    : 0;
+  const investmentTypes = Array.from(new Set(investments.map(inv => inv.type)));
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-background border border-primary/20 p-8">
-        <div className="relative z-10">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            {/* Left: Title + Subtitle */}
-            <div>
-              <h1 className="text-4xl font-bold gradient-text mb-2">
-                {t('investments.title')}
-              </h1>
-              <p className="text-muted-foreground">
-                {t('investments.subtitle')}
-              </p>
-            </div>
-            
-            {/* Right: Quick Stats Cards */}
-            <div className="grid grid-cols-2 gap-4 md:w-auto">
-              <Card className="p-4 bg-background/80 backdrop-blur">
-                <p className="text-xs text-muted-foreground mb-1">
-                  {t('investments.totalValue')}
-                </p>
-                <p className="text-2xl font-bold">
-                  {formatCurrency(totalValue)}
-                </p>
-              </Card>
-              
-              <Card className="p-4 bg-background/80 backdrop-blur">
-                <p className="text-xs text-muted-foreground mb-1">
-                  {t('investments.totalReturn')}
-                </p>
-                <p className={`text-2xl font-bold ${totalYield >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {totalYield >= 0 ? '+' : ''}{yieldPercent.toFixed(2)}%
-                </p>
-              </Card>
-            </div>
-          </div>
-        </div>
-        
-        {/* Background decoration */}
-        <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(white,transparent_70%)]" />
-      </div>
+      {/* Hero Section with New Design */}
+      <InvestmentHero
+        totalValue={totalValue}
+        totalGain={totalReturn}
+        gainPercentage={returnPercentage}
+        bestPerformer={
+          bestPerformer
+            ? {
+                name: bestPerformer.name,
+                gainPercent: ((bestPerformer.currentPrice - bestPerformer.purchasePrice) / bestPerformer.purchasePrice) * 100,
+              }
+            : undefined
+        }
+        onAddInvestment={() => setSheetOpen(true)}
+        onImport={() => {
+          const importTab = document.querySelector('[value="import"]');
+          if (importTab) {
+            (importTab as HTMLElement).click();
+          }
+        }}
+        onExportPDF={handleExportPDF}
+        onExportCSV={handleExportCSV}
+      />
 
-      {/* Live Tracking Info + Export Actions */}
-      <div className="flex items-center justify-between gap-4">
-        {liveTrackingCount > 0 && (
-          <div className="flex items-center gap-3">
-            <Badge variant="secondary" className="gap-2">
-              <TrendingUp className="w-3 h-3" />
-              {liveTrackingCount} {t('investments.liveTracking')}
-            </Badge>
-            <Button 
-              onClick={refreshPrices} 
-              variant="outline" 
-              size="sm"
-              className="gap-2"
-            >
-              <RefreshCw className="h-4 w-4" />
-              {t('investments.refreshPrices')}
-            </Button>
-          </div>
-        )}
-        
-        <div className="flex gap-2 ml-auto">
-          <Button onClick={handleExportCSV} variant="outline" size="sm">
-            <FileSpreadsheet className="h-4 w-4 mr-2" />
-            {t('common.exportCSV')}
-          </Button>
-          <Button onClick={handleExportPDF} variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            {t('common.exportPDF')}
-          </Button>
-        </div>
-      </div>
-
-      <Tabs defaultValue="overview" className="space-y-6">
-        {/* Pills-style tabs */}
-        <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl">
-          <TabsTrigger 
-            value="overview" 
-            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-6 py-2.5"
-          >
-            <div className="flex items-center gap-2">
-              <PieChart className="h-4 w-4" />
-              {t('investments.overview')}
-            </div>
+      {/* 3 Tabs: Portfolio, Performance, Import */}
+      <Tabs defaultValue="portfolio" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="portfolio" className="gap-2">
+            <PieChart className="icon-button" />
+            Portfolio
           </TabsTrigger>
-          
-          <TabsTrigger 
-            value="analytics" 
-            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-6 py-2.5"
-          >
-            <div className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              {t('investments.analytics')}
-            </div>
+          <TabsTrigger value="performance" className="gap-2">
+            <BarChart3 className="icon-button" />
+            Performance
           </TabsTrigger>
-          
-          <TabsTrigger 
-            value="simulator" 
-            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-6 py-2.5"
-          >
-            <div className="flex items-center gap-2">
-              <Calculator className="h-4 w-4" />
-              {t('investments.simulator')}
-            </div>
-          </TabsTrigger>
-          
-          <TabsTrigger 
-            value="import" 
-            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm px-6 py-2.5"
-          >
-            <div className="flex items-center gap-2">
-              <UploadIcon className="h-4 w-4" />
-              {t('investments.import')}
-            </div>
+          <TabsTrigger value="import" className="gap-2">
+            <UploadIcon className="icon-button" />
+            Import
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6 mt-6 min-h-[800px] transition-all duration-300">
-          {/* Sheet drawer instead of Collapsible */}
-          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-            <SheetTrigger asChild>
-              <Button variant="default" size="lg" className="gap-2 w-full sm:w-auto">
-                <Plus className="h-5 w-5" />
-                {t('investments.quickAdd')}
-              </Button>
-            </SheetTrigger>
-            
-            <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle>{t('investments.addNew')}</SheetTitle>
-                <SheetDescription>
-                  {t('investments.addNewDesc')}
-                </SheetDescription>
-              </SheetHeader>
-              
-              <div className="mt-6">
-                <InvestmentForm onAdd={handleAddInvestment} />
-              </div>
-            </SheetContent>
-          </Sheet>
-
-          {/* Filter Chips - Modern rounded-full style */}
-          <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            <span className="text-sm font-medium text-muted-foreground shrink-0">
-              {t('investments.filterBy')}
-            </span>
-            
-            {['all', 'Stock', 'ETF', 'Crypto', 'Cash'].map((type) => (
-              <button
-                key={type}
-                onClick={() => setFilterType(type)}
-                className={`
-                  px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap
-                  ${filterType === type 
-                    ? 'bg-primary text-primary-foreground shadow-sm' 
-                    : 'bg-muted hover:bg-muted/80'
-                  }
-                `}
+        <TabsContent value="portfolio" className="space-y-6">
+          {investmentTypes.length > 1 && (
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                variant={filterType === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilterType("all")}
               >
-                {type === 'all' ? t('investments.all') : t(`investment.type${type}`)}
-                <span className="ml-2 opacity-70">
-                  ({type === 'all' ? investments.length : investments.filter(i => i.type === type).length})
-                </span>
-              </button>
-            ))}
-          </div>
+                All Types
+              </Button>
+              {investmentTypes.map((type) => (
+                <Button
+                  key={type}
+                  variant={filterType === type ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterType(type)}
+                >
+                  {type}
+                </Button>
+              ))}
+            </div>
+          )}
 
           <PortfolioAnalysis investments={filteredInvestments} />
-          <InvestmentTable investments={filteredInvestments} onDelete={handleDeleteInvestment} onUpdatePrice={handleUpdateInvestmentPrice} />
+          <InvestmentTable 
+            investments={filteredInvestments} 
+            onDelete={handleDeleteInvestment}
+            onUpdatePrice={handleUpdateInvestmentPrice}
+          />
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-6 mt-6 min-h-[800px] transition-all duration-300">
+        <TabsContent value="performance" className="space-y-6">
           <PortfolioMetricsPanel investments={investments} />
-        </TabsContent>
-
-        <TabsContent value="simulator" className="space-y-6 mt-6 min-h-[800px] transition-all duration-300">
-          <InvestmentScenarioSimulator />
-        </TabsContent>
-
-        <TabsContent value="import" className="space-y-6 mt-6 min-h-[800px] transition-all duration-300">
-          <BrokerIntegration />
           
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-6">
-            <h3 className="font-semibold mb-2">🚀 {t('investments.comingSoon')}</h3>
-            <p className="text-sm text-muted-foreground">
-              {t('investments.moreBrokers')}
-            </p>
-          </div>
+          <Card className="glass-card">
+            <div className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Calculator className="icon-card text-primary" />
+                <h3 className="text-lg font-semibold">Scenario Simulator</h3>
+              </div>
+              <InvestmentScenarioSimulator />
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="import" className="space-y-6">
+          <BrokerIntegration />
         </TabsContent>
       </Tabs>
+
+      {/* Add Investment Sheet */}
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Add Investment</SheetTitle>
+            <SheetDescription>
+              Fill in the details of your new investment
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6">
+            <InvestmentForm
+              onAdd={(investment) => {
+                handleAddInvestment(investment);
+                setSheetOpen(false);
+              }}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

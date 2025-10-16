@@ -5,9 +5,6 @@ import {
   Wallet,
   Lightbulb,
   Settings,
-  Upload,
-  Trophy,
-  Users,
   Target,
 } from "lucide-react";
 import {
@@ -31,52 +28,46 @@ export function AppSidebar() {
 
   const navigationItems = [
     { 
-      title: t("dashboard"), 
+      title: "Dashboard", 
       url: "/", 
       icon: LayoutDashboard,
-      tooltip: t("dashboard")
+      tooltip: "Dashboard"
     },
     { 
-      title: t("expenses"), 
-      url: "/expenses", 
+      title: "Transactions", 
+      url: "/transactions", 
       icon: Wallet,
-      tooltip: t("expenses")
+      tooltip: "Transactions"
     },
     { 
-      title: t("investments"), 
+      title: "Investments", 
       url: "/investments", 
       icon: TrendingUp,
-      tooltip: t("investments")
+      tooltip: "Investments"
     },
     { 
-      title: t("insights"), 
+      title: "Insights", 
       url: "/insights", 
       icon: Lightbulb,
-      tooltip: t("insights")
+      tooltip: "Insights"
     },
     { 
-      title: t("progress"), 
-      url: "/progress", 
-      icon: Trophy,
-      tooltip: t("progress")
+      title: "Goals", 
+      url: "/goals", 
+      icon: Target,
+      tooltip: "Goals"
     },
     { 
-      title: t("community"), 
-      url: "/community", 
-      icon: Users,
-      tooltip: t("community")
+      title: "News", 
+      url: "/news", 
+      icon: LayoutDashboard,
+      tooltip: "News"
     },
     { 
-      title: t("upload"), 
-      url: "/upload", 
-      icon: Upload,
-      tooltip: t("upload")
-    },
-    { 
-      title: t("settings"), 
+      title: "Settings", 
       url: "/settings", 
       icon: Settings,
-      tooltip: t("settings")
+      tooltip: "Settings"
     },
   ];
 
@@ -103,7 +94,7 @@ export function AppSidebar() {
                     tooltip={item.title}
                   >
                     <NavLink to={item.url} end onClick={handleLinkClick}>
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className="icon-nav" />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>

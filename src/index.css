@@ -2,6 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Typography System - Standardized */
+@layer utilities {
+  .text-hero-number {
+    @apply text-7xl font-extrabold tracking-tighter;
+  }
+  
+  .text-large-number {
+    @apply text-5xl font-bold tracking-tight;
+  }
+  
+  .text-medium-number {
+    @apply text-3xl font-semibold;
+  }
+  
+  .text-small-number {
+    @apply text-2xl font-semibold;
+  }
+  
+  /* Icon sizes standardized */
+  .icon-nav {
+    @apply w-5 h-5;
+  }
+  
+  .icon-card {
+    @apply w-6 h-6;
+  }
+  
+  .icon-stat {
+    @apply w-8 h-8;
+  }
+  
+  .icon-hero {
+    @apply w-12 h-12;
+  }
+  
+  .icon-button {
+    @apply w-4 h-4;
+  }
+}
+
 @layer utilities {
   .glass-morphism {
     background: rgba(255, 255, 255, 0.05);
