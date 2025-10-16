@@ -65,30 +65,30 @@ export default function News() {
 
   const getImpactColor = (score?: number) => {
     if (!score) return "bg-muted";
-    if (score >= 8) return "bg-red-500/10 text-red-500 border-red-500/20";
-    if (score >= 6) return "bg-orange-500/10 text-orange-500 border-orange-500/20";
-    return "bg-green-500/10 text-green-500 border-green-500/20";
+    if (score >= 8) return "bg-destructive/10 text-destructive border-destructive/20";
+    if (score >= 6) return "bg-warning/10 text-warning border-warning/20";
+    return "bg-success/10 text-success border-success/20";
   };
 
   return (
-    <div className="space-y-6 animate-fade-in overflow-hidden">
+    <div className="space-y-6 animate-fade-in w-full">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-background border border-blue-500/20 p-6">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-info/10 via-accent/10 to-background border border-info/20 p-6">
         <div className="relative z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                <Newspaper className="icon-card text-blue-500" />
+              <div className="h-12 w-12 rounded-xl bg-info/20 flex items-center justify-center">
+                <Newspaper className="icon-card text-info" />
               </div>
               <div>
                 <h1 className="text-section">Market News & Insights</h1>
                 <p className="text-muted-foreground mt-1">Stay updated with financial markets</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="icon-button" />
               <span>Updated {lastUpdate.toLocaleTimeString()}</span>
-              <div className="ml-2 h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+              <div className="ml-2 h-2 w-2 rounded-full bg-success animate-pulse" />
             </div>
           </div>
         </div>
@@ -96,7 +96,7 @@ export default function News() {
       </div>
 
       {/* Filter Bar */}
-      <Card className="glass-card sticky top-4 z-30 backdrop-blur-xl mt-4">
+      <Card className="glass-card sticky top-[72px] z-40 backdrop-blur-xl">
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">

@@ -78,7 +78,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className={open ? "w-60" : "w-14"}>
+    <Sidebar collapsible="icon" className={`${open ? "w-60" : "w-14"} z-50`}>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className={open ? "" : "sr-only"}>

@@ -44,14 +44,14 @@ export const Layout = () => {
   return (
     <SidebarProvider>
       <WaveBackground variant="default" />
-      <div className="flex min-h-screen w-full relative">
+      <div className="flex min-h-screen w-full relative overflow-hidden">
         {/* Desktop Sidebar */}
-        <div className="hidden md:block">
+        <div className="hidden md:block fixed left-0 top-0 h-full z-50">
           <AppSidebar />
         </div>
 
-        <main className="flex-1 w-full overflow-x-hidden overflow-y-auto pb-20 md:pb-0">
-          <div className="sticky top-0 z-50 bg-card/80 backdrop-blur-xl supports-[backdrop-filter]:bg-card/60 border-b px-4 py-3 shadow-sm">
+        <main className="flex-1 w-full overflow-x-hidden overflow-y-auto pb-20 md:pb-0 md:ml-14">
+          <div className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl supports-[backdrop-filter]:bg-card/60 border-b px-4 py-3 shadow-sm">
             <div className="flex items-center justify-between max-w-7xl mx-auto">
               <GlobalSearch />
               <div className="flex items-center gap-2">
