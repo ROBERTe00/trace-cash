@@ -24,28 +24,120 @@ export const aggregateSmallCategories = (
 };
 
 /**
- * Calculates portfolio diversification score using Shannon Entropy
- * @param data Array of investment values
- * @returns Diversification score from 0-100 (100 = perfectly diversified)
+ * Calculates realistic portfolio diversification score based on financial best practices
+ * @param categoryData Object with category names and values
+ * @param totalValue Total portfolio value
+ * @returns Object with score, rating, advice, and warnings
+ */
+export const calculatePortfolioDiversification = (
+  categoryData: Record<string, number>,
+  totalValue: number
+): {
+  score: number;
+  rating: 'poor' | 'fair' | 'good' | 'excellent';
+  advice: string;
+  warnings: string[];
+} => {
+  if (totalValue === 0 || Object.keys(categoryData).length === 0) {
+    return {
+      score: 0,
+      rating: 'poor',
+      advice: 'Add investments to your portfolio to start building wealth',
+      warnings: ['No investments in portfolio']
+    };
+  }
+
+  const warnings: string[] = [];
+  let score = 100;
+
+  // Calculate percentages
+  const percentages = Object.entries(categoryData).reduce((acc, [cat, value]) => {
+    acc[cat] = (value / totalValue) * 100;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // CRITICAL: Crypto exposure analysis
+  const cryptoPercentage = percentages['Crypto'] || 0;
+  if (cryptoPercentage > 60) {
+    score -= 60;
+    warnings.push(`Extremely high crypto exposure (${cryptoPercentage.toFixed(0)}%) - Very high risk`);
+  } else if (cryptoPercentage > 40) {
+    score -= 40;
+    warnings.push(`High crypto exposure (${cryptoPercentage.toFixed(0)}%) - Consider reducing to 20-30%`);
+  } else if (cryptoPercentage > 30) {
+    score -= 25;
+    warnings.push(`Crypto exposure above recommended (${cryptoPercentage.toFixed(0)}%) - Consider reducing to 20%`);
+  } else if (cryptoPercentage > 20) {
+    score -= 10;
+    warnings.push(`Slightly high crypto exposure (${cryptoPercentage.toFixed(0)}%)`);
+  }
+
+  // Check for over-concentration in any single category
+  Object.entries(percentages).forEach(([category, pct]) => {
+    if (category === 'Crypto') return; // Already checked above
+    if (pct > 70) {
+      score -= 30;
+      warnings.push(`Too concentrated in ${category} (${pct.toFixed(0)}%)`);
+    } else if (pct > 60) {
+      score -= 20;
+      warnings.push(`High concentration in ${category} (${pct.toFixed(0)}%)`);
+    }
+  });
+
+  // Check number of categories (diversity of asset classes)
+  const numCategories = Object.keys(categoryData).length;
+  if (numCategories === 1) {
+    score -= 30;
+    warnings.push('Portfolio concentrated in single asset class');
+  } else if (numCategories === 2) {
+    score -= 10;
+  } else if (numCategories >= 4) {
+    score += 10; // Bonus for good diversity
+  }
+
+  // Ensure score stays within bounds
+  score = Math.max(0, Math.min(100, score));
+
+  // Determine rating and advice
+  let rating: 'poor' | 'fair' | 'good' | 'excellent';
+  let advice: string;
+
+  if (score >= 80) {
+    rating = 'excellent';
+    advice = 'Well-diversified portfolio with balanced risk exposure';
+  } else if (score >= 60) {
+    rating = 'good';
+    advice = 'Good diversification, but some improvements can be made';
+  } else if (score >= 40) {
+    rating = 'fair';
+    advice = 'Moderate diversification - consider rebalancing to reduce concentration';
+  } else {
+    rating = 'poor';
+    advice = 'Poor diversification - high concentration risk, rebalancing recommended';
+  }
+
+  return { score, rating, advice, warnings };
+};
+
+/**
+ * Legacy function for backward compatibility
+ * @deprecated Use calculatePortfolioDiversification instead
  */
 export const calculateDiversificationScore = (
   data: Array<{ value: number }>
 ): number => {
   if (data.length === 0) return 0;
-  if (data.length === 1) return 20; // Single asset = poor diversification
+  if (data.length === 1) return 20;
 
   const total = data.reduce((sum, item) => sum + item.value, 0);
-  
   if (total === 0) return 0;
 
-  // Calculate Shannon Entropy
   const entropy = data.reduce((sum, item) => {
     const p = item.value / total;
     if (p === 0) return sum;
     return sum - p * Math.log2(p);
   }, 0);
 
-  // Normalize to 0-100 scale
   const maxEntropy = Math.log2(data.length);
   const normalizedScore = (entropy / maxEntropy) * 100;
 

@@ -2,9 +2,10 @@ import { Card } from "@/components/ui/card";
 import { Investment } from "@/lib/storage";
 import { useApp } from "@/contexts/AppContext";
 import { ModernPieChart } from "@/components/charts/ModernPieChart";
-import { aggregateSmallCategories, calculateDiversificationScore, assignCategoryColors } from "@/lib/chartUtils";
-import { TrendingUp, Shield, Target } from "lucide-react";
+import { aggregateSmallCategories, calculatePortfolioDiversification, assignCategoryColors } from "@/lib/chartUtils";
+import { TrendingUp, Shield, Target, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface PortfolioAnalysisProps {
   investments: Investment[];
@@ -39,10 +40,8 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
     percentage: ((item.value / totalValue) * 100).toFixed(1),
   }));
 
-  // Calculate diversification score using utility
-  const diversificationScore = calculateDiversificationScore(
-    Object.values(categoryData).map(value => ({ value }))
-  );
+  // Calculate realistic diversification analysis
+  const diversificationAnalysis = calculatePortfolioDiversification(categoryData, totalValue);
 
   // Risk level based on category allocation
   const calculateRiskLevel = () => {
@@ -130,27 +129,67 @@ export const PortfolioAnalysis = ({ investments }: PortfolioAnalysisProps) => {
         {/* Metrics */}
         <div className="space-y-4">
           {/* Diversification Score */}
-          <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
+          <div className={`p-4 rounded-lg border ${
+            diversificationAnalysis.rating === 'excellent' 
+              ? 'bg-success/5 border-success/20' 
+              : diversificationAnalysis.rating === 'good'
+              ? 'bg-primary/5 border-primary/20'
+              : diversificationAnalysis.rating === 'fair'
+              ? 'bg-warning/5 border-warning/20'
+              : 'bg-destructive/5 border-destructive/20'
+          }`}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium flex items-center gap-2">
-                <Shield className="icon-button text-primary" />
+                <Shield className={`icon-button ${
+                  diversificationAnalysis.rating === 'excellent' 
+                    ? 'text-success' 
+                    : diversificationAnalysis.rating === 'good'
+                    ? 'text-primary'
+                    : diversificationAnalysis.rating === 'fair'
+                    ? 'text-warning'
+                    : 'text-destructive'
+                }`} />
                 {t('portfolio.diversification')}
               </span>
-              <span className="text-medium-number text-primary">{diversificationScore.toFixed(0)}/100</span>
+              <span className={`text-medium-number font-bold ${
+                diversificationAnalysis.rating === 'excellent' 
+                  ? 'text-success' 
+                  : diversificationAnalysis.rating === 'good'
+                  ? 'text-primary'
+                  : diversificationAnalysis.rating === 'fair'
+                  ? 'text-warning'
+                  : 'text-destructive'
+              }`}>
+                {diversificationAnalysis.score}/100
+              </span>
             </div>
-            <div className="w-full bg-muted rounded-full h-2">
+            <div className="w-full bg-muted rounded-full h-2 mb-2">
               <div
-                className="bg-primary h-2 rounded-full transition-all duration-500"
-                style={{ width: `${diversificationScore}%` }}
+                className={`h-2 rounded-full transition-all duration-500 ${
+                  diversificationAnalysis.rating === 'excellent' 
+                    ? 'bg-success' 
+                    : diversificationAnalysis.rating === 'good'
+                    ? 'bg-primary'
+                    : diversificationAnalysis.rating === 'fair'
+                    ? 'bg-warning'
+                    : 'bg-destructive'
+                }`}
+                style={{ width: `${diversificationAnalysis.score}%` }}
               />
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              {diversificationScore >= 70
-                ? t('portfolio.excellentDiv')
-                : diversificationScore >= 50
-                ? t('portfolio.goodDiv')
-                : t('portfolio.considerDiv')}
+            <p className="text-xs font-medium mb-2">
+              {diversificationAnalysis.advice}
             </p>
+            {diversificationAnalysis.warnings.length > 0 && (
+              <div className="mt-3 space-y-1">
+                {diversificationAnalysis.warnings.map((warning, idx) => (
+                  <div key={idx} className="flex items-start gap-2 text-xs text-muted-foreground">
+                    <AlertTriangle className="h-3 w-3 mt-0.5 flex-shrink-0 text-warning" />
+                    <span>{warning}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Risk Level */}
