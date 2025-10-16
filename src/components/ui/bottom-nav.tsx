@@ -1,50 +1,72 @@
-import { Home, Receipt, TrendingUp, Users, Settings } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Link, useLocation } from "react-router-dom";
+import { LucideIcon } from "lucide-react";
 
-export const BottomNav = () => {
-  const navigate = useNavigate();
+interface BottomNavProps {
+  items: {
+    label: string;
+    href: string;
+    icon: LucideIcon;
+  }[];
+  fabAction?: () => void;
+  fabIcon?: LucideIcon;
+}
+
+export function BottomNav({ items, fabAction, fabIcon: FabIcon }: BottomNavProps) {
   const location = useLocation();
 
-  const navItems = [
-    { icon: Home, label: "Home", path: "/", exactMatch: true },
-    { icon: Receipt, label: "Spese", path: "/expenses" },
-    { icon: TrendingUp, label: "Investimenti", path: "/investments" },
-    { icon: Users, label: "Community", path: "/community" },
-    { icon: Settings, label: "Impostazioni", path: "/settings" },
-  ];
-
-  const isActive = (path: string, exactMatch?: boolean) => {
-    if (exactMatch) {
-      return location.pathname === path;
-    }
-    return location.pathname.startsWith(path);
-  };
-
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-lg border-t border-border z-50 md:hidden safe-area-inset-bottom">
-      <div className="grid grid-cols-5 h-16">
-        {navItems.map(({ icon: Icon, label, path, exactMatch }) => (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-lg md:hidden safe-area-inset-bottom">
+      <div className="flex items-center justify-around h-16 px-2 relative">
+        {items.slice(0, 2).map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              to={item.href}
+              className={cn(
+                "flex flex-col items-center justify-center flex-1 h-full transition-colors",
+                isActive
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Icon className="h-5 w-5" />
+              <span className="text-xs mt-1">{item.label}</span>
+            </Link>
+          );
+        })}
+        
+        {fabAction && FabIcon && (
           <button
-            key={path}
-            onClick={() => navigate(path)}
-            className={cn(
-              "flex flex-col items-center justify-center gap-1 transition-all duration-200",
-              "hover:bg-accent/50 active:scale-95",
-              isActive(path, exactMatch)
-                ? "text-primary font-medium"
-                : "text-muted-foreground"
-            )}
-            aria-label={label}
+            onClick={fabAction}
+            className="absolute left-1/2 -translate-x-1/2 -top-6 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-110 flex items-center justify-center"
           >
-            <Icon className={cn(
-              "transition-all duration-200",
-              isActive(path, exactMatch) ? "w-6 h-6" : "w-5 h-5"
-            )} />
-            <span className="text-[10px] leading-none">{label}</span>
+            <FabIcon className="h-6 w-6" />
           </button>
-        ))}
+        )}
+        
+        {items.slice(2).map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              to={item.href}
+              className={cn(
+                "flex flex-col items-center justify-center flex-1 h-full transition-colors",
+                isActive
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Icon className="h-5 w-5" />
+              <span className="text-xs mt-1">{item.label}</span>
+            </Link>
+          );
+        })}
       </div>
     </nav>
   );
-};
+}

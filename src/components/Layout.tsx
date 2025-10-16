@@ -1,90 +1,78 @@
-import { Moon, Sun, LogOut, Home } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
-import { SettingsPanel } from "@/components/SettingsPanel";
-import { NotificationBell } from "@/components/NotificationBell";
-import { useNavigate } from "react-router-dom";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 import { BottomNav } from "@/components/ui/bottom-nav";
-import { FAB } from "@/components/ui/fab";
+import { NotificationBell } from "@/components/NotificationBell";
+import { GlobalSearch } from "@/components/GlobalSearch";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import { Outlet, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { PWAOfflineIndicator } from "@/components/PWAOfflineIndicator";
+import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
+import { Home, Wallet, TrendingUp, Users, Settings, Plus } from "lucide-react";
 
-interface LayoutProps {
-  children: React.ReactNode;
-  onLogout?: () => void;
-}
-
-export const Layout = ({ children, onLogout }: LayoutProps) => {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+export const Layout = () => {
   const navigate = useNavigate();
+  const [showAddDialog, setShowAddDialog] = useState(false);
+
+  const navItems = [
+    { label: "Home", href: "/", icon: Home },
+    { label: "Spese", href: "/expenses", icon: Wallet },
+    { label: "Investi", href: "/investments", icon: TrendingUp },
+    { label: "Community", href: "/community", icon: Users },
+    { label: "Profilo", href: "/settings", icon: Settings },
+  ];
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === "SIGNED_OUT") {
+          navigate("/auth");
+          toast.info("You have been logged out");
+        }
+      }
+    );
 
-  if (!mounted) return null;
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 backdrop-blur-xl bg-background/80">
-        <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary">
-              <span className="text-lg font-bold text-white">€</span>
-            </div>
-            <h1 className="text-xl font-bold bg-clip-text text-transparent gradient-primary">
-              TraceCash
-            </h1>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/')}
-              className="rounded-full relative z-50 hidden md:flex"
-              title="Home"
-            >
-              <Home className="h-5 w-5" />
-            </Button>
-            <NotificationBell />
-            <SettingsPanel />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="rounded-full relative z-50"
-            >
-              {theme === "dark" ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
-              )}
-            </Button>
-            
-            {onLogout && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onLogout}
-                className="rounded-full relative z-50"
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
-            )}
-          </div>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        {/* Desktop Sidebar */}
+        <div className="hidden md:block">
+          <AppSidebar />
         </div>
-      </header>
-      
-      <main className="container px-4 py-6 pb-24 md:pb-6 animate-fade-in">
-        {children}
-      </main>
 
-      {/* Mobile Bottom Navigation */}
-      <BottomNav />
+        <main className="flex-1 overflow-auto pb-20 md:pb-0">
+          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b px-4 py-3">
+            <div className="flex items-center justify-between max-w-7xl mx-auto">
+              <GlobalSearch />
+              <div className="flex items-center gap-2">
+                <ThemeSwitcher />
+                <NotificationBell />
+              </div>
+            </div>
+          </div>
+          <div className="p-4 md:p-6 max-w-7xl mx-auto">
+            <PWAInstallPrompt />
+            <PWAOfflineIndicator />
+            <PWAUpdateNotification />
+            <Outlet />
+          </div>
+        </main>
 
-      {/* Floating Action Button */}
-      <FAB />
-    </div>
+        {/* Mobile Bottom Nav with FAB */}
+        <BottomNav
+          items={navItems}
+          fabAction={() => navigate("/expenses")}
+          fabIcon={Plus}
+        />
+      </div>
+    </SidebarProvider>
   );
 };

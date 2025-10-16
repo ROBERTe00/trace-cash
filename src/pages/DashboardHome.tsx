@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { KPICard } from "@/components/KPICard";
 import { IncomeTracker } from "@/components/IncomeTracker";
 import { FinancialGoals } from "@/components/FinancialGoals";
-import { InteractiveExpenseChart } from "@/components/InteractiveExpenseChart";
+import { ExpenseDonutChart } from "@/components/ExpenseDonutChart";
 import { InteractiveInvestmentChart } from "@/components/InteractiveInvestmentChart";
 import { EnhancedAIInsights } from "@/components/EnhancedAIInsights";
 import { FinancialProfile } from "@/components/FinancialProfile";
@@ -260,7 +260,7 @@ export default function DashboardHome() {
 
         {/* Interactive Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <InteractiveExpenseChart expenses={expenses as any} />
+          <ExpenseDonutChart expenses={expenses as any} />
           <InteractiveInvestmentChart investments={investments as any} />
         </div>
 
