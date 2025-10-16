@@ -22,6 +22,7 @@ export default function Investments() {
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<string>("all");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("portfolio");
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -214,18 +215,13 @@ export default function Investments() {
             : undefined
         }
         onAddInvestment={() => setSheetOpen(true)}
-        onImport={() => {
-          const importTab = document.querySelector('[value="import"]');
-          if (importTab) {
-            (importTab as HTMLElement).click();
-          }
-        }}
+        onImport={() => setActiveTab("import")}
         onExportPDF={handleExportPDF}
         onExportCSV={handleExportCSV}
       />
 
       {/* 3 Tabs: Portfolio, Performance, Import */}
-      <Tabs defaultValue="portfolio" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl">
           <TabsTrigger 
             value="portfolio" 
