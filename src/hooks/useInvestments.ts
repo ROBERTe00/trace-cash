@@ -24,7 +24,12 @@ export const useInvestments = () => {
     queryKey: ['investments'],
     queryFn: async (): Promise<Investment[]> => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      if (!user) {
+        console.log('[useInvestments] No authenticated user');
+        return [];
+      }
+
+      console.log('[useInvestments] Fetching investments for user:', user.id);
 
       const { data, error } = await supabase
         .from('investments')
@@ -32,7 +37,12 @@ export const useInvestments = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[useInvestments] Error fetching investments:', error);
+        throw error;
+      }
+      
+      console.log(`[useInvestments] Fetched ${data?.length || 0} investments for user ${user.id}`);
       return (data || []) as Investment[];
     },
   });

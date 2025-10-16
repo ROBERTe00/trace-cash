@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v2.2.0';
+const CACHE_VERSION = 'v2.3.0';
 const CACHE_NAME = `trace-cash-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `trace-cash-runtime-${CACHE_VERSION}`;
 
@@ -16,15 +16,24 @@ self.addEventListener('install', (event) => {
   console.log('[SW] Installing service worker version:', CACHE_VERSION);
   
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('[SW] Precaching essential files');
-        return cache.addAll(PRECACHE_URLS);
-      })
-      .then(() => {
-        console.log('[SW] Calling skipWaiting to activate immediately');
-        return self.skipWaiting();
-      })
+    (async () => {
+      // Delete ALL old caches immediately on install
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames.map(cacheName => {
+          console.log('[SW] Hard invalidation - deleting cache:', cacheName);
+          return caches.delete(cacheName);
+        })
+      );
+      
+      // Then precache fresh files
+      const cache = await caches.open(CACHE_NAME);
+      console.log('[SW] Precaching essential files');
+      await cache.addAll(PRECACHE_URLS);
+      
+      console.log('[SW] Calling skipWaiting to activate immediately');
+      return self.skipWaiting();
+    })()
   );
 });
 
@@ -49,12 +58,17 @@ self.addEventListener('activate', (event) => {
         return self.clients.claim();
       })
       .then(() => {
-        // Notify all clients that a new version is active
+        console.log('[SW] Claiming clients to take control immediately');
+        return self.clients.claim();
+      })
+      .then(() => {
+        // Notify all clients that a new version is active and force reload
         return self.clients.matchAll().then(clients => {
           clients.forEach(client => {
             client.postMessage({
               type: 'SW_ACTIVATED',
-              version: CACHE_VERSION
+              version: CACHE_VERSION,
+              forceReload: true  // Signal clients to hard reload
             });
           });
         });

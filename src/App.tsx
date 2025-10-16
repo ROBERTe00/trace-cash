@@ -30,8 +30,8 @@ import News from "./pages/News";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
-import { ImprovedOnboardingWizard } from "./components/ImprovedOnboardingWizard";
 import { SecurityAlerts } from "./components/SecurityAlerts";
+import { OnboardingWrapper } from "./components/OnboardingWrapper";
 
 const queryClient = new QueryClient();
 
@@ -40,18 +40,41 @@ function ProtectedRoutes() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let previousUserId: string | undefined;
+
     // Check auth on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      previousUserId = session?.user?.id;
       setLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        const newUserId = session?.user?.id;
+        
+        // If user changed, clear everything
+        if (previousUserId && newUserId && previousUserId !== newUserId) {
+          console.log('[Auth] User changed, clearing storage and cache');
+          localStorage.clear();
+          sessionStorage.clear();
+          queryClient.clear();
+        }
+        
+        // Update session
         setSession(session);
+        previousUserId = newUserId;
+        
+        // Handle auth events
         if (event === 'SIGNED_OUT') {
-          window.location.href = '/auth';
+          console.log('[Auth] SIGNED_OUT event, clearing query cache');
+          queryClient.clear();
+          queryClient.invalidateQueries();
+          // Don't redirect here - let AccountMenu handle it
+        } else if (event === 'SIGNED_IN') {
+          console.log('[Auth] SIGNED_IN event, clearing stale cache');
+          queryClient.invalidateQueries();
         }
       }
     );
@@ -69,36 +92,38 @@ function ProtectedRoutes() {
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <AppSidebar />
-        <div className="flex-1 flex flex-col">
-          <header className="h-14 flex items-center justify-between border-b px-4 sticky top-0 bg-background/95 backdrop-blur z-10 gap-4">
-            <div className="flex items-center gap-4 flex-1">
-              <SidebarTrigger />
-              <GlobalSearch />
-            </div>
-            <div className="flex items-center gap-2">
-              <NotificationBell />
-              <AccountMenu />
-            </div>
-          </header>
-          <main className="flex-1 p-6 overflow-auto">
-            <Routes>
-              <Route path="/" element={<DashboardHome />} />
-              <Route path="/transactions" element={<Transactions />} />
-              <Route path="/investments" element={<Investments />} />
-              <Route path="/insights" element={<Insights />} />
-              <Route path="/goals" element={<FuturePlanner />} />
-              <Route path="/news" element={<News />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
+    <OnboardingWrapper>
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          <AppSidebar />
+          <div className="flex-1 flex flex-col">
+            <header className="h-14 flex items-center justify-between border-b px-4 sticky top-0 bg-background/95 backdrop-blur z-10 gap-4">
+              <div className="flex items-center gap-4 flex-1">
+                <SidebarTrigger />
+                <GlobalSearch />
+              </div>
+              <div className="flex items-center gap-2">
+                <NotificationBell />
+                <AccountMenu />
+              </div>
+            </header>
+            <main className="flex-1 p-6 overflow-auto">
+              <Routes>
+                <Route path="/" element={<DashboardHome />} />
+                <Route path="/transactions" element={<Transactions />} />
+                <Route path="/investments" element={<Investments />} />
+                <Route path="/insights" element={<Insights />} />
+                <Route path="/goals" element={<FuturePlanner />} />
+                <Route path="/news" element={<News />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
+          </div>
         </div>
-      </div>
-      <SecurityAlerts />
-    </SidebarProvider>
+        <SecurityAlerts />
+      </SidebarProvider>
+    </OnboardingWrapper>
   );
 }
 

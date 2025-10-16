@@ -188,8 +188,11 @@ export default function Auth() {
         }
 
         console.log("🔐 [Auth] Signup successful:", data.user?.email);
-        localStorage.setItem("show-onboarding", "true");
-        toast.success("Account created successfully!");
+        
+        // Don't use localStorage - the database trigger will set onboarding_completed = false
+        toast.success("Account created successfully! Welcome!");
+        
+        // Navigate to home - the OnboardingWrapper will check database and show onboarding
         navigate("/");
       }
     } catch (error) {

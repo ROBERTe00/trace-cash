@@ -24,7 +24,12 @@ export const useExpenses = () => {
     queryKey: ['expenses'],
     queryFn: async (): Promise<Expense[]> => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
+      if (!user) {
+        console.log('[useExpenses] No authenticated user');
+        return [];
+      }
+
+      console.log('[useExpenses] Fetching expenses for user:', user.id);
 
       const { data, error } = await supabase
         .from('expenses')
@@ -32,7 +37,12 @@ export const useExpenses = () => {
         .eq('user_id', user.id)
         .order('date', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[useExpenses] Error fetching expenses:', error);
+        throw error;
+      }
+      
+      console.log(`[useExpenses] Fetched ${data?.length || 0} expenses for user ${user.id}`);
       return (data || []) as Expense[];
     },
   });
@@ -41,6 +51,8 @@ export const useExpenses = () => {
     mutationFn: async (expense: Omit<Expense, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+
+      console.log('[useExpenses] Creating expense for user:', user.id);
 
       const { data, error } = await supabase
         .from('expenses')
@@ -51,7 +63,12 @@ export const useExpenses = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('[useExpenses] Error creating expense:', error);
+        throw error;
+      }
+      
+      console.log('[useExpenses] Expense created successfully for user:', user.id);
       return data;
     },
     onSuccess: () => {

@@ -16,6 +16,7 @@ import { clearUser } from "@/lib/storage";
 import { AuditLogger } from "@/lib/auditLogger";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "@/contexts/AppContext";
+import { clearCacheAndReload } from "@/lib/pwaUtils";
 
 export const AccountMenu = () => {
   const navigate = useNavigate();
@@ -34,27 +35,39 @@ export const AccountMenu = () => {
 
   const handleLogout = async () => {
     try {
+      console.log('[Logout] Starting logout process...');
+      
       await AuditLogger.log({
         action: 'user_logout',
         resourceType: 'auth',
       });
       
-      // Wait for signOut to complete before clearing and redirecting
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error("Logout error:", error);
+        console.error('[Logout] Supabase signOut error:', error);
         toast.error("Errore durante il logout");
         return;
       }
       
-      clearUser();
+      console.log('[Logout] Supabase signOut successful');
       
-      // Redirect to auth page
-      window.location.href = '/auth';
+      // Clear all user data
+      clearUser();
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      console.log('[Logout] Storage cleared, calling clearCacheAndReload...');
+      
+      // Clear cache, unregister SW, and hard reload
+      await clearCacheAndReload();
+      
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error('[Logout] Unexpected error:', error);
       toast.error("Errore durante il logout");
+      // Fallback: force redirect even if something fails
+      window.location.href = '/auth';
     }
   };
 

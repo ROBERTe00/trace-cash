@@ -21,6 +21,7 @@ import ExpenseBreakdownCard from "@/components/ExpenseBreakdownCard";
 import CashflowCard from "@/components/CashflowCard";
 import SavingPlansCard from "@/components/SavingPlansCard";
 import { FinancialGoals } from "@/components/FinancialGoals";
+import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { useApp } from "@/contexts/AppContext";
 
 export default function DashboardHome() {
@@ -28,6 +29,7 @@ export default function DashboardHome() {
   const [goals, setGoals] = useState<FinancialGoal[]>([]);
   const [showSuggestionDialog, setShowSuggestionDialog] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   
   const { expenses } = useExpenses();
   const { investments, totalValue } = useInvestments();
@@ -43,6 +45,22 @@ export default function DashboardHome() {
         await migrateLocalStorageToDatabase(user.id);
       }
       setGoals(getGoals());
+      
+      // Check if user is new (show welcome banner for first 7 days)
+      if (user) {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('created_at')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (profile?.created_at) {
+          const daysSinceCreation = Math.floor(
+            (Date.now() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24)
+          );
+          setShowWelcome(daysSinceCreation < 7);
+        }
+      }
     };
     initData();
   }, []);
@@ -153,6 +171,8 @@ export default function DashboardHome() {
   return (
     <TooltipProvider>
       <div className="space-y-6 p-4 md:p-8 max-w-[1600px] mx-auto w-full">
+        {showWelcome && <WelcomeBanner />}
+        
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between min-w-0">
           <div className="min-w-0 flex-1">
             <h1 className="text-section font-extrabold tracking-tight mb-2 break-words">
