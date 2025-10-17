@@ -73,10 +73,11 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
     setProgress(0);
     setIsProcessing(true);
     
-    // Persist state to localStorage
+    // Persist state to localStorage with timestamp
     localStorage.setItem("upload-processing", "true");
     localStorage.setItem("upload-progress", "0");
     localStorage.setItem("upload-filename", file.name);
+    localStorage.setItem("upload-processing-start", Date.now().toString());
 
     // Show persistent toast with progress
     const id = toast(
@@ -130,16 +131,25 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
 
       console.log("📤 [Upload] Invoking process-bank-statement edge function...");
       
-      // Process with AI
-    const { data: processData, error: processError } = await supabase.functions.invoke(
-      'process-bank-statement-v2',
-      {
-        body: {
-          fileUrl: signedData.signedUrl,
-          fileName: file.name,
-        },
-      }
-    );
+      // Process with AI with timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Processing timeout - please try again or use a smaller date range')), 90000)
+      );
+      
+      const functionPromise = supabase.functions.invoke(
+        'process-bank-statement-v2',
+        {
+          body: {
+            fileUrl: signedData.signedUrl,
+            fileName: file.name,
+          },
+        }
+      );
+
+      const { data: processData, error: processError } = await Promise.race([
+        functionPromise,
+        timeoutPromise
+      ]) as any;
 
       console.log("📤 [Upload] Edge function result:", { 
         success: !processError, 
@@ -498,12 +508,30 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
     setIsProcessing(false);
     setProgress(0);
     setFileName(null);
+    if (toastId) {
+      toast.dismiss(toastId);
+    }
     localStorage.removeItem("upload-processing");
     localStorage.removeItem("upload-progress");
     localStorage.removeItem("upload-filename");
     localStorage.removeItem("upload-transactions");
     localStorage.removeItem("upload-bank-name");
+    localStorage.removeItem("upload-processing-start");
   };
+
+  // Clear stuck upload state on mount if processing for too long
+  useEffect(() => {
+    const processingStart = localStorage.getItem("upload-processing-start");
+    if (isProcessing && processingStart) {
+      const elapsed = Date.now() - parseInt(processingStart);
+      // If processing for more than 2 minutes, clear the stuck state
+      if (elapsed > 120000) {
+        console.log("📤 [Upload] Clearing stuck processing state");
+        clearTransactions();
+        toast.error("Previous upload timed out. Please try again.");
+      }
+    }
+  }, []);
 
   // Clear upload state when user logs out
   useEffect(() => {
