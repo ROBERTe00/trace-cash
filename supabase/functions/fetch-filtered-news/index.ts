@@ -13,9 +13,9 @@ serve(async (req) => {
 
   try {
     const NEWS_API_KEY = Deno.env.get("NEWS_API_KEY");
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
-    if (!NEWS_API_KEY || !OPENAI_API_KEY) {
+    if (!NEWS_API_KEY || !LOVABLE_API_KEY) {
       throw new Error("Missing required API keys");
     }
 
@@ -44,18 +44,15 @@ serve(async (req) => {
       try {
         const prompt = `Rate the financial market impact of this news on a scale of 0-10. Only respond with a number.\n\nTitle: ${article.title}\nDescription: ${article.description}`;
         
-        // Deterministic temperature for risk assessment
-        const temperature = 0.15;
-        
         const startTime = Date.now();
-        const scoreRes = await fetch("https://api.openai.com/v1/chat/completions", {
+        const scoreRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${OPENAI_API_KEY}`,
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "gpt-4o",
+            model: "google/gemini-2.5-flash",
             messages: [
               {
                 role: "system",
@@ -66,8 +63,6 @@ serve(async (req) => {
                 content: `Title: "${article.title}". Description: "${article.description || 'No description'}"`
               }
             ],
-            temperature,
-            max_tokens: 10,
           }),
         });
 
@@ -103,8 +98,7 @@ serve(async (req) => {
             await supabase.from('ai_audit_logs').insert({
               user_id: user.id,
               feature: 'news_impact_scoring',
-              ai_model: 'gpt-4o',
-              temperature,
+              ai_model: 'google/gemini-2.5-flash',
               input_prompt: prompt,
               ai_raw_response: scoreText,
               ui_summary: `Impact score: ${score}`,

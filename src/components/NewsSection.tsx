@@ -16,7 +16,7 @@ interface NewsArticle {
 }
 
 export const NewsSection = () => {
-  const { data: news, isLoading } = useQuery({
+  const { data: news, isLoading, error } = useQuery({
     queryKey: ["filtered-news"],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("fetch-filtered-news");
@@ -25,6 +25,7 @@ export const NewsSection = () => {
     },
     refetchInterval: 1000 * 60 * 60, // Refresh hourly
     staleTime: 1000 * 60 * 30, // Consider stale after 30 minutes
+    retry: 2,
   });
 
   if (isLoading) {
@@ -44,12 +45,31 @@ export const NewsSection = () => {
     );
   }
 
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <h3 className="font-semibold flex items-center gap-2">
+            <Newspaper className="w-5 h-5 text-primary" />
+            📰 High-Impact Financial News
+          </h3>
+          <p className="text-sm text-muted-foreground">AI-filtered market-moving events</p>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-destructive text-center py-8">
+            Failed to load news. Please try again later.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!news || news.length === 0) {
     return (
       <Card>
         <CardHeader>
           <h3 className="font-semibold flex items-center gap-2">
-            <Newspaper className="w-5 h-5" />
+            <Newspaper className="w-5 h-5 text-primary" />
             📰 High-Impact Financial News
           </h3>
           <p className="text-sm text-muted-foreground">AI-filtered market-moving events</p>
