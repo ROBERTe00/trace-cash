@@ -7,12 +7,14 @@ import { CategoryManager } from "@/components/CategoryManager";
 import { NotificationSettings } from "@/components/NotificationSettings";
 import { LanguageCurrencySettings } from "@/components/LanguageCurrencySettings";
 import { PushNotificationToggle } from "@/components/PushNotificationToggle";
+import { GamificationPanel } from "@/components/GamificationPanel";
+import { AchievementsList } from "@/components/AchievementsList";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { clearUser, exportToCSV } from "@/lib/storage";
 import { supabase } from "@/integrations/supabase/client";
-import { Download, LogOut, Palette, Shield, Database, WifiOff, Settings as SettingsIcon, Trash2, RefreshCw } from "lucide-react";
+import { Download, LogOut, Palette, Shield, Database, WifiOff, Settings as SettingsIcon, Trash2, RefreshCw, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { AuditLogger } from "@/lib/auditLogger";
 import { useApp } from "@/contexts/AppContext";
@@ -80,7 +82,7 @@ export default function Settings() {
 
       {/* Tabs Layout */}
       <Tabs defaultValue="appearance" className="space-y-6">
-        <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl">
+        <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl overflow-x-auto">
           <TabsTrigger 
             value="appearance" 
             className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5"
@@ -88,6 +90,16 @@ export default function Settings() {
             <div className="flex items-center gap-2">
               <Palette className="icon-button" />
               {t("settings.appearance")}
+            </div>
+          </TabsTrigger>
+          
+          <TabsTrigger 
+            value="gamification" 
+            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5"
+          >
+            <div className="flex items-center gap-2">
+              <Trophy className="icon-button" />
+              Progress
             </div>
           </TabsTrigger>
           
@@ -156,6 +168,44 @@ export default function Settings() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Gamification Tab */}
+        <TabsContent value="gamification" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="md:col-span-1">
+              <GamificationPanel />
+            </div>
+            <div className="md:col-span-1">
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4">🎯 How to Earn Points</h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-start gap-2">
+                    <span className="text-primary font-bold">+10</span>
+                    <p className="text-muted-foreground">Add an expense or income</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-primary font-bold">+20</span>
+                    <p className="text-muted-foreground">Add an investment</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-primary font-bold">+15</span>
+                    <p className="text-muted-foreground">Complete onboarding</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-primary font-bold">+5</span>
+                    <p className="text-muted-foreground">Daily login streak</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-primary font-bold">Variable</span>
+                    <p className="text-muted-foreground">Unlock achievements</p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
+          
+          <AchievementsList />
         </TabsContent>
 
         {/* Security Tab */}

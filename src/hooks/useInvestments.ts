@@ -1,5 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useGamificationTriggers } from "./useGamificationTriggers";
 
 export interface Investment {
   id: string;
@@ -20,6 +22,8 @@ export interface Investment {
 }
 
 export const useInvestments = () => {
+  const queryClient = useQueryClient();
+  const gamification = useGamificationTriggers();
   const { data: investments, isLoading } = useQuery({
     queryKey: ['investments'],
     queryFn: async (): Promise<Investment[]> => {
@@ -63,6 +67,79 @@ export const useInvestments = () => {
     return amount * Math.pow(1 + monthlyRate, months);
   };
 
+  const createInvestment = useMutation({
+    mutationFn: async (investment: Omit<Investment, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      console.log('[useInvestments] Creating investment for user:', user.id);
+
+      const { data, error } = await supabase
+        .from('investments')
+        .insert({
+          user_id: user.id,
+          ...investment,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[useInvestments] Error creating investment:', error);
+        throw error;
+      }
+      
+      console.log('[useInvestments] Investment created successfully for user:', user.id);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['investments'] });
+      gamification.triggerInvestmentAdded();
+      toast.success('Investment added successfully!');
+    },
+    onError: () => {
+      toast.error('Failed to add investment');
+    },
+  });
+
+  const updateInvestment = useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Investment> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('investments')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['investments'] });
+      toast.success('Investment updated successfully!');
+    },
+    onError: () => {
+      toast.error('Failed to update investment');
+    },
+  });
+
+  const deleteInvestment = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('investments')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['investments'] });
+      toast.success('Investment deleted successfully!');
+    },
+    onError: () => {
+      toast.error('Failed to delete investment');
+    },
+  });
+
   return {
     investments: investments || [],
     isLoading,
@@ -71,5 +148,8 @@ export const useInvestments = () => {
     totalGain,
     gainPercentage,
     predictGrowth,
+    createInvestment: createInvestment.mutate,
+    updateInvestment: updateInvestment.mutate,
+    deleteInvestment: deleteInvestment.mutate,
   };
 };

@@ -13,10 +13,14 @@ import { PWAOfflineIndicator } from "@/components/PWAOfflineIndicator";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { Home, Wallet, TrendingUp, Users, Settings, Plus } from "lucide-react";
 import WaveBackground from "@/components/WaveBackground";
+import { useGamificationTriggers } from "@/hooks/useGamificationTriggers";
 
 export const Layout = () => {
   const navigate = useNavigate();
   const [showAddDialog, setShowAddDialog] = useState(false);
+  
+  // Initialize gamification triggers
+  useGamificationTriggers();
 
   const navItems = [
     { label: "Home", href: "/", icon: Home },
