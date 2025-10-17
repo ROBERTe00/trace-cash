@@ -128,20 +128,37 @@ function ProtectedRoutes() {
 }
 
 function App() {
-  // Initialize PWA features
+  // Initialize PWA features (ONE TIME ONLY)
   useEffect(() => {
     console.log('[PWA] Initializing PWA features...');
+    
+    let isReloading = false;
     
     // Register service worker
     registerServiceWorker().then(registration => {
       if (registration) {
         console.log('[PWA] Service Worker registered successfully');
+        
+        // Listen for SW activation messages
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          if (event.data.type === 'SW_ACTIVATED' && !isReloading) {
+            console.log('[App] New service worker activated, reloading...');
+            isReloading = true;
+            
+            // Reload ONLY if not on auth page, with delay
+            if (!window.location.pathname.includes('/auth')) {
+              setTimeout(() => {
+                window.location.reload();
+              }, 500);
+            }
+          }
+        });
       }
     });
 
     // Capture install prompt
     captureInstallPrompt();
-  }, []);
+  }, []); // Empty deps = run ONCE
 
   return (
     <ErrorBoundary>

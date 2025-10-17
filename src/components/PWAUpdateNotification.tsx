@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { RefreshCw, X, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { isIOS, isAppInstalled } from "@/lib/pwaUtils";
+import { isIOS, isAppInstalled, getUpdateInProgress, setUpdateInProgress } from "@/lib/pwaUtils";
 
 export const PWAUpdateNotification = () => {
   const [updateAvailable, setUpdateAvailable] = useState(false);
@@ -21,17 +21,19 @@ export const PWAUpdateNotification = () => {
       setRegistration(reg);
       setUpdateAvailable(true);
 
-      // Auto-update on Android/desktop after a countdown
+      // Auto-update on Android/desktop after countdown (less aggressive)
       if (!isIOS() && isAppInstalled()) {
-        console.log('[PWA Update] Auto-updating on Android/Desktop in 3 seconds...');
+        console.log('[PWA Update] Auto-updating on Android/Desktop in 5 seconds...');
         toast({
           title: "New version available!",
-          description: "Updating automatically in 3 seconds...",
-          duration: 3000,
+          description: "Updating automatically in 5 seconds...",
+          duration: 5000,
         });
         setTimeout(() => {
-          handleUpdateAction();
-        }, 3000);
+          if (!document.hidden) { // Only if tab is visible
+            handleUpdateAction();
+          }
+        }, 5000);
       } else {
         toast({
           title: "🎉 New version available",
@@ -67,10 +69,10 @@ export const PWAUpdateNotification = () => {
         }
       });
 
-      // Listen for controller change (update activated)
+      // Listen for controller change (NO auto-reload, handled by App.tsx)
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        console.log('[PWA Update] Controller changed, reloading page');
-        window.location.reload();
+        console.log('[PWA Update] Controller changed - update completed');
+        // Reload is handled by App.tsx with debouncing
       });
     });
 
@@ -91,26 +93,25 @@ export const PWAUpdateNotification = () => {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Check for updates every 10 seconds when app is active (aggressive for development)
-    const updateInterval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        console.log('[PWA Update] Periodic check (10s interval)');
-        navigator.serviceWorker.ready.then(reg => reg.update());
-      }
-    }, 10000);
+    // Periodic checks handled by pwaUtils.ts (no duplicate needed)
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      clearInterval(updateInterval);
     };
   }, [toast]);
 
   const handleUpdateAction = async () => {
+    if (getUpdateInProgress()) {
+      console.log('[PWA Update] Update already in progress, skipping');
+      return;
+    }
+    
     if (!registration) {
       console.log('[PWA Update] No registration available');
       return;
     }
 
+    setUpdateInProgress(true);
     setIsUpdating(true);
     console.log('[PWA Update] Applying update...');
 
@@ -138,6 +139,7 @@ export const PWAUpdateNotification = () => {
     } catch (error) {
       console.error('[PWA Update] Error during update:', error);
       setIsUpdating(false);
+      setUpdateInProgress(false);
       
       toast({
         title: "Update failed",

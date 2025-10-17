@@ -9,6 +9,13 @@ export interface BeforeInstallPromptEvent extends Event {
 }
 
 let deferredPrompt: BeforeInstallPromptEvent | null = null;
+let isUpdateInProgress = false;
+
+export const setUpdateInProgress = (value: boolean) => {
+  isUpdateInProgress = value;
+};
+
+export const getUpdateInProgress = () => isUpdateInProgress;
 
 /**
  * Register service worker with automatic update checking
@@ -34,13 +41,13 @@ export const registerServiceWorker = async (): Promise<ServiceWorkerRegistration
         }
       });
       
-      // Check for updates periodically (every 10 seconds when app is active - aggressive for development)
+      // Check for updates periodically (every 60 seconds - less aggressive)
       setInterval(() => {
         if (document.visibilityState === 'visible') {
-          console.log('[PWA] Periodic update check');
+          console.log('[PWA] Periodic update check (1min interval)');
           registration.update();
         }
-      }, 10000);
+      }, 60000);
       
       // Listen for new service worker
       registration.addEventListener('updatefound', () => {

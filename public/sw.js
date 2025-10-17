@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v2.5.0';
+const CACHE_VERSION = 'v2.6.0'; // FIX: No more reload loops
 const CACHE_NAME = `trace-cash-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `trace-cash-runtime-${CACHE_VERSION}`;
 
@@ -58,17 +58,12 @@ self.addEventListener('activate', (event) => {
         return self.clients.claim();
       })
       .then(() => {
-        console.log('[SW] Claiming clients to take control immediately');
-        return self.clients.claim();
-      })
-      .then(() => {
-        // Notify all clients that a new version is active and force reload
+        // Notify all clients that new version is active (NO force reload)
         return self.clients.matchAll().then(clients => {
           clients.forEach(client => {
             client.postMessage({
               type: 'SW_ACTIVATED',
-              version: CACHE_VERSION,
-              forceReload: true  // Signal clients to hard reload
+              version: CACHE_VERSION
             });
           });
         });
