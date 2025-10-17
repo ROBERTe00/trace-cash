@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Expense } from "@/lib/storage";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import Tesseract from "tesseract.js";
 
 interface ExtractedTransaction {
   date: string;
@@ -10,6 +11,7 @@ interface ExtractedTransaction {
   amount: number;
   category: string;
   payee: string;
+  confidence?: number;
 }
 
 interface UploadContextType {
@@ -145,16 +147,28 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
         transactionCount: processData?.transactions?.length || 0 
       });
 
-      if (processError) throw processError;
+      if (processError) {
+        console.log("📤 [Upload] PDF extraction failed, attempting OCR fallback...");
+        const ocrSuccess = await handleOCRFallback(file, id);
+        if (!ocrSuccess) {
+          throw processError;
+        }
+        return;
+      }
 
       const transactions = processData.transactions || [];
       const detectedBank = processData.bank || "Unknown Bank";
       
       if (transactions.length === 0) {
-        toast.dismiss(id);
-        toast.error("No transactions found in the statement");
-        setIsProcessing(false);
-        setFileName(null);
+        console.log("📤 [Upload] No transactions from AI, attempting OCR fallback...");
+        const ocrSuccess = await handleOCRFallback(file, id);
+        if (!ocrSuccess) {
+          toast.dismiss(id);
+          toast.error("No transactions found in the statement");
+          setIsProcessing(false);
+          setFileName(null);
+          return;
+        }
         return;
       }
 
@@ -215,6 +229,116 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
       localStorage.removeItem("upload-filename");
       localStorage.removeItem("upload-transactions");
     }
+  };
+
+  const handleOCRFallback = async (file: File, currentToastId: string | number): Promise<boolean> => {
+    console.log('[Upload] Starting OCR fallback extraction...');
+    updateToastProgress(currentToastId, 65, 'Trying OCR extraction...');
+    
+    try {
+      const { data: { text } } = await Tesseract.recognize(file, 'eng', {
+        logger: (m) => {
+          if (m.status === 'recognizing text') {
+            const ocrProgress = 65 + (m.progress * 20);
+            updateToastProgress(currentToastId, ocrProgress, `OCR: ${(m.progress * 100).toFixed(0)}%`);
+          }
+        }
+      });
+      
+      console.log('[Upload] OCR text extracted, length:', text.length);
+      
+      // Parse text with simple regex for transactions
+      const transactions = parseTextToTransactions(text);
+      
+      if (transactions.length > 0) {
+        console.log('[Upload] OCR extracted', transactions.length, 'transactions');
+        setProgress(100);
+        localStorage.setItem("upload-progress", "100");
+        setExtractedTransactions(transactions);
+        setBankName("OCR Extracted");
+        localStorage.setItem("upload-transactions", JSON.stringify(transactions));
+        localStorage.setItem("upload-bank-name", "OCR Extracted");
+        
+        toast.dismiss(currentToastId);
+        toast(
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-green-500" />
+            <div>
+              <p className="font-medium">OCR extraction complete!</p>
+              <p className="text-xs text-muted-foreground">
+                Extracted {transactions.length} transactions (review carefully)
+              </p>
+            </div>
+          </div>,
+          {
+            duration: 5000,
+            position: "bottom-right",
+          }
+        );
+        
+        setIsProcessing(false);
+        setFileName(null);
+        return true;
+      }
+    } catch (ocrError) {
+      console.error('[Upload] OCR also failed:', ocrError);
+    }
+    return false;
+  };
+
+  const parseTextToTransactions = (text: string): ExtractedTransaction[] => {
+    const transactions: ExtractedTransaction[] = [];
+    const lines = text.split('\n');
+    
+    // Simple pattern matching for common transaction formats
+    const datePattern = /(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/;
+    const amountPattern = /[\€\$\£]?\s*(\d{1,3}(?:[,\.]\d{3})*(?:[,\.]\d{2})?)/;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      
+      const dateMatch = line.match(datePattern);
+      const amountMatch = line.match(amountPattern);
+      
+      if (dateMatch && amountMatch) {
+        const rawDate = dateMatch[1];
+        const rawAmount = amountMatch[1].replace(/[,\.]/g, '');
+        
+        // Parse date to YYYY-MM-DD format
+        let date = '';
+        try {
+          const parts = rawDate.split(/[\/\-\.]/);
+          if (parts.length === 3) {
+            const day = parts[0].padStart(2, '0');
+            const month = parts[1].padStart(2, '0');
+            const year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+            date = `${year}-${month}-${day}`;
+          }
+        } catch {
+          date = new Date().toISOString().split('T')[0];
+        }
+        
+        // Extract description (text between date and amount)
+        const description = line
+          .replace(datePattern, '')
+          .replace(amountPattern, '')
+          .trim()
+          .substring(0, 100) || 'Transaction';
+        
+        transactions.push({
+          date,
+          description,
+          amount: -parseFloat(rawAmount) / 100, // Assume expenses, convert cents
+          category: "Other",
+          payee: description.split(' ')[0] || 'Unknown',
+          confidence: 0.5,
+        });
+      }
+    }
+    
+    console.log('[Upload] Parsed', transactions.length, 'transactions from OCR text');
+    return transactions;
   };
 
   const updateToastProgress = (id: string | number, progress: number, message: string) => {

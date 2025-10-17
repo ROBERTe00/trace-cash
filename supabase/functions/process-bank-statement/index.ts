@@ -68,8 +68,8 @@ serve(async (req) => {
 
     console.log("Converted to base64, length:", base64.length);
 
-    // Call OpenAI API with timeout
-    console.log("Calling OpenAI GPT-4o API...");
+    // Call OpenAI API with GPT-4.1 (upgraded from GPT-4o)
+    console.log("Calling OpenAI GPT-4.1 Vision API...");
     const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -77,30 +77,20 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "gpt-4.1-2025-04-14",
+        max_completion_tokens: 4000,
         messages: [
           {
             role: "system",
-            content: `You are a financial data extraction assistant. Extract ALL transactions from the bank statement PDF.
-Return ONLY a JSON array with this EXACT structure, no markdown, no code blocks, no additional text:
-[
-  {
-    "date": "YYYY-MM-DD",
-    "description": "Transaction description",
-    "amount": number (positive for income, negative for expenses),
-    "category": "one of: Shopping, Transport, Food, Bills, Entertainment, Healthcare, Other",
-    "payee": "Merchant or payee name"
-  }
-]
+            content: `Extract ALL transactions from this bank statement PDF.
+Return valid JSON array ONLY:
+[{"date":"YYYY-MM-DD","description":"text","amount":number,"category":"Shopping|Transport|Food|Bills|Entertainment|Healthcare|Other","payee":"name","confidence":0.0-1.0}]
 
-CRITICAL RULES:
-1. Return ONLY the JSON array, nothing else
-2. Extract ALL transactions, not just a sample
-3. Use negative numbers for expenses/debits
-4. Use positive numbers for income/credits
-5. Dates must be in YYYY-MM-DD format
-6. Categories must match the list exactly
-7. If unclear, use "Other" category`
+Rules:
+- Negative = expenses, Positive = income
+- Always include confidence score (0.5 = uncertain, 0.9 = certain)
+- If unclear, use confidence: 0.5
+- NO markdown, NO code blocks`
           },
           {
             role: "user",
