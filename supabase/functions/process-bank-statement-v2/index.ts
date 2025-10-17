@@ -37,10 +37,10 @@ serve(async (req) => {
     }
     
     const { fileUrl, fileName } = validation.data;
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
-    if (!OPENAI_API_KEY) {
-      throw new Error("OPENAI_API_KEY is not configured");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
     console.log("Starting bank statement processing:", fileName);
@@ -142,14 +142,14 @@ serve(async (req) => {
 
     // First AI call: Detect bank name
     console.log("Step 1: Detecting bank name...");
-    const bankDetectionResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+    const bankDetectionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "google/gemini-2.5-flash",
         messages: [
           {
             role: "system",
@@ -179,14 +179,14 @@ If you can't identify the bank, return "Unknown Bank".`
     // Enhanced extraction with merchant context
     const merchantHints = extractMerchantHints(extractedText);
     
-    const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "google/gemini-2.5-flash",
         messages: [
           {
             role: "system",
@@ -262,16 +262,16 @@ ${extractedText}`
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error("GPT-4o API error:", aiResponse.status, errorText);
+      console.error("Lovable AI error:", aiResponse.status, errorText);
       
       if (aiResponse.status === 429) {
-        throw new Error("⏱️ Too many requests to OpenAI. Please wait 1 minute and retry.");
+        throw new Error("⏱️ Too many requests. Please wait 1 minute and retry.");
       }
       if (aiResponse.status === 402) {
-        throw new Error("💳 OpenAI credits exhausted. Please add funds to your account.");
+        throw new Error("💳 AI credits exhausted. Please top up your workspace credits.");
       }
       if (aiResponse.status === 401) {
-        throw new Error("🔑 Invalid OpenAI API key. Contact support.");
+        throw new Error("🔑 Invalid AI API key. Contact support.");
       }
       
       throw new Error(`AI service error: ${aiResponse.status}`);
