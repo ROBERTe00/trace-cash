@@ -90,19 +90,28 @@ serve(async (req) => {
       throw new Error("Nessuna transazione valida trovata nel file");
     }
 
-    // AI Categorization with OpenAI
+    // AI Categorization with OpenAI (BATCH PROCESSING - 10x faster)
     const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
     
     if (!OPENAI_API_KEY) {
       throw new Error("OPENAI_API_KEY not configured");
     }
 
-    console.log(`Processing ${transactions.length} transactions with AI...`);
+    console.log(`Processing ${transactions.length} transactions with AI (batch mode)...`);
 
-    // Categorize in batches for efficiency
-    const categorizedTransactions = [];
-    
-    for (const txn of transactions) {
+    const BATCH_SIZE = 20;
+    const categorizedTransactions: Transaction[] = [];
+    const validCategories = ["Food", "Transport", "Entertainment", "Shopping", "Bills", "Healthcare", "Education", "Income", "Investment", "Other"];
+
+    // Process in batches for 10x speedup
+    for (let i = 0; i < transactions.length; i += BATCH_SIZE) {
+      const batch = transactions.slice(i, i + BATCH_SIZE);
+      console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil(transactions.length / BATCH_SIZE)}`);
+      
+      const batchPrompt = batch.map((txn, idx) => 
+        `${idx + 1}. "${txn.description}" - €${txn.amount}`
+      ).join('\n');
+      
       try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
@@ -111,42 +120,61 @@ serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "gpt-4o",
+            model: "gpt-4o-mini",
+            temperature: 0.15,
             messages: [
               {
                 role: "system",
-                content: "Sei un AI che categorizza transazioni finanziarie in italiano. Rispondi SOLO con UNA delle seguenti categorie esatte: Food, Transport, Entertainment, Shopping, Bills, Healthcare, Education, Income, Investment, Other. Non aggiungere spiegazioni."
+                content: `Categorizza queste transazioni italiane. Rispondi SOLO con un array JSON di categorie (una per transazione):
+["Food","Transport","Shopping","Bills","Entertainment","Healthcare","Education","Income","Investment","Other"]
+
+Regole:
+- DEVI ritornare esattamente ${batch.length} categorie
+- Usa SOLO i nomi di categoria esatti sopra
+- NO spiegazioni, SOLO l'array JSON`
               },
               {
                 role: "user",
-                content: `Categorizza questa transazione italiana:\nDescrizione: "${txn.description}"\nImporto: €${txn.amount}`
+                content: `Categorizza queste:\n${batchPrompt}`
               }
             ],
           }),
         });
-
-        if (!response.ok) {
-          console.error(`AI categorization failed for "${txn.description}"`);
-          txn.category = "Other";
-          txn.confidence = 0.5;
-        } else {
+        
+        if (response.ok) {
           const data = await response.json();
-          const category = data.choices?.[0]?.message?.content?.trim() || "Other";
+          const categoriesText = data.choices?.[0]?.message?.content || "[]";
+          const categories = JSON.parse(categoriesText.match(/\[.*\]/)?.[0] || "[]");
           
-          // Validate category
-          const validCategories = ["Food", "Transport", "Entertainment", "Shopping", "Bills", "Healthcare", "Education", "Income", "Investment", "Other"];
-          txn.category = validCategories.includes(category) ? category : "Other";
-          txn.confidence = 0.85;
+          batch.forEach((txn, idx) => {
+            txn.category = validCategories.includes(categories[idx]) ? categories[idx] : "Other";
+            txn.confidence = 0.85;
+            categorizedTransactions.push(txn);
+          });
+          
+          console.log(`Batch ${Math.floor(i / BATCH_SIZE) + 1} completed: ${batch.length} transactions categorized`);
+        } else {
+          console.error(`Batch ${Math.floor(i / BATCH_SIZE) + 1} failed with status ${response.status}`);
+          // Fallback to "Other" for this batch
+          batch.forEach(txn => {
+            txn.category = "Other";
+            txn.confidence = 0.5;
+            categorizedTransactions.push(txn);
+          });
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        console.error(`Error categorizing transaction: ${errorMessage}`);
-        txn.category = "Other";
-        txn.confidence = 0.5;
+        console.error(`Batch ${Math.floor(i / BATCH_SIZE) + 1} error: ${errorMessage}`);
+        // Fallback with low confidence
+        batch.forEach(txn => {
+          txn.category = "Other";
+          txn.confidence = 0.3;
+          categorizedTransactions.push(txn);
+        });
       }
-
-      categorizedTransactions.push(txn);
     }
+    
+    console.log(`AI categorization complete: ${categorizedTransactions.length} transactions processed`);
 
     // Store in database
     const supabase = createClient(

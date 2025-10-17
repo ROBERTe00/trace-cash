@@ -91,44 +91,64 @@ export const CSVExcelUpload = ({ onTransactionsParsed }: CSVExcelUploadProps) =>
         const fileContent = e.target?.result as string;
         const fileType = file.name.endsWith('.csv') ? 'csv' : 'excel';
 
-        // Call new smart AI function
-        const { data, error } = await supabase.functions.invoke('parse-smart-transactions', {
-          body: {
-            fileContent,
-            fileType,
-            userId: user.id,
-          },
-        });
+        // Simulate real-time progress with interval
+        let currentProgress = 10;
+        const progressInterval = setInterval(() => {
+          currentProgress = Math.min(currentProgress + 8, 90); // Cap at 90%
+          toast.loading(`Elaborazione: ${currentProgress}%`, {
+            id: toastId,
+            description: currentProgress < 40 ? 'Parsing file...' : currentProgress < 70 ? 'AI categorization in progress...' : 'Almost done...'
+          });
+        }, 800);
 
-        toast.dismiss(toastId);
+        try {
+          // Call new smart AI function with batch processing
+          const { data, error } = await supabase.functions.invoke('parse-smart-transactions', {
+            body: {
+              fileContent,
+              fileType,
+              userId: user.id,
+            },
+          });
 
-        if (error || !data?.success) {
-          console.error('Parse error:', error || data?.error);
-          toast.error(data?.error || "Errore durante l'elaborazione del file");
+          clearInterval(progressInterval);
+          toast.dismiss(toastId);
+
+          if (error || !data?.success) {
+            console.error('Parse error:', error || data?.error);
+            toast.error(data?.error || "Errore durante l'elaborazione del file");
+            setIsProcessing(false);
+            return;
+          }
+
+          if (!data.transactions || data.transactions.length === 0) {
+            toast.error('Nessuna transazione valida trovata nel file');
+            setIsProcessing(false);
+            return;
+          }
+
+          // Store transactions for feedback modal
+          setParsedTransactions(data.transactions);
+          
+          // Show success toast with stats
+          toast.success(data.message, {
+            description: `${data.stats.expenses} spese, ${data.stats.income} entrate`,
+            duration: 5000,
+          });
+
+          // Refresh expenses query
+          queryClient.invalidateQueries({ queryKey: ['expenses'] });
+
+          // Show feedback modal for corrections
+          setShowFeedbackModal(true);
           setIsProcessing(false);
-          return;
-        }
-
-        if (!data.transactions || data.transactions.length === 0) {
-          toast.error('Nessuna transazione valida trovata nel file');
+        } catch (err) {
+          clearInterval(progressInterval);
+          toast.dismiss(toastId);
+          console.error('Processing error:', err);
+          toast.error('Errore nell\'elaborazione del file');
           setIsProcessing(false);
-          return;
         }
-
-        // Store transactions for feedback modal
-        setParsedTransactions(data.transactions);
-        
-        // Show success toast
-        toast.success(data.message, {
-          description: `${data.stats.expenses} spese, ${data.stats.income} entrate`
-        });
-
-        // Refresh expenses query
-        queryClient.invalidateQueries({ queryKey: ['expenses'] });
-
-        // Show feedback modal for corrections
-        setShowFeedbackModal(true);
-        setIsProcessing(false);
       };
 
       reader.onerror = () => {
