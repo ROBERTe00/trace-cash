@@ -22,11 +22,18 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches and take control immediately
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating service worker...');
+  console.log('[SW] Activating service worker version:', CACHE_VERSION);
   event.waitUntil((async () => {
-    await self.clients.claim();
+    // Clean up old caches
     const keys = await caches.keys();
-    await Promise.all(keys.filter(k => !k.includes(CACHE_VERSION)).map(k => caches.delete(k)));
+    await Promise.all(keys.filter(k => !k.includes(CACHE_VERSION)).map(k => {
+      console.log('[SW] Deleting old cache:', k);
+      return caches.delete(k);
+    }));
+    
+    // Take control of all clients
+    await self.clients.claim();
+    console.log('[SW] Activation complete');
   })());
 });
 

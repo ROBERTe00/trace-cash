@@ -73,31 +73,11 @@ function ProtectedRoutes() {
           queryClient.invalidateQueries();
           // Don't redirect here - let AccountMenu handle it
         } else if (event === 'SIGNED_IN') {
-          console.log('[Auth] SIGNED_IN - Force clearing ALL caches');
+          console.log('[Auth] SIGNED_IN - Refreshing queries');
           
-          // Clear React Query
+          // Just clear and invalidate queries, NO RELOAD
           queryClient.clear();
           queryClient.invalidateQueries();
-          
-          // Clear ALL Service Worker caches
-          if ('caches' in window) {
-            caches.keys().then(cacheNames => {
-              Promise.all(cacheNames.map(name => {
-                console.log('[Auth] Deleting cache:', name);
-                return caches.delete(name);
-              })).then(() => {
-                console.log('[Auth] All caches cleared, reloading fresh version');
-                setTimeout(() => {
-                  window.location.reload();
-                }, 300);
-              });
-            });
-          } else {
-            // Fallback if caches API not available
-            setTimeout(() => {
-              window.location.reload();
-            }, 300);
-          }
         }
       }
     );
@@ -155,27 +135,10 @@ function App() {
   useEffect(() => {
     console.log('[PWA] Initializing PWA features...');
     
-    let isReloading = false;
-    
-    // Register service worker
+    // Register service worker WITHOUT reload logic
     registerServiceWorker().then(registration => {
       if (registration) {
         console.log('[PWA] Service Worker registered successfully');
-        
-        // Listen for SW activation messages
-        navigator.serviceWorker.addEventListener('message', (event) => {
-          if (event.data.type === 'SW_ACTIVATED' && !isReloading) {
-            console.log('[App] New service worker activated, reloading...');
-            isReloading = true;
-            
-            // Reload ONLY if not on auth page, with delay
-            if (!window.location.pathname.includes('/auth')) {
-              setTimeout(() => {
-                window.location.reload();
-              }, 500);
-            }
-          }
-        });
       }
     });
 
