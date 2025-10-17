@@ -135,6 +135,25 @@ export default function Settings() {
             <CardContent className="space-y-6">
               <LanguageCurrencySettings />
               <ThemeSwitcher />
+              
+              {/* Emergency Cache Reset */}
+              <div className="pt-6 border-t space-y-3">
+                <div className="flex items-center gap-2 text-destructive">
+                  <RefreshCw className="h-5 w-5" />
+                  <h4 className="font-semibold">Emergency Cache Reset</h4>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  If you see an old version of the app (wrong colors, missing features), use this to force a complete reset.
+                </p>
+                <Button 
+                  onClick={handleClearCache} 
+                  variant="destructive"
+                  className="gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  🔥 Force Reset App
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
