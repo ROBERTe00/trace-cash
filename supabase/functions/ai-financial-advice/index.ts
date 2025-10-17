@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-import { evaluatePortfolioRules, formatRulesForAI } from '../_shared/ruleEngine.ts';
+import { executeAIRequest } from '../_shared/aiRequestBuilder.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -83,10 +83,7 @@ Focus on:
 2. Investment diversification strategy
 3. Goal achievement acceleration tips`;
 
-    // DETERMINISTIC PRE-CHECK: Crypto exposure risk
-    const messages: Array<{ role: string; content: string }> = [];
-    
-    // Calculate crypto exposure from categoryBreakdown
+    // Calculate portfolio data for rule engine
     const portfolioEntries = Object.entries(categoryBreakdown);
     const totalPortfolio = portfolioEntries.reduce((sum, [_, val]) => sum + val, 0);
     const cryptoValue = portfolioEntries
@@ -94,7 +91,6 @@ Focus on:
       .reduce((sum, [_, val]) => sum + val, 0);
     const cryptoPerc = totalPortfolio === 0 ? 0 : Math.round((cryptoValue / totalPortfolio) * 100);
 
-    // Run deterministic rule engine BEFORE AI
     const portfolioData = {
       crypto_allocation: cryptoPerc,
       bonds_allocation: 0,
@@ -107,100 +103,37 @@ Focus on:
         type: key
       }))
     };
-    
-    const ruleResult = evaluatePortfolioRules(portfolioData);
-    const rulesPrompt = formatRulesForAI(ruleResult);
-    
-    console.log('Rule Engine Result:', JSON.stringify(ruleResult, null, 2));
 
-    if (cryptoPerc >= 50) {
-      messages.push({
-        role: "system",
-        content: `DETERMINISTIC RULE: User's crypto exposure is ${cryptoPerc}%. This MUST be classified as HIGH RISK. You must advise portfolio diversification and warn about volatility.`
-      });
+    // Execute AI request with rule engine
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    const authHeader = req.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    const { data: { user } } = await supabase.auth.getUser(token);
+    
+    if (!user) {
+      throw new Error('User not authenticated');
     }
 
-    // Prepend rule engine results to system prompt
-    const enhancedSystemPrompt = rulesPrompt + systemPrompt;
-
-    messages.push({ role: "system", content: enhancedSystemPrompt });
-    messages.push({ role: "user", content: "Generate 3 financial advice cards for me" });
-
-    // Deterministic temperature for financial analysis
-    const temperature = 0.15;
-
-    const startTime = Date.now();
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const aiResponse = await executeAIRequest(
+      portfolioData,
+      {
         model: "gpt-4o",
-        messages,
-        temperature,
-        max_tokens: 1000,
-      }),
-    });
-
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "OpenAI credits exhausted. Please check your OpenAI account." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (response.status === 401) {
-        return new Response(
-          JSON.stringify({ error: "Invalid OpenAI API key. Please check your configuration." }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      const errorText = await response.text();
-      console.error("OpenAI API error:", response.status, errorText);
-      throw new Error("Failed to get AI response");
-    }
-
-    const data = await response.json();
-    const advice = data.choices[0].message.content;
-    const latency = Date.now() - startTime;
-
-    // Log to ai_audit_logs
-    try {
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      
-      const authHeader = req.headers.get('Authorization');
-      const token = authHeader?.replace('Bearer ', '');
-      const { data: { user } } = await supabase.auth.getUser(token);
-      
-      if (user) {
-        await supabase.from('ai_audit_logs').insert({
-          user_id: user.id,
-          feature: 'financial_advice',
-          ai_model: 'gpt-4o',
-          temperature,
-          input_prompt: `RULE ENGINE: ${JSON.stringify(ruleResult)}\n\nPROMPT: ${systemPrompt}`,
-          ai_raw_response: advice,
-          ui_summary: JSON.stringify({ advice, rule_engine: ruleResult }),
-          latency_ms: latency,
-          success: true
-        });
-      }
-    } catch (logError) {
-      console.error('Failed to log AI audit:', logError);
-    }
+        temperature: 0.15,
+        maxTokens: 1000,
+        systemPrompt,
+        userPrompt: "Generate 3 financial advice cards for me"
+      },
+      OPENAI_API_KEY,
+      supabase,
+      user.id,
+      'financial_advice'
+    );
 
     return new Response(
-      JSON.stringify({ advice }),
+      JSON.stringify({ advice: aiResponse.summary }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

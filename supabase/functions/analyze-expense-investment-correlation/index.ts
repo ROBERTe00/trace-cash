@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
-import { evaluatePortfolioRules, formatRulesForAI } from '../_shared/ruleEngine.ts';
+import { executeAIRequest } from '../_shared/aiRequestBuilder.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -116,9 +116,7 @@ Return JSON format:
 
     console.log('Calling OpenAI GPT-4o for analysis...');
 
-    // DETERMINISTIC PRE-CHECK: Crypto exposure risk
-    const messages: Array<{ role: string; content: string }> = [];
-    
+    // Calculate portfolio data for rule engine
     const cryptoInvestments = investments?.filter(inv => 
       /btc|eth|crypto|bitcoin|ethereum|coin|token/i.test(inv.symbol || inv.name || inv.type || '')
     ) || [];
@@ -129,11 +127,10 @@ Return JSON format:
     
     const cryptoPerc = portfolioValue === 0 ? 0 : Math.round((cryptoValue / portfolioValue) * 100);
 
-    // Run deterministic rule engine BEFORE AI
     const portfolioData = {
       crypto_allocation: cryptoPerc,
-      bonds_allocation: 0, // Calculate if you have bond data
-      cash_balance: 0, // Calculate from cash reserves
+      bonds_allocation: 0,
+      cash_balance: 0,
       equities_allocation: 100 - cryptoPerc,
       assets: investments?.map(inv => ({
         name: inv.name,
@@ -142,61 +139,28 @@ Return JSON format:
         type: inv.type
       })) || []
     };
-    
-    const ruleResult = evaluatePortfolioRules(portfolioData);
-    const rulesPrompt = formatRulesForAI(ruleResult);
-    
-    console.log('Rule Engine Result:', JSON.stringify(ruleResult, null, 2));
 
-    if (cryptoPerc >= 50) {
-      messages.push({
-        role: "system",
-        content: `DETERMINISTIC RULE: Portfolio has ${cryptoPerc}% crypto exposure. This MUST be classified as HIGH RISK. You must flag this as a critical diversification issue.`
-      });
-    }
-
-    // Prepend rule engine results to AI prompt
-    const enhancedPrompt = rulesPrompt + prompt;
-
-    messages.push({ role: 'system', content: 'You are a financial analyst. Always respond with valid JSON.' });
-    messages.push({ role: 'user', content: enhancedPrompt });
-
-    // Deterministic temperature for finance/investment analysis
-    const temperature = 0.15;
-
-    const startTime = Date.now();
-    // Call OpenAI API
-    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    // Execute AI request with rule engine
+    const aiResponse = await executeAIRequest(
+      portfolioData,
+      {
         model: 'gpt-4o',
-        messages,
-        temperature,
-        max_tokens: 1500,
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      console.error('AI API error:', await aiResponse.text());
-      throw new Error('Failed to get AI response');
-    }
-
-    const aiResult = await aiResponse.json();
-    const aiContent = aiResult.choices[0]?.message?.content;
-    const latency = Date.now() - startTime;
-
-    console.log('AI response received');
+        temperature: 0.15,
+        maxTokens: 1500,
+        systemPrompt: 'You are a financial analyst. Always respond with valid JSON.',
+        userPrompt: prompt
+      },
+      openaiApiKey,
+      supabase,
+      user.id,
+      'expense_investment_correlation'
+    );
 
     // Parse AI response
     let analysis;
     try {
-      // Extract JSON from response (might have markdown formatting)
-      const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
-      analysis = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(aiContent);
+      const jsonMatch = aiResponse.summary.match(/\{[\s\S]*\}/);
+      analysis = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(aiResponse.summary);
     } catch (e) {
       console.error('Failed to parse AI response:', e);
       // Fallback response
@@ -215,23 +179,6 @@ Return JSON format:
           additional_gain: Math.round(portfolioValue * 0.04)
         }
       };
-    }
-
-    // Log to ai_audit_logs with rule engine results
-    try {
-      await supabase.from('ai_audit_logs').insert({
-        user_id: user.id,
-        feature: 'expense_investment_correlation',
-        ai_model: 'gpt-4o',
-        temperature,
-        input_prompt: `RULE ENGINE: ${JSON.stringify(ruleResult)}\n\nPROMPT: ${prompt}`,
-        ai_raw_response: aiContent,
-        ui_summary: JSON.stringify({ ...analysis, rule_engine: ruleResult }),
-        latency_ms: latency,
-        success: true
-      });
-    } catch (logError) {
-      console.error('Failed to log AI audit:', logError);
     }
 
     return new Response(JSON.stringify(analysis), {
