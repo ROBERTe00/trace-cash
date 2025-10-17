@@ -166,6 +166,10 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
+      // Capture extraction method
+      const method = processData.method || "text";
+      console.log(`📊 Extraction method used: ${method}`);
+
       const transactions = processData.transactions || [];
       const detectedBank = processData.bank || "Unknown Bank";
       
@@ -244,20 +248,28 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
 
       setProgress(100);
       localStorage.setItem("upload-progress", "100");
-      setExtractedTransactions(transactions);
+      
+      // Add extraction method to each transaction
+      const transactionsWithMethod = transactions.map((t: any) => ({
+        ...t,
+        extractionMethod: method
+      }));
+      
+      setExtractedTransactions(transactionsWithMethod);
       setBankName(detectedBank);
-      localStorage.setItem("upload-transactions", JSON.stringify(transactions));
+      localStorage.setItem("upload-transactions", JSON.stringify(transactionsWithMethod));
       localStorage.setItem("upload-bank-name", detectedBank);
       
-      // Show success toast
+      // Show success toast with method indicator
       toast.dismiss(id);
+      const methodLabel = method === "vision" ? "Vision AI" : "Text Extraction";
       toast(
         <div className="flex items-center gap-3">
           <CheckCircle2 className="h-5 w-5 text-green-500" />
           <div>
             <p className="font-medium">Processing complete!</p>
             <p className="text-xs text-muted-foreground">
-              {detectedBank} - Extracted {transactions.length} transactions
+              {detectedBank} - Extracted {transactions.length} transactions using {methodLabel}
             </p>
           </div>
         </div>,

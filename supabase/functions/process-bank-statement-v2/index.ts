@@ -132,6 +132,19 @@ serve(async (req) => {
       console.log(`Total extracted text length: ${extractedText.length} chars from ${pageTexts.length} page(s)`);
       console.log("First 500 chars:", extractedText.substring(0, 500));
       
+      // Check if extraction failed (corrupted text or insufficient length)
+      const hasCorruptedChars = /[\x00-\x1F\x7F-\xFF]{10,}/.test(extractedText);
+      const insufficientText = extractedText.length < 1000;
+      const totalChars = extractedText.length;
+      const nonAsciiCount = extractedText.split('').filter(c => c.charCodeAt(0) > 127).length;
+      const hasGarbage = totalChars > 0 && (nonAsciiCount / totalChars) > 0.3;
+
+      if (hasCorruptedChars || insufficientText || hasGarbage) {
+        console.log("⚠️ Native text extraction failed - corrupted chars:", hasCorruptedChars, "insufficient:", insufficientText, "garbage:", hasGarbage);
+        console.log("🔍 Switching to Vision API fallback...");
+        return await processWithVision(uint8Array, fileName, LOVABLE_API_KEY);
+      }
+      
       if (extractedText.length < 50) {
         throw new Error("Could not extract sufficient text from PDF. The PDF might be scanned or image-based.");
       }
@@ -355,7 +368,8 @@ ${extractedText}`
       JSON.stringify({ 
         bank: bankName,
         transactions,
-        totalExtracted: transactions.length
+        totalExtracted: transactions.length,
+        method: "text"
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
@@ -459,4 +473,186 @@ function extractMerchantHints(text: string): string[] {
   }
   
   return Array.from(hints);
+}
+
+async function processWithVision(
+  pdfContent: Uint8Array,
+  fileName: string,
+  lovableApiKey: string
+): Promise<Response> {
+  console.log("🔍 Processing with Lovable AI Vision...");
+
+  try {
+    // Convert PDF to base64
+    const base64Pdf = btoa(String.fromCharCode(...pdfContent));
+
+    // Step 1: Detect bank name with Vision
+    console.log("Step 1: Detecting bank name with Vision API...");
+    const bankDetectionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${lovableApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content: "You are a bank statement analyzer. Identify the bank name from the visual statement. Return ONLY the bank name, nothing else."
+          },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "What is the name of the bank in this statement?" },
+              { 
+                type: "image_url", 
+                image_url: { url: `data:application/pdf;base64,${base64Pdf}` } 
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    let bankName = "Unknown Bank";
+    if (bankDetectionResponse.ok) {
+      const bankData = await bankDetectionResponse.json();
+      bankName = (bankData.choices?.[0]?.message?.content || "Unknown Bank").trim();
+      console.log("Detected bank:", bankName);
+    }
+
+    // Step 2: Extract transactions with Vision
+    console.log("Step 2: Extracting transactions with Vision API...");
+    const transactionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${lovableApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert at extracting transactions from bank statements using visual analysis.
+
+CRITICAL RULES:
+1. Extract ALL transactions from ALL pages of the PDF
+2. Return ONLY a pure JSON array, no markdown, no explanations
+3. Negative amounts (-) for expenses/debits, positive (+) for income/credits
+4. Date format: YYYY-MM-DD (normalize Italian dates like 28/08/2025 to 2025-08-28)
+5. Add confidence score (0.0-1.0) based on clarity of the data
+6. Extract merchant/payee name and transaction description
+
+CATEGORIES (choose most appropriate):
+- "Food & Dining"
+- "Transportation"
+- "Shopping"
+- "Entertainment"
+- "Healthcare"
+- "Bills & Utilities"
+- "Income"
+- "Investments"
+- "Other"
+
+OUTPUT FORMAT (pure JSON array only):
+[{"date":"YYYY-MM-DD","description":"transaction description","amount":-99.99,"category":"category","payee":"merchant name","confidence":0.85}]
+
+Extract EVERY transaction you can see across ALL pages.`
+          },
+          {
+            role: "user",
+            content: [
+              { 
+                type: "text", 
+                text: `Extract ALL transactions from this ${bankName} bank statement. Process every page and return a complete JSON array of all transactions.` 
+              },
+              { 
+                type: "image_url", 
+                image_url: { url: `data:application/pdf;base64,${base64Pdf}` } 
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    if (!transactionResponse.ok) {
+      const errorText = await transactionResponse.text();
+      console.error("Vision API error:", transactionResponse.status, errorText);
+      throw new Error(`Vision API failed: ${transactionResponse.status}`);
+    }
+
+    const transactionData = await transactionResponse.json();
+    const content = transactionData.choices?.[0]?.message?.content || "";
+    
+    console.log("Vision API response length:", content.length);
+    console.log("Vision API response preview:", content.substring(0, 500));
+
+    // Parse JSON response
+    let transactions = [];
+    try {
+      // Remove markdown code blocks if present
+      const cleaned = content.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
+      
+      // Extract JSON array
+      const jsonMatch = cleaned.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        transactions = JSON.parse(jsonMatch[0]);
+      } else {
+        console.error("No JSON array found in response:", cleaned.substring(0, 200));
+        throw new Error("Failed to extract JSON array from vision response");
+      }
+    } catch (e) {
+      console.error("Vision response parsing failed:", e);
+      console.error("Raw content:", content);
+      throw new Error("Failed to parse vision response");
+    }
+
+    // Validate and clean transactions
+    const validTransactions = transactions.filter((t: any) => 
+      t.date && t.description && typeof t.amount === 'number' && t.category
+    ).map((t: any) => ({
+      date: t.date,
+      description: t.description || "Unknown",
+      amount: t.amount,
+      category: t.category || "Other",
+      payee: t.payee || t.description,
+      confidence: Math.max(0, Math.min(1, t.confidence || 0.7)),
+      bank: bankName,
+      extractionMethod: "vision"
+    }));
+
+    console.log(`✅ Vision extraction complete: ${validTransactions.length} transactions`);
+
+    if (validTransactions.length === 0) {
+      return new Response(
+        JSON.stringify({ 
+          error: "No transactions extracted via Vision API",
+          bank: bankName,
+          transactions: [],
+          method: "vision"
+        }),
+        { 
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        bank: bankName,
+        transactions: validTransactions,
+        totalExtracted: validTransactions.length,
+        method: "vision"
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+
+  } catch (error) {
+    console.error("Vision processing error:", error);
+    throw error;
+  }
 }

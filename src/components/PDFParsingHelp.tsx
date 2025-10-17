@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, FileSpreadsheet, Mail, HelpCircle } from "lucide-react";
+import { AlertTriangle, FileSpreadsheet, Mail, HelpCircle, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface PDFParsingHelpProps {
@@ -34,6 +34,17 @@ export const PDFParsingHelp = ({
             <p className="text-sm text-muted-foreground mb-4">{errorMessage}</p>
           )}
 
+          <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Eye className="h-4 w-4 text-blue-600" />
+              <h4 className="font-semibold text-blue-600">Advanced Vision Processing Available</h4>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Our system automatically switches to AI Vision analysis when standard text extraction encounters difficulties. 
+              The AI reads your statement visually, just like a human would, ensuring accurate extraction even from complex or scanned PDFs.
+            </p>
+          </div>
+
           <div className="space-y-3">
             <div>
               <h4 className="font-medium text-sm mb-2">Why did this happen?</h4>
@@ -42,6 +53,7 @@ export const PDFParsingHelp = ({
                 <li>Complex table formatting that's hard to parse</li>
                 <li>Multi-page statement with inconsistent formatting</li>
                 <li>Protected or encrypted PDF</li>
+                <li>Complex formatting or special encoding was detected</li>
               </ul>
             </div>
 

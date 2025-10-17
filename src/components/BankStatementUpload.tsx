@@ -76,10 +76,17 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
   const [rawExtractedText, setRawExtractedText] = useState<string>("");
   const [showParsingHelp, setShowParsingHelp] = useState(false);
   const [lastFileName, setLastFileName] = useState<string>("");
+  const [extractionMethod, setExtractionMethod] = useState<"text" | "vision" | null>(null);
 
   useEffect(() => {
     if (extractedTransactions.length > 0 && !showVerification) {
       setEditedTransactions(extractedTransactions);
+      
+      // Capture extraction method from response
+      const method = (extractedTransactions[0] as any).extractionMethod || "text";
+      setExtractionMethod(method);
+      console.log(`📊 Extraction method used: ${method}`);
+      
       setShowVerification(true);
       setShowParsingHelp(false);
       
@@ -262,12 +269,13 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
               <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
               <div className="text-sm">
                 <p className="font-medium">Advanced AI Analysis</p>
-                <ul className="text-muted-foreground space-y-1 mt-1">
-                  <li>✓ Extracts ALL transactions (no limits)</li>
-                  <li>✓ Detects bank name automatically</li>
-                  <li>✓ Smart categorization with confidence scores</li>
-                  <li>✓ Multi-page support</li>
-                </ul>
+              <ul className="text-muted-foreground space-y-1 mt-1">
+                <li>✓ Extracts ALL transactions (no limits)</li>
+                <li>✓ Detects bank name automatically</li>
+                <li>✓ Smart categorization with confidence scores</li>
+                <li>✓ Multi-page support</li>
+                <li>✓ AI Vision fallback for complex PDFs</li>
+              </ul>
               </div>
             </div>
           </div>
@@ -294,10 +302,23 @@ export const BankStatementUpload = ({ onTransactionsExtracted }: BankStatementUp
               )}
               Review & Edit Transactions
             </DialogTitle>
-            <DialogDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-              <span>
-                Found {editedTransactions.length} transaction{editedTransactions.length !== 1 ? 's' : ''}
-              </span>
+          <DialogDescription className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-wrap">
+            <span>
+              Found {editedTransactions.length} transaction{editedTransactions.length !== 1 ? 's' : ''}
+            </span>
+            
+            {extractionMethod === "vision" && (
+              <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">
+                <Eye className="h-3 w-3 mr-1" />
+                AI Vision Powered
+              </Badge>
+            )}
+            {extractionMethod === "text" && (
+              <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
+                <FileText className="h-3 w-3 mr-1" />
+                Text Extraction
+              </Badge>
+            )}
               {lowConfidenceCount > 0 && (
                 <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
                   <AlertTriangle className="h-3 w-3 mr-1" />
