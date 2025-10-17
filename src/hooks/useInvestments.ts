@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useGamificationTriggers } from "./useGamificationTriggers";
 
 export interface Investment {
   id: string;
@@ -23,7 +22,6 @@ export interface Investment {
 
 export const useInvestments = () => {
   const queryClient = useQueryClient();
-  const gamification = useGamificationTriggers();
   const { data: investments, isLoading } = useQuery({
     queryKey: ['investments'],
     queryFn: async (): Promise<Investment[]> => {
@@ -93,7 +91,6 @@ export const useInvestments = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['investments'] });
-      gamification.triggerInvestmentAdded();
       toast.success('Investment added successfully!');
     },
     onError: () => {
