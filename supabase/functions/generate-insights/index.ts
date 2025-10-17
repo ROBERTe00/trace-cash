@@ -127,6 +127,9 @@ Focus on:
 
 Be specific, use actual numbers from the data, and make insights actionable.`;
 
+    // Deterministic temperature for financial analysis
+    const temperature = 0.15;
+
     const startTime = Date.now();
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -140,7 +143,7 @@ Be specific, use actual numbers from the data, and make insights actionable.`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Analyze this financial data and provide insights:\n${financialContext}` },
         ],
-        temperature: 0.2,
+        temperature,
         max_tokens: 1200,
       }),
     });
@@ -220,7 +223,7 @@ Be specific, use actual numbers from the data, and make insights actionable.`;
           user_id: user.id,
           feature: 'generate_insights',
           ai_model: 'gpt-4o',
-          temperature: 0.2,
+          temperature,
           input_prompt: systemPrompt,
           ai_raw_response: content,
           ui_summary: JSON.stringify(insights),

@@ -44,6 +44,9 @@ serve(async (req) => {
       try {
         const prompt = `Rate the financial market impact of this news on a scale of 0-10. Only respond with a number.\n\nTitle: ${article.title}\nDescription: ${article.description}`;
         
+        // Deterministic temperature for risk assessment
+        const temperature = 0.15;
+        
         const startTime = Date.now();
         const scoreRes = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
@@ -63,7 +66,7 @@ serve(async (req) => {
                 content: `Title: "${article.title}". Description: "${article.description || 'No description'}"`
               }
             ],
-            temperature: 0.1,
+            temperature,
             max_tokens: 10,
           }),
         });
@@ -101,7 +104,7 @@ serve(async (req) => {
               user_id: user.id,
               feature: 'news_impact_scoring',
               ai_model: 'gpt-4o',
-              temperature: 0.1,
+              temperature,
               input_prompt: prompt,
               ai_raw_response: scoreText,
               ui_summary: `Impact score: ${score}`,

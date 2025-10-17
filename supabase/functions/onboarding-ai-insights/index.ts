@@ -90,6 +90,11 @@ serve(async (req) => {
         throw new Error("Invalid step");
     }
 
+    console.log('Calling OpenAI with prompt:', userPrompt);
+    
+    // Deterministic temperature: onboarding is general advice (not critical finance)
+    const temperature = 0.7;
+    
     // Call OpenAI GPT-4o API
     const startTime = Date.now();
     const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -104,7 +109,7 @@ serve(async (req) => {
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.2,
+        temperature,
         max_tokens: 800,
       }),
     });
@@ -164,7 +169,7 @@ serve(async (req) => {
           user_id: user.id,
           feature: `onboarding_${step}`,
           ai_model: 'gpt-4o',
-          temperature: 0.2,
+          temperature,
           input_prompt: userPrompt,
           ai_raw_response: content,
           ui_summary: typeof insight === 'string' ? insight : JSON.stringify(insight),

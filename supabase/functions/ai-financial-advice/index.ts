@@ -103,6 +103,9 @@ Focus on:
     messages.push({ role: "system", content: systemPrompt });
     messages.push({ role: "user", content: "Generate 3 financial advice cards for me" });
 
+    // Deterministic temperature for financial analysis
+    const temperature = 0.15;
+
     const startTime = Date.now();
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -113,7 +116,7 @@ Focus on:
       body: JSON.stringify({
         model: "gpt-4o",
         messages,
-        temperature: 0.2,
+        temperature,
         max_tokens: 1000,
       }),
     });
@@ -161,7 +164,7 @@ Focus on:
           user_id: user.id,
           feature: 'financial_advice',
           ai_model: 'gpt-4o',
-          temperature: 0.2,
+          temperature,
           input_prompt: systemPrompt,
           ai_raw_response: advice,
           ui_summary: advice,

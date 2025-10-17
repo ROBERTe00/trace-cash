@@ -138,6 +138,9 @@ Return JSON format:
     messages.push({ role: 'system', content: 'You are a financial analyst. Always respond with valid JSON.' });
     messages.push({ role: 'user', content: prompt });
 
+    // Deterministic temperature for finance/investment analysis
+    const temperature = 0.15;
+
     const startTime = Date.now();
     // Call OpenAI API
     const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -149,7 +152,7 @@ Return JSON format:
       body: JSON.stringify({
         model: 'gpt-4o',
         messages,
-        temperature: 0.2,
+        temperature,
         max_tokens: 1500,
       }),
     });
@@ -197,7 +200,7 @@ Return JSON format:
         user_id: user.id,
         feature: 'expense_investment_correlation',
         ai_model: 'gpt-4o',
-        temperature: 0.2,
+        temperature,
         input_prompt: prompt,
         ai_raw_response: aiContent,
         ui_summary: JSON.stringify(analysis),

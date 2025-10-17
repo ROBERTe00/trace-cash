@@ -113,6 +113,9 @@ Return JSON format:
     });
     messages.push({ role: 'user', content: prompt });
 
+    // Deterministic temperature for investment advice
+    const temperature = 0.15;
+
     const startTime = Date.now();
     // Call OpenAI API
     const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -124,7 +127,7 @@ Return JSON format:
       body: JSON.stringify({
         model: 'gpt-4o',
         messages,
-        temperature: 0.2,
+        temperature,
         max_tokens: 1500,
       }),
     });
@@ -184,7 +187,7 @@ Return JSON format:
         user_id: user.id,
         feature: 'investment_allocation',
         ai_model: 'gpt-4o',
-        temperature: 0.2,
+        temperature,
         input_prompt: prompt,
         ai_raw_response: aiContent,
         ui_summary: JSON.stringify(suggestion),
