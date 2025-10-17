@@ -1,9 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 interface OnboardingData {
@@ -12,185 +12,170 @@ interface OnboardingData {
   liquidity: number;
   assets: number;
   debts: number;
-  step: "welcome" | "essentials" | "expenses" | "investments" | "summary";
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { data, step }: { data: OnboardingData; step: string } = await req.json();
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    const { data, step } = await req.json();
+    console.log('📊 [Onboarding AI] Generating insights for step:', step);
 
-    if (!OPENAI_API_KEY) {
-      throw new Error("OPENAI_API_KEY is not configured");
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    if (!lovableApiKey) {
+      throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    console.log(`Generating AI insights for ${step} step...`);
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Build context-specific prompts
-    let systemPrompt = "You are a professional financial advisor. Provide clear, actionable insights in 2-3 sentences.";
+    let systemPrompt = "You are a financial advisor helping users understand their financial situation.";
     let userPrompt = "";
 
-    switch (step) {
-      case "welcome":
-        userPrompt = `User wants to save €${data.savingsGoal}/month with a monthly income of €${data.monthlyIncome}. 
-        Calculate how many months it would take assuming a 20% savings rate. Provide an encouraging insight.`;
-        break;
+    if (step === "summary") {
+      const netWorth = data.liquidity + data.assets - data.debts;
+      const savingsRate = data.monthlyIncome > 0 
+        ? ((data.monthlyIncome - 0) / data.monthlyIncome * 100).toFixed(1)
+        : "0";
 
-      case "essentials":
-        const netWorth = data.liquidity + data.assets - data.debts;
-        const debtToAssetRatio = data.assets > 0 ? (data.debts / data.assets) * 100 : 0;
-        userPrompt = `User financial profile:
-        - Monthly Income: €${data.monthlyIncome}
-        - Liquidity: €${data.liquidity}
-        - Total Assets: €${data.assets}
-        - Total Debts: €${data.debts}
-        - Net Worth: €${netWorth}
-        - Debt-to-Asset Ratio: ${debtToAssetRatio.toFixed(1)}%
-        
-        Provide 3 key financial insights about their current situation and actionable advice.`;
-        break;
+      systemPrompt = `You are a financial advisor. Provide concise, realistic financial projections in JSON format.
+Return ONLY valid JSON with this exact structure (no markdown, no extra text):
+{
+  "oneYear": "Brief projection for 1 year (max 30 words)",
+  "threeYear": "Brief projection for 3 years (max 30 words)", 
+  "tips": ["Tip 1 (max 20 words)", "Tip 2 (max 20 words)", "Tip 3 (max 20 words)"]
+}`;
 
-      case "expenses":
-        userPrompt = `User is about to upload expenses. Explain how AI categorization with GPT-4o will help them 
-        understand spending patterns and identify top categories. Keep it brief and exciting.`;
-        break;
+      userPrompt = `User financial data:
+- Monthly Income: €${data.monthlyIncome}
+- Liquidity: €${data.liquidity}
+- Total Assets: €${data.assets}
+- Total Debts: €${data.debts}
+- Net Worth: €${netWorth}
+- Savings Goal: €${data.savingsGoal}
+- Current Savings Rate: ${savingsRate}%
 
-      case "investments":
-        userPrompt = `User is importing investments. Explain how live price tracking and portfolio analysis 
-        with AI will help them optimize returns. Keep it brief and motivating.`;
-        break;
-
-      case "summary":
-        const netWorthSummary = data.liquidity + data.assets - data.debts;
-        const savingsRate = data.monthlyIncome > 0 ? (data.savingsGoal / data.monthlyIncome) * 100 : 0;
-        userPrompt = `User complete profile:
-        - Monthly Income: €${data.monthlyIncome}
-        - Savings Goal: €${data.savingsGoal}
-        - Net Worth: €${netWorthSummary}
-        - Savings Rate: ${savingsRate.toFixed(0)}%
-        
-        Provide:
-        1. 1-year projection (accumulation if savings goal met)
-        2. 3-year projection (with 5% annual return on investments)
-        3. One actionable tip to improve financial health
-        
-        Format as JSON:
-        {
-          "oneYear": "€X accumulated",
-          "threeYear": "€X net worth",
-          "tip": "Actionable advice"
-        }`;
-        break;
-
-      default:
-        throw new Error("Invalid step");
+Generate realistic 1-year and 3-year projections, plus 3 actionable tips. Return ONLY the JSON object.`;
+    } else {
+      userPrompt = `Provide a brief financial insight based on: ${JSON.stringify(data)}`;
     }
 
-    console.log('Calling OpenAI with prompt:', userPrompt);
-    
-    // Deterministic temperature: onboarding is general advice (not critical finance)
-    const temperature = 0.7;
-    
-    // Call OpenAI GPT-4o API
+    console.log('🤖 [Onboarding AI] Calling Lovable AI (Gemini 2.5 Flash)...');
     const startTime = Date.now();
-    const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
+
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
       headers: {
-        "Authorization": `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
+        'Authorization': `Bearer ${lovableApiKey}`,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: 'google/gemini-2.5-flash',
         messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
         ],
-        temperature,
-        max_tokens: 800,
+        temperature: 0.7,
+        max_tokens: 500,
       }),
     });
 
+    const latency = Date.now() - startTime;
+
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error("OpenAI API error:", aiResponse.status, errorText);
+      console.error('❌ [Onboarding AI] Lovable AI error:', aiResponse.status, errorText);
       
       if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        throw new Error('AI rate limit exceeded. Please try again in a moment.');
       }
-      
       if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "OpenAI credits exhausted. Please check your account." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        throw new Error('AI credits exhausted. Please add credits to your Lovable workspace.');
       }
       
-      throw new Error(`AI service error: ${aiResponse.status}`);
+      throw new Error(`AI API error: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    const latency = Date.now() - startTime;
-    const content = aiData.choices?.[0]?.message?.content || "";
+    console.log('✅ [Onboarding AI] AI response received:', { latency, choices: aiData.choices?.length });
 
-    console.log("AI insight generated successfully");
+    let insight = aiData.choices?.[0]?.message?.content || "Unable to generate insights at this time.";
 
     // Parse JSON for summary step
-    let insight = content;
     if (step === "summary") {
       try {
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          insight = JSON.parse(jsonMatch[0]);
+        // Clean markdown code blocks if present
+        let cleanedInsight = insight.trim();
+        if (cleanedInsight.startsWith('```json')) {
+          cleanedInsight = cleanedInsight.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        } else if (cleanedInsight.startsWith('```')) {
+          cleanedInsight = cleanedInsight.replace(/```\n?/g, '').trim();
         }
-      } catch (e) {
-        console.error("Failed to parse JSON from AI response:", e);
+        
+        insight = JSON.parse(cleanedInsight);
+        console.log('✅ [Onboarding AI] JSON parsed successfully');
+      } catch (parseError) {
+        console.error('❌ [Onboarding AI] JSON parse error:', parseError);
+        console.error('Raw content:', insight);
+        
+        // Fallback response
+        insight = {
+          oneYear: "Continue building emergency fund and reducing debt for improved financial stability.",
+          threeYear: "Potential to increase savings and begin investing for long-term wealth building.",
+          tips: [
+            "Track all expenses to identify savings opportunities",
+            "Build 3-6 months emergency fund before investing",
+            "Consider automating savings from each paycheck"
+          ]
+        };
       }
     }
 
     // Log to ai_audit_logs
     try {
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      
-      const authHeader = req.headers.get('Authorization');
-      const token = authHeader?.replace('Bearer ', '');
-      const { data: { user } } = await supabase.auth.getUser(token);
-      
+      const { data: { user } } = await supabase.auth.getUser(
+        req.headers.get('Authorization')?.replace('Bearer ', '') || ''
+      );
+
       if (user) {
         await supabase.from('ai_audit_logs').insert({
           user_id: user.id,
-          feature: `onboarding_${step}`,
-          ai_model: 'gpt-4o',
-          temperature,
+          feature: 'onboarding-insights',
+          ai_model: 'google/gemini-2.5-flash',
           input_prompt: userPrompt,
-          ai_raw_response: content,
-          ui_summary: typeof insight === 'string' ? insight : JSON.stringify(insight),
+          ai_raw_response: typeof insight === 'string' ? insight : JSON.stringify(insight),
           latency_ms: latency,
-          success: true
+          success: true,
+          ui_summary: `Onboarding step: ${step}`,
         });
       }
     } catch (logError) {
-      console.error('Failed to log AI audit:', logError);
+      console.error('⚠️ [Onboarding AI] Failed to log to audit:', logError);
     }
 
     return new Response(
       JSON.stringify({ insight }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
   } catch (error) {
-    console.error("Error in onboarding-ai-insights:", error);
-    const message = error instanceof Error ? error.message : "Unknown error occurred";
+    console.error('❌ [Onboarding AI] Error:', error);
     return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        insight: step === 'summary' ? {
+          oneYear: "Unable to generate projection at this time.",
+          threeYear: "Please try again later.",
+          tips: ["Focus on tracking your expenses", "Build an emergency fund", "Review your financial goals regularly"]
+        } : "Unable to generate insights. Please try again."
+      }),
+      { 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
     );
   }
 });

@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload, FileText, Plus, TrendingDown } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useUpload } from "@/contexts/UploadContext";
+import { ManualExpenseDialog } from "../ManualExpenseDialog";
+import { toast } from "sonner";
 
 interface ExpensesStepProps {
   data: any;
@@ -12,12 +15,22 @@ interface ExpensesStepProps {
 
 export function ExpensesStep({ data, setData }: ExpensesStepProps) {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
+  const { uploadFile } = useUpload();
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setUploadedFile(file);
-      // In production, this would call GPT-4o to categorize expenses
+      
+      try {
+        await uploadFile(file);
+        toast.success("Bank statement uploaded! Processing transactions...");
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        toast.error("Failed to upload file. Please try again.");
+        setUploadedFile(null);
+      }
     }
   };
 
@@ -33,7 +46,7 @@ export function ExpensesStep({ data, setData }: ExpensesStepProps) {
       <Alert className="bg-info/10 border-info/20">
         <TrendingDown className="w-4 h-4 text-info" />
         <AlertDescription>
-          <strong>Optional:</strong> Upload your bank statement (PDF/CSV) and AI will automatically categorize your expenses using GPT-4o. You can add expenses later from the dashboard.
+          <strong>Optional:</strong> Upload your bank statement (PDF/CSV) and AI will automatically categorize your expenses. You can add expenses later from the dashboard.
         </AlertDescription>
       </Alert>
 
@@ -68,7 +81,10 @@ export function ExpensesStep({ data, setData }: ExpensesStepProps) {
         </motion.div>
 
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Card className="p-6 cursor-pointer hover:border-primary transition-colors h-full">
+          <Card 
+            className="p-6 cursor-pointer hover:border-primary transition-colors h-full"
+            onClick={() => setIsManualDialogOpen(true)}
+          >
             <div className="flex flex-col items-center text-center gap-3">
               <div className="p-3 rounded-full bg-secondary/10">
                 <Plus className="w-6 h-6 text-secondary" />
@@ -114,6 +130,13 @@ export function ExpensesStep({ data, setData }: ExpensesStepProps) {
         </div>
       </Card>
 
+      <ManualExpenseDialog 
+        open={isManualDialogOpen}
+        onOpenChange={setIsManualDialogOpen}
+        onExpenseAdded={() => {
+          toast.success("Expense added! You can add more or continue.");
+        }}
+      />
     </div>
   );
 }

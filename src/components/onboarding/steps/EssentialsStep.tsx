@@ -69,9 +69,14 @@ export function EssentialsStep({ data, setData }: EssentialsStepProps) {
               </Label>
               <Input
                 id={field.key}
-                type="number"
-                value={data[field.key]}
-                onChange={(e) => setData({ ...data, [field.key]: parseInt(e.target.value) || 0 })}
+                type="text"
+                inputMode="numeric"
+                value={data[field.key] === 0 ? "" : data[field.key].toLocaleString()}
+                onChange={(e) => {
+                  const rawValue = e.target.value.replace(/[^\d]/g, '');
+                  const numValue = rawValue === '' ? 0 : parseInt(rawValue);
+                  setData({ ...data, [field.key]: numValue });
+                }}
                 className="text-lg font-semibold"
                 placeholder="0"
               />

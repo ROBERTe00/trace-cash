@@ -116,7 +116,7 @@ export function SummaryStep({ data }: SummaryStepProps) {
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-            <p className="font-medium text-sm">💡 AI Financial Projections (GPT-4o)</p>
+            <p className="font-medium text-sm">AI Financial Projections</p>
           </div>
           
           {loadingProjections ? (

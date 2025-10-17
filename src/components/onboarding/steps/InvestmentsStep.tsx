@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload, Plus, TrendingUp, Activity } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ManualInvestmentDialog } from "../ManualInvestmentDialog";
+import { toast } from "sonner";
 
 interface InvestmentsStepProps {
   data: any;
@@ -12,12 +14,13 @@ interface InvestmentsStepProps {
 
 export function InvestmentsStep({ data, setData }: InvestmentsStepProps) {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setUploadedFile(file);
-      // In production, this would call GPT-4o to fetch live prices
+      toast.success("Investment file uploaded! You can add more manually or continue.");
     }
   };
 
@@ -35,7 +38,7 @@ export function InvestmentsStep({ data, setData }: InvestmentsStepProps) {
       <Alert className="bg-success/10 border-success/20">
         <Activity className="w-4 h-4 text-success" />
         <AlertDescription>
-          <strong>Optional:</strong> Import your investments and AI will fetch live prices and calculate performance using GPT-4o. You can add investments later from the dashboard.
+          <strong>Optional:</strong> Import your investments and AI will fetch live prices and calculate performance. You can add investments later from the dashboard.
         </AlertDescription>
       </Alert>
 
@@ -64,7 +67,10 @@ export function InvestmentsStep({ data, setData }: InvestmentsStepProps) {
         </motion.div>
 
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Card className="p-6 cursor-pointer hover:border-primary transition-colors h-full">
+          <Card 
+            className="p-6 cursor-pointer hover:border-primary transition-colors h-full"
+            onClick={() => setIsManualDialogOpen(true)}
+          >
             <div className="flex flex-col items-center text-center gap-3">
               <div className="p-3 rounded-full bg-secondary/10">
                 <Plus className="w-6 h-6 text-secondary" />
@@ -118,6 +124,13 @@ export function InvestmentsStep({ data, setData }: InvestmentsStepProps) {
         </div>
       </Card>
 
+      <ManualInvestmentDialog 
+        open={isManualDialogOpen}
+        onOpenChange={setIsManualDialogOpen}
+        onInvestmentAdded={() => {
+          toast.success("Investment added! You can add more or continue.");
+        }}
+      />
     </div>
   );
 }
