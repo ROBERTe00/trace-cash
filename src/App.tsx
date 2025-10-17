@@ -73,8 +73,31 @@ function ProtectedRoutes() {
           queryClient.invalidateQueries();
           // Don't redirect here - let AccountMenu handle it
         } else if (event === 'SIGNED_IN') {
-          console.log('[Auth] SIGNED_IN event, clearing stale cache');
+          console.log('[Auth] SIGNED_IN - Force clearing ALL caches');
+          
+          // Clear React Query
+          queryClient.clear();
           queryClient.invalidateQueries();
+          
+          // Clear ALL Service Worker caches
+          if ('caches' in window) {
+            caches.keys().then(cacheNames => {
+              Promise.all(cacheNames.map(name => {
+                console.log('[Auth] Deleting cache:', name);
+                return caches.delete(name);
+              })).then(() => {
+                console.log('[Auth] All caches cleared, reloading fresh version');
+                setTimeout(() => {
+                  window.location.reload();
+                }, 300);
+              });
+            });
+          } else {
+            // Fallback if caches API not available
+            setTimeout(() => {
+              window.location.reload();
+            }, 300);
+          }
         }
       }
     );

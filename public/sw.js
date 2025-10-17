@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v2.6.0'; // FIX: No more reload loops
+const CACHE_VERSION = 'v3.0.0'; // MAJOR UPDATE: Force clean cache + never cache index.html
 const CACHE_NAME = `trace-cash-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `trace-cash-runtime-${CACHE_VERSION}`;
 
@@ -81,12 +81,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first strategy for app files (HTML, JS, CSS)
+  // NEVER cache index.html or app shell - always fetch fresh from network
+  if (url.pathname === '/' || url.pathname === '/index.html' || request.destination === 'document') {
+    event.respondWith(
+      fetch(request, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+      }).catch(() => {
+        // Only fallback to cache if network completely fails (offline mode)
+        return caches.match('/index.html');
+      })
+    );
+    return;
+  }
+
+  // Network-first strategy for JS/CSS/assets
   if (
-    request.destination === 'document' ||
     request.url.includes('.js') ||
     request.url.includes('.css') ||
-    url.pathname === '/' ||
     url.pathname.startsWith('/assets/')
   ) {
     event.respondWith(
@@ -117,7 +129,7 @@ self.addEventListener('fetch', (event) => {
           }, 2000);
         })
       ]).catch(() => {
-        return caches.match(request) || caches.match('/index.html');
+        return caches.match(request);
       })
     );
     return;
