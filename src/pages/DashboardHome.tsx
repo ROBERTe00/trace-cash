@@ -7,13 +7,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useInvestments } from "@/hooks/useInvestments";
-import { useSavingsPotential } from "@/hooks/useSavingsPotential";
-import { useExpenseCorrelation } from "@/hooks/useExpenseCorrelation";
+import { useFinancialGoals } from "@/hooks/useFinancialGoals";
 import { useInvestmentSuggestions } from "@/hooks/useInvestmentSuggestions";
 import { useLivePricePolling, useManualPriceRefresh } from "@/hooks/useLivePricePolling";
 import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
 import { migrateLocalStorageToDatabase, hasPendingMigration } from "@/lib/migrateExpenses";
-import { getGoals, saveGoals, FinancialGoal } from "@/lib/storage";
 import FinanceScoreCard from "@/components/FinanceScoreCard";
 import BalanceCard from "@/components/BalanceCard";
 import StatCard from "@/components/StatCard";
@@ -22,17 +20,21 @@ import CashflowCard from "@/components/CashflowCard";
 import SavingPlansCard from "@/components/SavingPlansCard";
 import { FinancialGoals } from "@/components/FinancialGoals";
 import { WelcomeBanner } from "@/components/WelcomeBanner";
+import { LoadingDashboard } from "@/components/LoadingDashboard";
 import { useApp } from "@/contexts/AppContext";
+import { startOfMonth, eachDayOfInterval, format } from "date-fns";
 
 export default function DashboardHome() {
   const { formatCurrency } = useApp();
-  const [goals, setGoals] = useState<FinancialGoal[]>([]);
   const [showSuggestionDialog, setShowSuggestionDialog] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   
-  const { expenses } = useExpenses();
-  const { investments, totalValue } = useInvestments();
+  const { expenses, isLoading: loadingExpenses } = useExpenses();
+  const { investments, totalValue, isLoading: loadingInvestments } = useInvestments();
+  const { goals, isLoading: loadingGoals } = useFinancialGoals();
   const { suggestions: investmentSuggestions } = useInvestmentSuggestions();
   const { refreshPrices } = useManualPriceRefresh();
 
@@ -41,53 +43,35 @@ export default function DashboardHome() {
   useEffect(() => {
     const initData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user && hasPendingMigration()) {
+      if (!user) {
+        setIsLoadingProfile(false);
+        return;
+      }
+
+      if (hasPendingMigration()) {
         await migrateLocalStorageToDatabase(user.id);
       }
-      setGoals(getGoals());
       
-      // Check if user is new (show welcome banner for first 7 days)
-      if (user) {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('created_at')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (profile?.created_at) {
-          const daysSinceCreation = Math.floor(
-            (Date.now() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24)
-          );
-          setShowWelcome(daysSinceCreation < 7);
-        }
+      // Fetch user profile
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      setUserProfile(profile);
+      setIsLoadingProfile(false);
+      
+      if (profile?.created_at) {
+        const daysSinceCreation = Math.floor(
+          (Date.now() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24)
+        );
+        setShowWelcome(daysSinceCreation < 7);
       }
     };
     initData();
   }, []);
 
-  const handleAddGoal = (goal: Omit<FinancialGoal, "id">) => {
-    const newGoal = { ...goal, id: crypto.randomUUID() };
-    const updated = [...goals, newGoal];
-    setGoals(updated);
-    saveGoals(updated);
-    toast.success("Goal created successfully!");
-  };
-
-  const handleDeleteGoal = (id: string) => {
-    const updated = goals.filter((g) => g.id !== id);
-    setGoals(updated);
-    saveGoals(updated);
-    toast.success("Goal deleted");
-  };
-
-  const handleUpdateGoal = (id: string, currentAmount: number) => {
-    const updated = goals.map((g) =>
-      g.id === id ? { ...g, currentAmount } : g
-    );
-    setGoals(updated);
-    saveGoals(updated);
-    toast.success("Goal updated!");
-  };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -96,6 +80,14 @@ export default function DashboardHome() {
     toast.success("Prices refreshed!");
   };
 
+  // Show loading state
+  const isLoading = loadingExpenses || loadingInvestments || loadingGoals || isLoadingProfile;
+  
+  if (isLoading) {
+    return <LoadingDashboard />;
+  }
+
+  // Calculate real financial data
   const totalExpenses = expenses
     .filter((e) => e.type === "Expense")
     .reduce((sum, e) => sum + e.amount, 0);
@@ -106,13 +98,14 @@ export default function DashboardHome() {
 
   const netBalance = totalIncome - totalExpenses;
   const totalInvestments = totalValue;
-  const totalNetWorth = netBalance + totalInvestments;
+  const cashAvailable = userProfile?.cash_available || 0;
+  const totalNetWorth = cashAvailable + totalInvestments;
 
   const handleExportCSV = () => {
     exportToCSV({
       expenses: expenses as any,
       investments: investments as any,
-      goals,
+      goals: goals as any,
       summary: { totalIncome, totalExpenses, netBalance, portfolioValue: totalValue },
     });
     toast.success("CSV exported!");
@@ -122,50 +115,105 @@ export default function DashboardHome() {
     exportToPDF({
       expenses: expenses as any,
       investments: investments as any,
-      goals,
+      goals: goals as any,
       summary: { totalIncome, totalExpenses, netBalance, portfolioValue: totalValue },
     });
     toast.success("PDF report generated!");
   };
 
-  const financeScore = 75;
-  const totalBalance = totalNetWorth;
-  const accounts = [
-    { name: "Premium Plus", amount: totalInvestments * 0.6, type: "Investment", icon: 'card' as const, color: "#10b981" },
-    { name: "Cash Account", amount: totalInvestments * 0.4, type: "Savings", icon: 'wallet' as const, color: "#3b82f6" },
-  ];
-
-  const categoryBreakdown = expenses.reduce((acc, expense) => {
-    const existing = acc.find(c => c.name === expense.category);
-    if (existing) {
-      existing.amount += expense.amount;
-    } else {
-      acc.push({
-        name: expense.category,
-        amount: expense.amount,
-        color: ['#1E3A26', '#81C784', '#9C27B0', '#BDBDBD'][acc.length % 4]
-      });
+  // Calculate finance score based on real data
+  const calculateFinanceScore = () => {
+    let score = 50; // Base score
+    
+    // Income vs Expenses ratio (max 25 points)
+    if (totalIncome > 0) {
+      const savingsRate = ((totalIncome - totalExpenses) / totalIncome) * 100;
+      score += Math.min(25, savingsRate / 4);
     }
-    return acc;
-  }, [] as Array<{ name: string; amount: number; color: string }>).slice(0, 4);
+    
+    // Has investments (15 points)
+    if (investments.length > 0) score += 15;
+    
+    // Has goals (10 points)
+    if (goals.length > 0) score += 10;
+    
+    return Math.min(100, Math.max(0, Math.round(score)));
+  };
 
-  const cashflowData = [
-    { day: 'Mon', income: 4200, expense: 2400 },
-    { day: 'Tue', income: 3800, expense: 2200 },
-    { day: 'Wed', income: 5000, expense: 2800 },
-    { day: 'Thu', income: 4600, expense: 2600 },
-    { day: 'Fri', income: 5200, expense: 3000 },
-    { day: 'Sat', income: 3200, expense: 1800 },
-    { day: 'Sun', income: 2800, expense: 1500 },
-  ];
+  const financeScore = calculateFinanceScore();
+  const totalBalance = totalNetWorth;
+  
+  // Real accounts based on actual data
+  const accounts = [
+    { name: "Investments", amount: totalInvestments, type: "Investment", icon: 'card' as const, color: "#10b981" },
+    { name: "Cash Available", amount: cashAvailable, type: "Cash", icon: 'wallet' as const, color: "#3b82f6" },
+  ].filter(acc => acc.amount > 0);
 
-  const savingPlans = [
-    { name: "Emergency Fund", current: 8000, target: 20000, color: "#81C784" },
-    { name: "Retirement", current: 15000, target: 60000, color: "#9C27B0" },
-  ];
+  // Real category breakdown from expenses
+  const categoryBreakdown = expenses
+    .filter(e => e.type === "Expense")
+    .reduce((acc, expense) => {
+      const existing = acc.find(c => c.name === expense.category);
+      if (existing) {
+        existing.amount += expense.amount;
+      } else {
+        acc.push({
+          name: expense.category,
+          amount: expense.amount,
+          color: ['#1E3A26', '#81C784', '#9C27B0', '#BDBDBD'][acc.length % 4]
+        });
+      }
+      return acc;
+    }, [] as Array<{ name: string; amount: number; color: string }>)
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 4);
 
-  const monthlyIncome = 18000;
-  const monthlyExpenses = totalExpenses / 12;
+  // Real cashflow data from last 7 days
+  const getLast7DaysCashflow = () => {
+    const today = new Date();
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 6);
+    
+    const days = eachDayOfInterval({ start: sevenDaysAgo, end: today });
+    
+    return days.map(day => {
+      const dayStr = format(day, 'yyyy-MM-dd');
+      const dayExpenses = expenses.filter(e => 
+        e.type === "Expense" && e.date === dayStr
+      ).reduce((sum, e) => sum + e.amount, 0);
+      
+      const dayIncome = expenses.filter(e => 
+        e.type === "Income" && e.date === dayStr
+      ).reduce((sum, e) => sum + e.amount, 0);
+      
+      return {
+        day: format(day, 'EEE'),
+        income: dayIncome,
+        expense: dayExpenses
+      };
+    });
+  };
+
+  const cashflowData = getLast7DaysCashflow();
+
+  // Real saving plans from financial goals
+  const savingPlans = goals
+    .filter(g => g.goal_type === 'savings' || g.goal_type === 'emergency_fund')
+    .map(g => ({
+      name: g.title,
+      current: g.current_amount,
+      target: g.target_amount,
+      color: g.goal_type === 'emergency_fund' ? "#81C784" : "#9C27B0"
+    }));
+
+  // Real monthly calculations
+  const monthlyIncome = userProfile?.monthly_income || 0;
+  const now = new Date();
+  const monthStart = startOfMonth(now);
+  const currentMonthExpenses = expenses
+    .filter(e => e.type === "Expense" && new Date(e.date) >= monthStart)
+    .reduce((sum, e) => sum + e.amount, 0);
+  const monthlyExpenses = currentMonthExpenses;
   const monthlySavingsAmount = monthlyIncome - monthlyExpenses;
 
   return (
