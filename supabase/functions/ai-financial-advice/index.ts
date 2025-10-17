@@ -81,6 +81,27 @@ Focus on:
 2. Investment diversification strategy
 3. Goal achievement acceleration tips`;
 
+    // DETERMINISTIC PRE-CHECK: Crypto exposure risk
+    const messages: Array<{ role: string; content: string }> = [];
+    
+    // Calculate crypto exposure from categoryBreakdown
+    const portfolioEntries = Object.entries(categoryBreakdown);
+    const totalPortfolio = portfolioEntries.reduce((sum, [_, val]) => sum + val, 0);
+    const cryptoValue = portfolioEntries
+      .filter(([key]) => /btc|eth|crypto|bitcoin|ethereum/i.test(key))
+      .reduce((sum, [_, val]) => sum + val, 0);
+    const cryptoPerc = totalPortfolio === 0 ? 0 : Math.round((cryptoValue / totalPortfolio) * 100);
+
+    if (cryptoPerc >= 50) {
+      messages.push({
+        role: "system",
+        content: `DETERMINISTIC RULE: User's crypto exposure is ${cryptoPerc}%. This MUST be classified as HIGH RISK. You must advise portfolio diversification and warn about volatility.`
+      });
+    }
+
+    messages.push({ role: "system", content: systemPrompt });
+    messages.push({ role: "user", content: "Generate 3 financial advice cards for me" });
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -89,10 +110,7 @@ Focus on:
       },
       body: JSON.stringify({
         model: "gpt-4o",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: "Generate 3 financial advice cards for me" },
-        ],
+        messages,
         temperature: 0.2,
         max_tokens: 1000,
       }),

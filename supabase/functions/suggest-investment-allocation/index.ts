@@ -91,6 +91,28 @@ Return JSON format:
 
     console.log('Calling OpenAI GPT-4o for allocation suggestion...');
 
+    // DETERMINISTIC PRE-CHECK: Crypto exposure risk
+    const messages: Array<{ role: string; content: string }> = [];
+    
+    const cryptoAllocation = Object.entries(currentAllocation).filter(([type]) => 
+      /btc|eth|crypto|bitcoin|ethereum|coin|token/i.test(type)
+    ).reduce((sum, [_, val]) => sum + (val as number), 0);
+    
+    const cryptoPerc = totalPortfolio === 0 ? 0 : Math.round((cryptoAllocation / totalPortfolio) * 100);
+
+    if (cryptoPerc >= 50) {
+      messages.push({
+        role: "system",
+        content: `DETERMINISTIC RULE: Current portfolio has ${cryptoPerc}% crypto exposure. This is HIGH RISK. You MUST recommend reducing crypto allocation below 20% and diversifying into safer assets (ETFs, bonds, index funds).`
+      });
+    }
+
+    messages.push({ 
+      role: 'system', 
+      content: 'You are a certified financial advisor. Always respond with valid JSON. This is informational only, not financial advice.' 
+    });
+    messages.push({ role: 'user', content: prompt });
+
     // Call OpenAI API
     const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -100,10 +122,7 @@ Return JSON format:
       },
       body: JSON.stringify({
         model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: 'You are a certified financial advisor. Always respond with valid JSON. This is informational only, not financial advice.' },
-          { role: 'user', content: prompt }
-        ],
+        messages,
         temperature: 0.2,
         max_tokens: 1500,
       }),
