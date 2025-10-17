@@ -93,6 +93,8 @@ Focus on:
           { role: "system", content: systemPrompt },
           { role: "user", content: "Generate 3 financial advice cards for me" },
         ],
+        temperature: 0.2,
+        max_tokens: 1000,
       }),
     });
 

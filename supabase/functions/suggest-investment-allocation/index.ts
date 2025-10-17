@@ -104,6 +104,8 @@ Return JSON format:
           { role: 'system', content: 'You are a certified financial advisor. Always respond with valid JSON. This is informational only, not financial advice.' },
           { role: 'user', content: prompt }
         ],
+        temperature: 0.2,
+        max_tokens: 1500,
       }),
     });
 

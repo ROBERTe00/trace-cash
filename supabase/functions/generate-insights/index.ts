@@ -138,6 +138,8 @@ Be specific, use actual numbers from the data, and make insights actionable.`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Analyze this financial data and provide insights:\n${financialContext}` },
         ],
+        temperature: 0.2,
+        max_tokens: 1200,
       }),
     });
 

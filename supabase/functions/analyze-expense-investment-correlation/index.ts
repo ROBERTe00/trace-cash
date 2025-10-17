@@ -128,6 +128,8 @@ Return JSON format:
           { role: 'system', content: 'You are a financial analyst. Always respond with valid JSON.' },
           { role: 'user', content: prompt }
         ],
+        temperature: 0.2,
+        max_tokens: 1500,
       }),
     });
 

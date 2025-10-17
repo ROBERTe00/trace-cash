@@ -59,6 +59,8 @@ serve(async (req) => {
                 content: `Title: "${article.title}". Description: "${article.description || 'No description'}"`
               }
             ],
+            temperature: 0.1,
+            max_tokens: 10,
           }),
         });
 
