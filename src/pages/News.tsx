@@ -33,17 +33,38 @@ export default function News() {
   const fetchNews = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("fetch-filtered-news", {
-        body: { category: "finance" },
-      });
+      const { data, error } = await supabase.functions.invoke("fetch-filtered-news");
 
-      if (error) throw error;
+      if (error) {
+        console.error("Edge function error:", error);
+        throw error;
+      }
 
-      setArticles(data?.articles || []);
+      console.log("News data received:", data);
+      
+      // The edge function returns { news: [...] }
+      const newsArticles = data?.news || [];
+      
+      // Transform to match our interface
+      const transformedArticles: NewsArticle[] = newsArticles.map((article: any) => ({
+        title: article.title,
+        description: article.description,
+        url: article.url,
+        source: article.source?.name || "Unknown",
+        publishedAt: article.publishedAt,
+        impact_score: article.impactScore,
+      }));
+
+      console.log("Transformed articles:", transformedArticles);
+      setArticles(transformedArticles);
       setLastUpdate(new Date());
+      
+      if (transformedArticles.length === 0) {
+        toast.info("No high-impact news at the moment");
+      }
     } catch (error) {
       console.error("Failed to fetch news:", error);
-      toast.error("Failed to load news");
+      toast.error("Failed to load news. Please try again later.");
     } finally {
       setLoading(false);
     }

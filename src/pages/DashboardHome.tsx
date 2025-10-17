@@ -21,7 +21,6 @@ import SavingPlansCard from "@/components/SavingPlansCard";
 import { FinancialGoals } from "@/components/FinancialGoals";
 import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { LoadingDashboard } from "@/components/LoadingDashboard";
-import { NewsSection } from "@/components/NewsSection";
 import { useApp } from "@/contexts/AppContext";
 import { startOfMonth, eachDayOfInterval, format } from "date-fns";
 
@@ -311,8 +310,6 @@ export default function DashboardHome() {
         </div>
 
         <FinancialGoals />
-
-        <NewsSection />
 
         <Dialog open={showSuggestionDialog} onOpenChange={setShowSuggestionDialog}>
           <DialogContent>
