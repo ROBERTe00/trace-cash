@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowUp, ArrowDown, LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { AIInsightTooltip } from "@/components/AIInsightTooltip";
 
 interface StatCardProps {
   icon: LucideIcon;
@@ -45,7 +46,20 @@ const StatCard = ({ icon: Icon, label, value, change, changeType, delay = 0 }: S
           </div>
           
           <div className="space-y-1 min-w-0">
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider truncate">{label}</p>
+            <div className="flex items-center gap-1">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider truncate">{label}</p>
+              <AIInsightTooltip 
+                content={
+                  label === "Monthly Income" 
+                    ? "Total income received this month. Track all sources to understand your cash flow." 
+                    : label === "Monthly Expenses" 
+                    ? "Total spending this month. Monitor this closely to stay within budget." 
+                    : label === "Monthly Savings" 
+                    ? "Income minus expenses. Aim for at least 20% of your income."
+                    : "Total value of your investment portfolio. Diversification is key."
+                }
+              />
+            </div>
             <motion.p
               className="text-small-number break-words"
               initial={{ scale: 0 }}

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
+import { AIInsightModal } from "@/components/AIInsightModal";
 
 interface FinanceScoreCardProps {
   score: number;
@@ -27,7 +28,24 @@ const FinanceScoreCard = ({ score }: FinanceScoreCardProps) => {
       <Card className="h-full border-none shadow-lg hover:shadow-2xl transition-all duration-300 rounded-3xl bg-card overflow-hidden">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold text-muted-foreground">Finance Score</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base font-semibold text-muted-foreground">Finance Score</CardTitle>
+              <AIInsightModal
+                title="Finance Health Score"
+                metric="Your overall financial health rating"
+                value={`${score}%`}
+                explanation="The Finance Health Score measures your overall financial wellness based on multiple factors including income stability, savings rate, investment diversification, and goal achievement."
+                calculation="Score = (Income-Expense Ratio × 25) + (Has Investments × 15) + (Has Goals × 10) + Base(50)"
+                suggestions={[
+                  `Your score is ${label.toLowerCase()}. ${score < 50 ? 'Focus on reducing expenses and building an emergency fund.' : score < 75 ? 'Great progress! Consider increasing your investment allocation.' : 'Excellent! Keep maintaining your healthy financial habits.'}`,
+                  "Track all expenses to identify saving opportunities",
+                  "Set up automatic transfers to savings accounts",
+                  "Diversify investments across different asset classes",
+                  "Review and adjust financial goals quarterly"
+                ]}
+                improvement={score < 75 ? "Increasing your savings rate by just 5% can significantly improve your score over time." : "Maintain your current habits and consider consulting a financial advisor for advanced optimization."}
+              />
+            </div>
             <TrendingUp className="icon-card text-primary" />
           </div>
         </CardHeader>

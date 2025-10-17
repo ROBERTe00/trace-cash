@@ -21,6 +21,7 @@ import SavingPlansCard from "@/components/SavingPlansCard";
 import { FinancialGoals } from "@/components/FinancialGoals";
 import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { LoadingDashboard } from "@/components/LoadingDashboard";
+import { NewsSection } from "@/components/NewsSection";
 import { useApp } from "@/contexts/AppContext";
 import { startOfMonth, eachDayOfInterval, format } from "date-fns";
 
@@ -218,7 +219,7 @@ export default function DashboardHome() {
 
   return (
     <TooltipProvider>
-      <div className="space-y-6 p-4 md:p-8 max-w-[1600px] mx-auto w-full min-h-screen">
+      <div className="space-y-6 p-4 md:p-8 max-w-[1600px] mx-auto w-full">
         {showWelcome && <WelcomeBanner />}
         
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between min-w-0">
@@ -310,6 +311,8 @@ export default function DashboardHome() {
         </div>
 
         <FinancialGoals />
+
+        <NewsSection />
 
         <Dialog open={showSuggestionDialog} onOpenChange={setShowSuggestionDialog}>
           <DialogContent>

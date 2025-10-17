@@ -14,9 +14,16 @@ export function WelcomeStep({ data, setData }: WelcomeStepProps) {
   const [aiInsight, setAiInsight] = useState<string>("");
   const [loadingInsight, setLoadingInsight] = useState(false);
 
+  // Initialize monthlyIncome if not set
+  useEffect(() => {
+    if (data.monthlyIncome === 0 || !data.monthlyIncome) {
+      setData({ ...data, monthlyIncome: 1000, savingsGoal: 500 });
+    }
+  }, []);
+
   useEffect(() => {
     const fetchAiInsight = async () => {
-      if (data.savingsGoal > 0 && data.monthlyIncome > 0) {
+      if (data.savingsGoal >= 500 && data.monthlyIncome >= 500) {
         setLoadingInsight(true);
         try {
           const { data: insightData, error } = await supabase.functions.invoke('onboarding-ai-insights', {
@@ -64,24 +71,45 @@ export function WelcomeStep({ data, setData }: WelcomeStepProps) {
         <p className="text-muted-foreground">Set a realistic target to track your progress</p>
       </div>
 
-      <div className="space-y-4">
-        <div className="text-center">
-          <span className="metric-text text-4xl">€{data.savingsGoal.toLocaleString()}</span>
-          <span className="text-muted-foreground ml-2">/month</span>
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Monthly Income</label>
+          <div className="text-center">
+            <span className="metric-text text-3xl">€{data.monthlyIncome.toLocaleString()}</span>
+            <span className="text-muted-foreground ml-2">/month</span>
+          </div>
+          <Slider
+            value={[data.monthlyIncome]}
+            onValueChange={([value]) => setData({ ...data, monthlyIncome: value })}
+            min={500}
+            max={30000}
+            step={500}
+            className="w-full"
+          />
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span>€500</span>
+            <span>€30,000</span>
+          </div>
         </div>
-        
-        <Slider
-          value={[data.savingsGoal]}
-          onValueChange={([value]) => setData({ ...data, savingsGoal: value })}
-          min={500}
-          max={20000}
-          step={500}
-          className="w-full"
-        />
 
-        <div className="flex justify-between text-sm text-muted-foreground">
-          <span>€500</span>
-          <span>€20,000</span>
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Savings Goal</label>
+          <div className="text-center">
+            <span className="metric-text text-3xl">€{data.savingsGoal.toLocaleString()}</span>
+            <span className="text-muted-foreground ml-2">/month</span>
+          </div>
+          <Slider
+            value={[data.savingsGoal]}
+            onValueChange={([value]) => setData({ ...data, savingsGoal: value })}
+            min={500}
+            max={20000}
+            step={500}
+            className="w-full"
+          />
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span>€500</span>
+            <span>€20,000</span>
+          </div>
         </div>
       </div>
 
