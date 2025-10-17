@@ -55,8 +55,8 @@ export const Layout = () => {
         </div>
 
         <main className="flex-1 w-full min-w-0 overflow-x-hidden pb-24 md:pb-0 md:ml-14 flex flex-col h-screen">
-          <div className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl supports-[backdrop-filter]:bg-card/60 border-b px-4 py-3 shadow-sm flex-shrink-0">
-            <div className="flex items-center justify-between max-w-7xl mx-auto">
+          <div className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl supports-[backdrop-filter]:bg-card/60 border-b px-2 sm:px-4 py-2 sm:py-3 shadow-sm flex-shrink-0">
+            <div className="flex items-center justify-between w-full">
               <GlobalSearch />
               <div className="flex items-center gap-2">
                 <ThemeSwitcher />
@@ -64,7 +64,7 @@ export const Layout = () => {
               </div>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 max-w-7xl mx-auto w-full pb-safe">
+          <div className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 w-full pb-safe">
             <PWAInstallPrompt />
             <PWAOfflineIndicator />
             <PWAUpdateNotification />

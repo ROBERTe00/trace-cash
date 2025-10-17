@@ -219,21 +219,18 @@ export default function Insights() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in min-h-screen w-full max-w-7xl mx-auto">
-      {/* Hero */}
+    <div className="space-y-4 sm:space-y-6 animate-fade-in pb-safe w-full">
       <InsightsHero
         score={healthScore}
         trend={getTrend()}
         summary={getSummary()}
       />
 
-      {/* Prioritized Alerts & Insights */}
       <AlertsPrioritized insights={insights} />
 
-      {/* Progress Tracking */}
       <div className="space-y-3">
         <h3 className="text-lg font-semibold">Financial Progress</h3>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <div className="lg:col-span-2">
             <NetWorthTracker expenses={expenses as any} investments={investments as any} />
           </div>
@@ -241,7 +238,6 @@ export default function Insights() {
         </div>
       </div>
 
-      {/* Recurring Expenses */}
       <RecurringExpenses expenses={expenses as any} />
     </div>
   );

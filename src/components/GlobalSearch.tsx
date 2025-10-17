@@ -109,9 +109,19 @@ export function GlobalSearch() {
 
   return (
     <>
+      {/* Mobile: Solo Icona */}
       <button
         onClick={() => setOpen(true)}
-        className="relative flex items-center gap-2 w-full max-w-sm px-3 py-2 text-sm text-muted-foreground bg-background border rounded-md hover:bg-accent transition-colors"
+        className="md:hidden p-2 rounded-md hover:bg-accent transition-colors"
+        aria-label="Search"
+      >
+        <Search className="h-5 w-5" />
+      </button>
+
+      {/* Desktop: Search Bar Completa */}
+      <button
+        onClick={() => setOpen(true)}
+        className="hidden md:flex items-center gap-2 w-full max-w-sm px-3 py-2 text-sm text-muted-foreground bg-background border rounded-md hover:bg-accent transition-colors relative"
       >
         <Search className="h-4 w-4" />
         <span>Search transactions...</span>

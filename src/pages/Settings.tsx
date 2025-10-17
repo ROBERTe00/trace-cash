@@ -63,17 +63,17 @@ export default function Settings() {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto animate-fade-in pb-safe overflow-y-auto">
+    <div className="space-y-4 sm:space-y-6 animate-fade-in pb-safe overflow-y-auto w-full">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-background border border-primary/20 p-8">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-background border border-primary/20 p-4 sm:p-6 md:p-8">
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
             <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center">
               <SettingsIcon className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-section">{t("settings")}</h1>
-              <p className="text-muted-foreground mt-1">{t("managePreferences")}</p>
+              <h1 className="text-2xl sm:text-3xl lg:text-section">{t("settings")}</h1>
+              <p className="text-muted-foreground text-sm sm:text-base mt-1">{t("managePreferences")}</p>
             </div>
           </div>
         </div>
@@ -81,58 +81,60 @@ export default function Settings() {
       </div>
 
       {/* Tabs Layout */}
-      <Tabs defaultValue="appearance" className="space-y-6">
-        <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl overflow-x-auto">
-          <TabsTrigger 
-            value="appearance" 
-            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5"
-          >
-            <div className="flex items-center gap-2">
-              <Palette className="icon-button" />
-              {t("settings.appearance")}
-            </div>
-          </TabsTrigger>
+      <Tabs defaultValue="appearance" className="space-y-4 sm:space-y-6">
+        <div className="overflow-x-auto pb-2">
+          <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl min-w-min">
+            <TabsTrigger 
+              value="appearance" 
+              className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 sm:px-6 py-2.5 whitespace-nowrap"
+            >
+              <div className="flex items-center gap-2">
+                <Palette className="icon-button" />
+                <span className="hidden sm:inline">{t("settings.appearance")}</span>
+              </div>
+            </TabsTrigger>
           
-          <TabsTrigger 
-            value="gamification" 
-            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5"
-          >
-            <div className="flex items-center gap-2">
-              <Trophy className="icon-button" />
-              Progress
-            </div>
-          </TabsTrigger>
-          
-          <TabsTrigger 
-            value="security" 
-            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5"
-          >
-            <div className="flex items-center gap-2">
-              <Shield className="icon-button" />
-              {t("settings.security")}
-            </div>
-          </TabsTrigger>
-          
-          <TabsTrigger 
-            value="data" 
-            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5"
-          >
-            <div className="flex items-center gap-2">
-              <Database className="icon-button" />
-              {t("settings.data")}
-            </div>
-          </TabsTrigger>
-          
-          <TabsTrigger 
-            value="offline" 
-            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5"
-          >
-            <div className="flex items-center gap-2">
-              <WifiOff className="icon-button" />
-              {t("settings.offline")}
-            </div>
-          </TabsTrigger>
-        </TabsList>
+            <TabsTrigger 
+              value="gamification" 
+              className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 sm:px-6 py-2.5 whitespace-nowrap"
+            >
+              <div className="flex items-center gap-2">
+                <Trophy className="icon-button" />
+                <span className="hidden sm:inline">Progress</span>
+              </div>
+            </TabsTrigger>
+            
+            <TabsTrigger 
+              value="security" 
+              className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 sm:px-6 py-2.5 whitespace-nowrap"
+            >
+              <div className="flex items-center gap-2">
+                <Shield className="icon-button" />
+                <span className="hidden sm:inline">{t("settings.security")}</span>
+              </div>
+            </TabsTrigger>
+            
+            <TabsTrigger 
+              value="data" 
+              className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 sm:px-6 py-2.5 whitespace-nowrap"
+            >
+              <div className="flex items-center gap-2">
+                <Database className="icon-button" />
+                <span className="hidden sm:inline">{t("settings.data")}</span>
+              </div>
+            </TabsTrigger>
+            
+            <TabsTrigger 
+              value="offline" 
+              className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 sm:px-6 py-2.5 whitespace-nowrap"
+            >
+              <div className="flex items-center gap-2">
+                <WifiOff className="icon-button" />
+                <span className="hidden sm:inline">{t("settings.offline")}</span>
+              </div>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Appearance Tab */}
         <TabsContent value="appearance" className="space-y-6">

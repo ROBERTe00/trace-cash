@@ -23,17 +23,17 @@ export default function Transactions() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in w-full max-w-7xl mx-auto pb-safe">
+    <div className="space-y-4 sm:space-y-6 animate-fade-in pb-safe w-full">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-background border border-primary/20 p-6">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-background border border-primary/20 p-4 sm:p-6">
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
             <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center">
               <Wallet className="icon-card text-primary" />
             </div>
             <div>
-              <h1 className="text-section">Transazioni</h1>
-              <p className="text-sm text-muted-foreground">Gestisci entrate e uscite</p>
+              <h1 className="text-2xl sm:text-3xl lg:text-section">Transazioni</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">Gestisci entrate e uscite</p>
             </div>
           </div>
         </div>
@@ -42,20 +42,22 @@ export default function Transactions() {
 
       {/* Simplified Tabs: 3 instead of 5 */}
       <Tabs defaultValue="transactions" className="space-y-4">
-        <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl">
-          <TabsTrigger value="transactions" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
-            <Wallet className="icon-button" />
-            <span className="hidden sm:inline">Transazioni</span>
-          </TabsTrigger>
-          <TabsTrigger value="analysis" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
-            <BarChart3 className="icon-button" />
-            <span className="hidden sm:inline">Analisi</span>
-          </TabsTrigger>
-          <TabsTrigger value="import" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2">
-            <Upload className="icon-button" />
-            <span className="hidden sm:inline">Importa</span>
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto pb-2">
+          <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl min-w-min">
+            <TabsTrigger value="transactions" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2 whitespace-nowrap">
+              <Wallet className="icon-button" />
+              <span className="hidden sm:inline">Transazioni</span>
+            </TabsTrigger>
+            <TabsTrigger value="analysis" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2 whitespace-nowrap">
+              <BarChart3 className="icon-button" />
+              <span className="hidden sm:inline">Analisi</span>
+            </TabsTrigger>
+            <TabsTrigger value="import" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2 whitespace-nowrap">
+              <Upload className="icon-button" />
+              <span className="hidden sm:inline">Importa</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* TAB 1: Transactions - 2-column layout on desktop */}
         <TabsContent value="transactions" className="space-y-4">
@@ -79,7 +81,7 @@ export default function Transactions() {
 
         {/* TAB 3: Import - Clean, focused layout */}
         <TabsContent value="import" className="space-y-4">
-          <Card className="glass-card p-6">
+          <Card className="glass-card p-4 sm:p-6">
             <h3 className="text-card-title mb-4 flex items-center gap-2">
               <Upload className="icon-card text-primary" />
               Importa Transazioni

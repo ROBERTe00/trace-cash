@@ -218,18 +218,18 @@ export default function DashboardHome() {
 
   return (
     <TooltipProvider>
-      <div className="space-y-6 p-4 md:p-8 max-w-[1600px] mx-auto w-full">
+      <div className="space-y-4 sm:space-y-6 w-full">
         {showWelcome && <WelcomeBanner />}
         
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between min-w-0">
           <div className="min-w-0 flex-1">
-            <h1 className="text-section font-extrabold tracking-tight mb-2 break-words">
+            <h1 className="text-2xl sm:text-3xl lg:text-section font-extrabold tracking-tight mb-2 break-words">
               Dashboard
             </h1>
-            <p className="text-muted-foreground text-base truncate">Your complete financial overview</p>
+            <p className="text-muted-foreground text-sm sm:text-base truncate">Your complete financial overview</p>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button 
               variant="outline" 
               size="sm"
@@ -261,13 +261,13 @@ export default function DashboardHome() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           <FinanceScoreCard score={financeScore} />
           <BalanceCard totalBalance={totalBalance} accounts={accounts} />
           <ExpenseBreakdownCard categories={categoryBreakdown} totalExpenses={totalExpenses} />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <StatCard
             icon={DollarSign}
             label="Monthly Income"
@@ -302,7 +302,7 @@ export default function DashboardHome() {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <div className="lg:col-span-2">
             <CashflowCard data={cashflowData} />
           </div>

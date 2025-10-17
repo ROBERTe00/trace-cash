@@ -200,7 +200,7 @@ export default function Investments() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in min-h-screen w-full max-w-7xl mx-auto pb-safe">
+    <div className="space-y-4 sm:space-y-6 animate-fade-in pb-safe w-full">
       {/* Hero Section with New Design */}
       <InvestmentHero
         totalValue={totalValue}
@@ -221,32 +221,34 @@ export default function Investments() {
       />
 
       {/* 3 Tabs: Portfolio, Performance, Import */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl">
-          <TabsTrigger 
-            value="portfolio" 
-            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5 gap-2"
-          >
-            <PieChart className="icon-button" />
-            Portfolio
-          </TabsTrigger>
-          <TabsTrigger 
-            value="performance" 
-            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5 gap-2"
-          >
-            <BarChart3 className="icon-button" />
-            Performance
-          </TabsTrigger>
-          <TabsTrigger 
-            value="import" 
-            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 py-2.5 gap-2"
-          >
-            <UploadIcon className="icon-button" />
-            Import
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+        <div className="overflow-x-auto pb-2">
+          <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl min-w-min">
+            <TabsTrigger 
+              value="portfolio" 
+              className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 sm:px-6 py-2.5 gap-2 whitespace-nowrap"
+            >
+              <PieChart className="icon-button" />
+              <span className="hidden sm:inline">Portfolio</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="performance" 
+              className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 sm:px-6 py-2.5 gap-2 whitespace-nowrap"
+            >
+              <BarChart3 className="icon-button" />
+              <span className="hidden sm:inline">Performance</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="import" 
+              className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 sm:px-6 py-2.5 gap-2 whitespace-nowrap"
+            >
+              <UploadIcon className="icon-button" />
+              <span className="hidden sm:inline">Import</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="portfolio" className="space-y-6">
+        <TabsContent value="portfolio" className="space-y-4 sm:space-y-6">
           {investmentTypes.length > 1 && (
             <div className="flex gap-2 flex-wrap">
               <Button
@@ -277,34 +279,32 @@ export default function Investments() {
           />
         </TabsContent>
 
-        <TabsContent value="performance" className="space-y-6 pb-24">
+        <TabsContent value="performance" className="space-y-4 sm:space-y-6">
           {investments.length === 0 ? (
-            <Card className="glass-card p-8 text-center">
+            <Card className="glass-card p-6 sm:p-8 text-center">
               <div className="max-w-md mx-auto space-y-4">
                 <div className="p-4 rounded-full bg-primary/10 w-16 h-16 mx-auto flex items-center justify-center">
                   <BarChart3 className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-xl font-semibold">No Performance Data Yet</h3>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground text-sm sm:text-base">
                   Add your first investment to see detailed performance metrics, risk analysis, and future projections.
                 </p>
-                <Button onClick={() => setSheetOpen(true)} className="mt-4">
+                <Button onClick={() => setSheetOpen(true)} className="mt-4 w-full sm:w-auto">
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Add Your First Investment
                 </Button>
               </div>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
-              {/* LEFT: Metrics (sempre visibile per prima su mobile) */}
-              <div className="space-y-6 order-1">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+              <div className="space-y-4 sm:space-y-6 order-1">
                 <PortfolioMetricsPanel investments={investments} />
               </div>
               
-              {/* RIGHT: Simulator (secondo su mobile) */}
               <div className="order-2">
                 <Card className="glass-card">
-                  <div className="p-6">
+                  <div className="p-4 sm:p-6">
                     <InvestmentScenarioSimulator />
                   </div>
                 </Card>
@@ -313,7 +313,7 @@ export default function Investments() {
           )}
         </TabsContent>
 
-        <TabsContent value="import" className="space-y-6">
+        <TabsContent value="import" className="space-y-4 sm:space-y-6">
           <BrokerIntegration />
         </TabsContent>
       </Tabs>
