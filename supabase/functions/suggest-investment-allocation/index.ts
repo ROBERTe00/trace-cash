@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { evaluatePortfolioRules, formatRulesForAI } from '../_shared/ruleEngine.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -100,6 +101,25 @@ Return JSON format:
     
     const cryptoPerc = totalPortfolio === 0 ? 0 : Math.round((cryptoAllocation / totalPortfolio) * 100);
 
+    // Run deterministic rule engine BEFORE AI
+    const portfolioData = {
+      crypto_allocation: cryptoPerc,
+      bonds_allocation: 0, // Calculate from currentAllocation if bonds exist
+      cash_balance: 0, // Calculate from profile or assets
+      equities_allocation: 100 - cryptoPerc,
+      assets: investments?.map(inv => ({
+        name: inv.name,
+        weight: totalPortfolio > 0 ? ((parseFloat(inv.current_price) * parseFloat(inv.quantity)) / totalPortfolio) * 100 : 0,
+        value: parseFloat(inv.current_price) * parseFloat(inv.quantity),
+        type: inv.type
+      })) || []
+    };
+    
+    const ruleResult = evaluatePortfolioRules(portfolioData);
+    const rulesPrompt = formatRulesForAI(ruleResult);
+    
+    console.log('Rule Engine Result:', JSON.stringify(ruleResult, null, 2));
+
     if (cryptoPerc >= 50) {
       messages.push({
         role: "system",
@@ -107,11 +127,14 @@ Return JSON format:
       });
     }
 
+    // Prepend rule engine results to AI prompt
+    const enhancedPrompt = rulesPrompt + prompt;
+
     messages.push({ 
       role: 'system', 
       content: 'You are a certified financial advisor. Always respond with valid JSON. This is informational only, not financial advice.' 
     });
-    messages.push({ role: 'user', content: prompt });
+    messages.push({ role: 'user', content: enhancedPrompt });
 
     // Deterministic temperature for investment advice
     const temperature = 0.15;
@@ -181,16 +204,16 @@ Return JSON format:
       };
     }
 
-    // Log to ai_audit_logs
+    // Log to ai_audit_logs with rule engine results
     try {
       await supabase.from('ai_audit_logs').insert({
         user_id: user.id,
         feature: 'investment_allocation',
         ai_model: 'gpt-4o',
         temperature,
-        input_prompt: prompt,
+        input_prompt: `RULE ENGINE: ${JSON.stringify(ruleResult)}\n\nPROMPT: ${prompt}`,
         ai_raw_response: aiContent,
-        ui_summary: JSON.stringify(suggestion),
+        ui_summary: JSON.stringify({ ...suggestion, rule_engine: ruleResult }),
         latency_ms: latency,
         success: true
       });

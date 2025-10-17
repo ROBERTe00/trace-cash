@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { evaluatePortfolioRules, formatRulesForAI } from '../_shared/ruleEngine.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -93,6 +94,25 @@ Focus on:
       .reduce((sum, [_, val]) => sum + val, 0);
     const cryptoPerc = totalPortfolio === 0 ? 0 : Math.round((cryptoValue / totalPortfolio) * 100);
 
+    // Run deterministic rule engine BEFORE AI
+    const portfolioData = {
+      crypto_allocation: cryptoPerc,
+      bonds_allocation: 0,
+      cash_balance: 0,
+      equities_allocation: 100 - cryptoPerc,
+      assets: portfolioEntries.map(([key, val]) => ({
+        name: key,
+        weight: totalPortfolio > 0 ? (val / totalPortfolio) * 100 : 0,
+        value: val,
+        type: key
+      }))
+    };
+    
+    const ruleResult = evaluatePortfolioRules(portfolioData);
+    const rulesPrompt = formatRulesForAI(ruleResult);
+    
+    console.log('Rule Engine Result:', JSON.stringify(ruleResult, null, 2));
+
     if (cryptoPerc >= 50) {
       messages.push({
         role: "system",
@@ -100,7 +120,10 @@ Focus on:
       });
     }
 
-    messages.push({ role: "system", content: systemPrompt });
+    // Prepend rule engine results to system prompt
+    const enhancedSystemPrompt = rulesPrompt + systemPrompt;
+
+    messages.push({ role: "system", content: enhancedSystemPrompt });
     messages.push({ role: "user", content: "Generate 3 financial advice cards for me" });
 
     // Deterministic temperature for financial analysis
@@ -165,9 +188,9 @@ Focus on:
           feature: 'financial_advice',
           ai_model: 'gpt-4o',
           temperature,
-          input_prompt: systemPrompt,
+          input_prompt: `RULE ENGINE: ${JSON.stringify(ruleResult)}\n\nPROMPT: ${systemPrompt}`,
           ai_raw_response: advice,
-          ui_summary: advice,
+          ui_summary: JSON.stringify({ advice, rule_engine: ruleResult }),
           latency_ms: latency,
           success: true
         });

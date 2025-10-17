@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
+import { evaluatePortfolioRules, formatRulesForAI } from '../_shared/ruleEngine.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -128,6 +129,25 @@ Return JSON format:
     
     const cryptoPerc = portfolioValue === 0 ? 0 : Math.round((cryptoValue / portfolioValue) * 100);
 
+    // Run deterministic rule engine BEFORE AI
+    const portfolioData = {
+      crypto_allocation: cryptoPerc,
+      bonds_allocation: 0, // Calculate if you have bond data
+      cash_balance: 0, // Calculate from cash reserves
+      equities_allocation: 100 - cryptoPerc,
+      assets: investments?.map(inv => ({
+        name: inv.name,
+        weight: portfolioValue > 0 ? (parseFloat(inv.current_price) * parseFloat(inv.quantity) / portfolioValue) * 100 : 0,
+        value: parseFloat(inv.current_price) * parseFloat(inv.quantity),
+        type: inv.type
+      })) || []
+    };
+    
+    const ruleResult = evaluatePortfolioRules(portfolioData);
+    const rulesPrompt = formatRulesForAI(ruleResult);
+    
+    console.log('Rule Engine Result:', JSON.stringify(ruleResult, null, 2));
+
     if (cryptoPerc >= 50) {
       messages.push({
         role: "system",
@@ -135,8 +155,11 @@ Return JSON format:
       });
     }
 
+    // Prepend rule engine results to AI prompt
+    const enhancedPrompt = rulesPrompt + prompt;
+
     messages.push({ role: 'system', content: 'You are a financial analyst. Always respond with valid JSON.' });
-    messages.push({ role: 'user', content: prompt });
+    messages.push({ role: 'user', content: enhancedPrompt });
 
     // Deterministic temperature for finance/investment analysis
     const temperature = 0.15;
@@ -194,16 +217,16 @@ Return JSON format:
       };
     }
 
-    // Log to ai_audit_logs
+    // Log to ai_audit_logs with rule engine results
     try {
       await supabase.from('ai_audit_logs').insert({
         user_id: user.id,
         feature: 'expense_investment_correlation',
         ai_model: 'gpt-4o',
         temperature,
-        input_prompt: prompt,
+        input_prompt: `RULE ENGINE: ${JSON.stringify(ruleResult)}\n\nPROMPT: ${prompt}`,
         ai_raw_response: aiContent,
-        ui_summary: JSON.stringify(analysis),
+        ui_summary: JSON.stringify({ ...analysis, rule_engine: ruleResult }),
         latency_ms: latency,
         success: true
       });
