@@ -14,61 +14,20 @@ const PRECACHE_URLS = [
 // Install event - precache essential files and skip waiting
 self.addEventListener('install', (event) => {
   console.log('[SW] Installing service worker version:', CACHE_VERSION);
-  
+  self.skipWaiting();
   event.waitUntil(
-    (async () => {
-      // Delete ALL old caches immediately on install
-      const cacheNames = await caches.keys();
-      await Promise.all(
-        cacheNames.map(cacheName => {
-          console.log('[SW] Hard invalidation - deleting cache:', cacheName);
-          return caches.delete(cacheName);
-        })
-      );
-      
-      // Then precache fresh files
-      const cache = await caches.open(CACHE_NAME);
-      console.log('[SW] Precaching essential files');
-      await cache.addAll(PRECACHE_URLS);
-      
-      console.log('[SW] Calling skipWaiting to activate immediately');
-      return self.skipWaiting();
-    })()
+    caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE_URLS))
   );
 });
 
 // Activate event - clean up old caches and take control immediately
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating service worker version:', CACHE_VERSION);
-  
-  event.waitUntil(
-    caches.keys()
-      .then(cacheNames => {
-        return Promise.all(
-          cacheNames.map(cacheName => {
-            if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
-              console.log('[SW] Deleting old cache:', cacheName);
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      })
-      .then(() => {
-        console.log('[SW] Claiming clients to take control immediately');
-        return self.clients.claim();
-      })
-      .then(() => {
-        // Notify all clients that new version is active (NO force reload)
-        return self.clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            client.postMessage({
-              type: 'SW_ACTIVATED',
-              version: CACHE_VERSION
-            });
-          });
-        });
-      })
-  );
+  console.log('[SW] Activating service worker...');
+  event.waitUntil((async () => {
+    await self.clients.claim();
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(k => !k.includes(CACHE_VERSION)).map(k => caches.delete(k)));
+  })());
 });
 
 // Fetch event with network-first for core files, cache-first for assets

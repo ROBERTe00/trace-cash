@@ -73,6 +73,20 @@ export const registerServiceWorker = async (): Promise<ServiceWorkerRegistration
         }
       });
       
+      // Update handshake: handle waiting worker
+      if (registration.waiting) {
+        console.log('[PWA] New worker waiting, triggering SKIP_WAITING');
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        
+        registration.waiting.addEventListener('statechange', (e) => {
+          const worker = e.target as ServiceWorker;
+          if (worker.state === 'activated') {
+            console.log('[PWA] New worker activated, reloading page');
+            window.location.reload();
+          }
+        });
+      }
+      
       return registration;
     } catch (error) {
       console.error('[PWA] Service Worker registration failed:', error);
