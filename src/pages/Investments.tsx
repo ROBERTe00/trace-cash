@@ -9,7 +9,7 @@ import { InvestmentHero } from "@/components/InvestmentHero";
 import { Investment } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, PieChart, BarChart3, Calculator, Upload as UploadIcon } from "lucide-react";
+import { Plus, PieChart, BarChart3, Calculator, Upload as UploadIcon, PlusCircle } from "lucide-react";
 import { exportInvestmentReport, exportInvestmentCSV } from "@/lib/investmentExport";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -277,25 +277,40 @@ export default function Investments() {
           />
         </TabsContent>
 
-        <TabsContent value="performance" className="space-y-6">
-          {/* Desktop: 2 columns, Mobile: 1 column */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* LEFT COLUMN: Metrics */}
-            <div className="space-y-6">
-              <PortfolioMetricsPanel investments={investments} />
-            </div>
-            
-            {/* RIGHT COLUMN: Simulator */}
-            <Card className="glass-card">
-              <div className="p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Calculator className="icon-card text-primary" />
-                  <h3 className="text-card-title">Scenario Simulator</h3>
+        <TabsContent value="performance" className="space-y-6 pb-24">
+          {investments.length === 0 ? (
+            <Card className="glass-card p-8 text-center">
+              <div className="max-w-md mx-auto space-y-4">
+                <div className="p-4 rounded-full bg-primary/10 w-16 h-16 mx-auto flex items-center justify-center">
+                  <BarChart3 className="h-8 w-8 text-primary" />
                 </div>
-                <InvestmentScenarioSimulator />
+                <h3 className="text-xl font-semibold">No Performance Data Yet</h3>
+                <p className="text-muted-foreground">
+                  Add your first investment to see detailed performance metrics, risk analysis, and future projections.
+                </p>
+                <Button onClick={() => setSheetOpen(true)} className="mt-4">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add Your First Investment
+                </Button>
               </div>
             </Card>
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
+              {/* LEFT: Metrics (sempre visibile per prima su mobile) */}
+              <div className="space-y-6 order-1">
+                <PortfolioMetricsPanel investments={investments} />
+              </div>
+              
+              {/* RIGHT: Simulator (secondo su mobile) */}
+              <div className="order-2">
+                <Card className="glass-card">
+                  <div className="p-6">
+                    <InvestmentScenarioSimulator />
+                  </div>
+                </Card>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="import" className="space-y-6">

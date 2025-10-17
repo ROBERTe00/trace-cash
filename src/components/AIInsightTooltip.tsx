@@ -13,16 +13,19 @@ interface AIInsightTooltipProps {
 
 export function AIInsightTooltip({ content, title }: AIInsightTooltipProps) {
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={300}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <button className="inline-flex items-center justify-center w-5 h-5 rounded-full hover:bg-primary/10 transition-colors">
-            <HelpCircle className="w-4 h-4 text-muted-foreground hover:text-primary" />
+          <button 
+            className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-primary/10 transition-colors touch-manipulation"
+            aria-label="More information"
+          >
+            <HelpCircle className="w-5 h-5 text-muted-foreground hover:text-primary transition-colors" />
           </button>
         </TooltipTrigger>
-        <TooltipContent className="max-w-xs p-3">
-          {title && <p className="font-semibold mb-1">{title}</p>}
-          <p className="text-sm">{content}</p>
+        <TooltipContent className="max-w-xs p-4 text-sm">
+          {title && <p className="font-semibold mb-2">{title}</p>}
+          <p>{content}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
