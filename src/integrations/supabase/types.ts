@@ -50,6 +50,51 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_audit_logs: {
+        Row: {
+          ai_model: string
+          ai_raw_response: string
+          error: string | null
+          feature: string
+          id: string
+          input_prompt: string
+          latency_ms: number | null
+          success: boolean | null
+          temperature: number | null
+          timestamp: string | null
+          ui_summary: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_model: string
+          ai_raw_response: string
+          error?: string | null
+          feature: string
+          id?: string
+          input_prompt: string
+          latency_ms?: number | null
+          success?: boolean | null
+          temperature?: number | null
+          timestamp?: string | null
+          ui_summary?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_model?: string
+          ai_raw_response?: string
+          error?: string | null
+          feature?: string
+          id?: string
+          input_prompt?: string
+          latency_ms?: number | null
+          success?: boolean | null
+          temperature?: number | null
+          timestamp?: string | null
+          ui_summary?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_feedback: {
         Row: {
           amount: number | null

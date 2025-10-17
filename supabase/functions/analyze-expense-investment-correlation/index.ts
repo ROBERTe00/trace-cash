@@ -138,6 +138,7 @@ Return JSON format:
     messages.push({ role: 'system', content: 'You are a financial analyst. Always respond with valid JSON.' });
     messages.push({ role: 'user', content: prompt });
 
+    const startTime = Date.now();
     // Call OpenAI API
     const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -160,6 +161,7 @@ Return JSON format:
 
     const aiResult = await aiResponse.json();
     const aiContent = aiResult.choices[0]?.message?.content;
+    const latency = Date.now() - startTime;
 
     console.log('AI response received');
 
@@ -187,6 +189,23 @@ Return JSON format:
           additional_gain: Math.round(portfolioValue * 0.04)
         }
       };
+    }
+
+    // Log to ai_audit_logs
+    try {
+      await supabase.from('ai_audit_logs').insert({
+        user_id: user.id,
+        feature: 'expense_investment_correlation',
+        ai_model: 'gpt-4o',
+        temperature: 0.2,
+        input_prompt: prompt,
+        ai_raw_response: aiContent,
+        ui_summary: JSON.stringify(analysis),
+        latency_ms: latency,
+        success: true
+      });
+    } catch (logError) {
+      console.error('Failed to log AI audit:', logError);
     }
 
     return new Response(JSON.stringify(analysis), {

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -102,6 +103,7 @@ Focus on:
     messages.push({ role: "system", content: systemPrompt });
     messages.push({ role: "user", content: "Generate 3 financial advice cards for me" });
 
+    const startTime = Date.now();
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -142,6 +144,34 @@ Focus on:
 
     const data = await response.json();
     const advice = data.choices[0].message.content;
+    const latency = Date.now() - startTime;
+
+    // Log to ai_audit_logs
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
+      const authHeader = req.headers.get('Authorization');
+      const token = authHeader?.replace('Bearer ', '');
+      const { data: { user } } = await supabase.auth.getUser(token);
+      
+      if (user) {
+        await supabase.from('ai_audit_logs').insert({
+          user_id: user.id,
+          feature: 'financial_advice',
+          ai_model: 'gpt-4o',
+          temperature: 0.2,
+          input_prompt: systemPrompt,
+          ai_raw_response: advice,
+          ui_summary: advice,
+          latency_ms: latency,
+          success: true
+        });
+      }
+    } catch (logError) {
+      console.error('Failed to log AI audit:', logError);
+    }
 
     return new Response(
       JSON.stringify({ advice }),

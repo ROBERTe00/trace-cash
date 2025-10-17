@@ -113,6 +113,7 @@ Return JSON format:
     });
     messages.push({ role: 'user', content: prompt });
 
+    const startTime = Date.now();
     // Call OpenAI API
     const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -135,6 +136,7 @@ Return JSON format:
 
     const aiResult = await aiResponse.json();
     const aiContent = aiResult.choices[0]?.message?.content;
+    const latency = Date.now() - startTime;
 
     console.log('AI allocation suggestion received');
 
@@ -174,6 +176,23 @@ Return JSON format:
         rebalancing_needed: false,
         confidence_score: 0.85
       };
+    }
+
+    // Log to ai_audit_logs
+    try {
+      await supabase.from('ai_audit_logs').insert({
+        user_id: user.id,
+        feature: 'investment_allocation',
+        ai_model: 'gpt-4o',
+        temperature: 0.2,
+        input_prompt: prompt,
+        ai_raw_response: aiContent,
+        ui_summary: JSON.stringify(suggestion),
+        latency_ms: latency,
+        success: true
+      });
+    } catch (logError) {
+      console.error('Failed to log AI audit:', logError);
     }
 
     return new Response(JSON.stringify(suggestion), {

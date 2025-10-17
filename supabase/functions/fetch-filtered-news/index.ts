@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -41,6 +42,9 @@ serve(async (req) => {
 
     for (const article of articles.slice(0, 10)) {
       try {
+        const prompt = `Rate the financial market impact of this news on a scale of 0-10. Only respond with a number.\n\nTitle: ${article.title}\nDescription: ${article.description}`;
+        
+        const startTime = Date.now();
         const scoreRes = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -78,8 +82,36 @@ serve(async (req) => {
         }
 
         const scoreData = await scoreRes.json();
+        const latency = Date.now() - startTime;
         const scoreText = scoreData.choices[0]?.message?.content?.trim() || "0";
         const score = parseInt(scoreText.match(/\d+/)?.[0] || "0");
+
+        // Log to ai_audit_logs
+        try {
+          const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+          const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+          const supabase = createClient(supabaseUrl, supabaseKey);
+          
+          const authHeader = req.headers.get('Authorization');
+          const token = authHeader?.replace('Bearer ', '');
+          const { data: { user } } = await supabase.auth.getUser(token);
+          
+          if (user) {
+            await supabase.from('ai_audit_logs').insert({
+              user_id: user.id,
+              feature: 'news_impact_scoring',
+              ai_model: 'gpt-4o',
+              temperature: 0.1,
+              input_prompt: prompt,
+              ai_raw_response: scoreText,
+              ui_summary: `Impact score: ${score}`,
+              latency_ms: latency,
+              success: true
+            });
+          }
+        } catch (logError) {
+          console.error('Failed to log AI audit:', logError);
+        }
 
         if (score >= 6) {
           scoredArticles.push({

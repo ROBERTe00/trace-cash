@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -90,6 +91,7 @@ serve(async (req) => {
     }
 
     // Call OpenAI GPT-4o API
+    const startTime = Date.now();
     const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -129,6 +131,7 @@ serve(async (req) => {
     }
 
     const aiData = await aiResponse.json();
+    const latency = Date.now() - startTime;
     const content = aiData.choices?.[0]?.message?.content || "";
 
     console.log("AI insight generated successfully");
@@ -144,6 +147,33 @@ serve(async (req) => {
       } catch (e) {
         console.error("Failed to parse JSON from AI response:", e);
       }
+    }
+
+    // Log to ai_audit_logs
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
+      const authHeader = req.headers.get('Authorization');
+      const token = authHeader?.replace('Bearer ', '');
+      const { data: { user } } = await supabase.auth.getUser(token);
+      
+      if (user) {
+        await supabase.from('ai_audit_logs').insert({
+          user_id: user.id,
+          feature: `onboarding_${step}`,
+          ai_model: 'gpt-4o',
+          temperature: 0.2,
+          input_prompt: userPrompt,
+          ai_raw_response: content,
+          ui_summary: typeof insight === 'string' ? insight : JSON.stringify(insight),
+          latency_ms: latency,
+          success: true
+        });
+      }
+    } catch (logError) {
+      console.error('Failed to log AI audit:', logError);
     }
 
     return new Response(
