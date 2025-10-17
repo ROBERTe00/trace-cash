@@ -200,7 +200,7 @@ export default function Investments() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in min-h-screen w-full max-w-7xl mx-auto">
+    <div className="space-y-6 animate-fade-in min-h-screen w-full max-w-7xl mx-auto pb-safe">
       {/* Hero Section with New Design */}
       <InvestmentHero
         totalValue={totalValue}

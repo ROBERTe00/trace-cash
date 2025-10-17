@@ -23,7 +23,7 @@ export default function Transactions() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in min-h-screen w-full max-w-7xl mx-auto">
+    <div className="space-y-6 animate-fade-in min-h-screen w-full max-w-7xl mx-auto pb-safe">
       {/* Hero Section */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-background border border-primary/20 p-6">
         <div className="relative z-10">

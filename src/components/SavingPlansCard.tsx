@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Target } from "lucide-react";
 import { useApp } from "@/contexts/AppContext";
 
 interface SavingPlan {
@@ -42,38 +42,48 @@ const SavingPlansCard = ({ plans, onAddPlan }: SavingPlansCardProps) => {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {plans.map((plan, index) => {
-            const percentage = ((plan.current / plan.target) * 100).toFixed(0);
-            return (
-              <motion.div
-                key={plan.name}
-                className="space-y-2"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.6 + index * 0.1 }}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{plan.name}</span>
-                  <span className="text-xs text-muted-foreground font-semibold">{percentage}%</span>
-                </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{formatCurrency(plan.current)}</span>
-                  <span>/ {formatCurrency(plan.target)}</span>
-                </div>
-                <div className="relative">
-                  <div className="h-2 rounded-full bg-muted overflow-hidden">
-                    <motion.div
-                      className="h-full rounded-full"
-                      style={{ backgroundColor: plan.color }}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${percentage}%` }}
-                      transition={{ duration: 1, ease: "easeOut", delay: 0.7 + index * 0.1 }}
-                    />
+          {plans.length === 0 ? (
+            <div className="py-8 text-center space-y-3">
+              <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <Target className="w-8 h-8 text-primary" />
+              </div>
+              <p className="text-sm font-medium text-muted-foreground">No savings plans yet</p>
+              <p className="text-xs text-muted-foreground">Click + to create your first financial goal</p>
+            </div>
+          ) : (
+            plans.map((plan, index) => {
+              const percentage = ((plan.current / plan.target) * 100).toFixed(0);
+              return (
+                <motion.div
+                  key={plan.name}
+                  className="space-y-2"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.6 + index * 0.1 }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">{plan.name}</span>
+                    <span className="text-xs text-muted-foreground font-semibold">{percentage}%</span>
                   </div>
-                </div>
-              </motion.div>
-            );
-          })}
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{formatCurrency(plan.current)}</span>
+                    <span>/ {formatCurrency(plan.target)}</span>
+                  </div>
+                  <div className="relative">
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full"
+                        style={{ backgroundColor: plan.color }}
+                        initial={{ width: 0 }}
+                        animate={{ width: `${percentage}%` }}
+                        transition={{ duration: 1, ease: "easeOut", delay: 0.7 + index * 0.1 }}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })
+          )}
         </CardContent>
       </Card>
     </motion.div>

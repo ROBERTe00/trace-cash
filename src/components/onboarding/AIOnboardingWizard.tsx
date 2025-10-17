@@ -35,11 +35,11 @@ export function AIOnboardingWizard({ isOpen, onComplete }: AIOnboardingWizardPro
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const [data, setData] = useState<OnboardingData>({
-    savingsGoal: 5000,
-    monthlyIncome: 30000,
-    liquidity: 10000,
-    assets: 50000,
-    debts: 20000,
+    savingsGoal: 0,
+    monthlyIncome: 0,
+    liquidity: 0,
+    assets: 0,
+    debts: 0,
   });
 
   const totalSteps = 5;

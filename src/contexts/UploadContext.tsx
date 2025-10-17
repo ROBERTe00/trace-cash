@@ -131,9 +131,9 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
 
       console.log("📤 [Upload] Invoking process-bank-statement edge function...");
       
-      // Process with AI with timeout
+      // Process with AI with 180s timeout (3 minutes for large PDFs)
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Processing timeout - please try again or use a smaller date range')), 90000)
+        setTimeout(() => reject(new Error('Processing timeout after 3 minutes. Please try a smaller date range or use CSV format.')), 180000)
       );
       
       const functionPromise = supabase.functions.invoke(
@@ -302,64 +302,111 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const handleOCRFallback = async (file: File, currentToastId: string | number): Promise<boolean> => {
-    console.log('[Upload] Starting OCR fallback extraction...');
-    updateToastProgress(currentToastId, 65, 'Trying OCR extraction (may take 30-60s)...');
-    
+    console.log("📄 [Upload] Starting OCR fallback with Tesseract.js...");
+    console.log("📄 [Upload] PDF size:", (file.size / 1024 / 1024).toFixed(2), "MB");
+    setProgress(60);
+    updateToastProgress(currentToastId, 60, "Using OCR to read scanned PDF (this may take 1-2 minutes)...");
+
     try {
-      // Convert PDF to images first for better OCR accuracy
-      const { data: { text } } = await Tesseract.recognize(file, 'eng+ita', {
-        logger: (m) => {
-          if (m.status === 'recognizing text') {
-            const ocrProgress = 65 + (m.progress * 30);
-            updateToastProgress(currentToastId, ocrProgress, `OCR: ${(m.progress * 100).toFixed(0)}%`);
+      // OCR-specific timeout: 120 seconds
+      const ocrTimeout = new Promise<never>((_, reject) => 
+        setTimeout(() => {
+          console.error("❌ [Upload] OCR timeout after 120 seconds");
+          reject(new Error('OCR_TIMEOUT'));
+        }, 120000)
+      );
+
+      const ocrPromise = (async () => {
+        console.log("📄 [Upload] Creating Tesseract worker...");
+        const worker = await Tesseract.createWorker("eng+ita", 1, {
+          logger: (m) => {
+            console.log("📄 [OCR Progress]", m.status, m.progress);
+            // Update progress based on Tesseract's actual progress
+            if (m.status === 'recognizing text' && typeof m.progress === 'number') {
+              const ocrProgress = 60 + Math.round(m.progress * 30); // 60-90% range for OCR
+              setProgress(ocrProgress);
+              updateToastProgress(currentToastId, ocrProgress, `Reading PDF with OCR... ${Math.round(m.progress * 100)}%`);
+            }
+          },
+        });
+
+        const arrayBuffer = await file.arrayBuffer();
+        const blob = new Blob([arrayBuffer], { type: file.type });
+        const imageUrl = URL.createObjectURL(blob);
+
+        console.log("📄 [Upload] Running OCR on PDF...");
+        const { data: { text } } = await worker.recognize(imageUrl);
+        
+        URL.revokeObjectURL(imageUrl);
+        await worker.terminate();
+
+        console.log("📄 [Upload] OCR completed, extracted text length:", text.length);
+        return text;
+      })();
+
+      const extractedText = await Promise.race([ocrPromise, ocrTimeout]);
+
+      if (!extractedText || extractedText.trim().length < 50) {
+        throw new Error("OCR could not extract meaningful text from the PDF");
+      }
+
+      setProgress(90);
+      updateToastProgress(currentToastId, 90, "Parsing extracted transactions...");
+      
+      const transactions = parseTextToTransactions(extractedText);
+      
+      if (transactions.length === 0) {
+        throw new Error("No transactions found in extracted text");
+      }
+
+      console.log(`✅ [Upload] OCR success: ${transactions.length} transactions extracted`);
+      
+      setExtractedTransactions(transactions);
+      localStorage.setItem("upload-transactions", JSON.stringify(transactions));
+      setBankName("Extracted via OCR");
+      localStorage.setItem("upload-bank-name", "Extracted via OCR");
+      
+      setProgress(100);
+      localStorage.setItem("upload-progress", "100");
+      toast.dismiss(currentToastId);
+      
+      toast.success(
+        <div className="flex items-center gap-3">
+          <CheckCircle2 className="h-5 w-5 text-success" />
+          <div>
+            <p className="font-medium">OCR extraction complete!</p>
+            <p className="text-xs text-muted-foreground">
+              Extracted {transactions.length} transactions - please review carefully
+            </p>
+          </div>
+        </div>,
+        {
+          duration: 6000,
+          position: "bottom-right",
+        }
+      );
+      
+      setIsProcessing(false);
+      setFileName(null);
+      return true;
+    } catch (ocrError) {
+      console.error('❌ [Upload] OCR failed:', ocrError);
+      toast.dismiss(currentToastId);
+      
+      const isTimeout = ocrError instanceof Error && ocrError.message === 'OCR_TIMEOUT';
+      const errorMessage = isTimeout
+        ? 'OCR timeout (>2min). Large PDFs take time - try uploading as CSV for faster processing.'
+        : 'OCR extraction failed. Please try uploading a CSV file or a clearer PDF scan.';
+      
+      toast.error(errorMessage, {
+        duration: 10000,
+        action: {
+          label: "Need Help?",
+          onClick: () => {
+            toast.info("Tip: CSV files process in seconds vs minutes for PDFs. Export from your bank as CSV if possible.");
           }
         }
       });
-      
-      console.log('[Upload] OCR text extracted, length:', text.length);
-      
-      if (text.length < 100) {
-        console.log('[Upload] OCR text too short, likely failed');
-        return false;
-      }
-      
-      // Parse text with improved regex for Italian bank statements
-      const transactions = parseTextToTransactions(text);
-      
-      if (transactions.length > 0) {
-        console.log('[Upload] OCR extracted', transactions.length, 'transactions');
-        setProgress(100);
-        localStorage.setItem("upload-progress", "100");
-        setExtractedTransactions(transactions);
-        setBankName("OCR Extracted");
-        localStorage.setItem("upload-transactions", JSON.stringify(transactions));
-        localStorage.setItem("upload-bank-name", "OCR Extracted");
-        
-        toast.dismiss(currentToastId);
-        toast(
-          <div className="flex items-center gap-3">
-            <CheckCircle2 className="h-5 w-5 text-success" />
-            <div>
-              <p className="font-medium">OCR extraction complete!</p>
-              <p className="text-xs text-muted-foreground">
-                Extracted {transactions.length} transactions - please review carefully (confidence: 50%)
-              </p>
-            </div>
-          </div>,
-          {
-            duration: 6000,
-            position: "bottom-right",
-          }
-        );
-        
-        setIsProcessing(false);
-        setFileName(null);
-        return true;
-      }
-    } catch (ocrError) {
-      console.error('[Upload] OCR also failed:', ocrError);
-      toast.dismiss(currentToastId);
-      toast.error('OCR extraction failed. Please try uploading a CSV or a clearer PDF.');
     }
     return false;
   };
@@ -524,11 +571,11 @@ export const UploadProvider = ({ children }: { children: ReactNode }) => {
     const processingStart = localStorage.getItem("upload-processing-start");
     if (isProcessing && processingStart) {
       const elapsed = Date.now() - parseInt(processingStart);
-      // If processing for more than 2 minutes, clear the stuck state
-      if (elapsed > 120000) {
-        console.log("📤 [Upload] Clearing stuck processing state");
+      // If processing for more than 3 minutes, clear the stuck state
+      if (elapsed > 180000) {
+        console.log("📤 [Upload] Clearing stuck processing state (>3min)");
         clearTransactions();
-        toast.error("Previous upload timed out. Please try again.");
+        toast.error("Previous upload timed out. Please try again with a smaller file or CSV format.");
       }
     }
   }, []);

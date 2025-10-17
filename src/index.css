@@ -312,6 +312,19 @@ All colors MUST be HSL.
   .animate-slide-down {
     animation: slide-down 0.3s ease-out;
   }
+  
+  /* iOS Safe Area Support */
+  .pb-safe {
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+  
+  .pt-safe {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+
+  .min-h-screen-safe {
+    min-height: calc(100vh - env(safe-area-inset-bottom));
+  }
 }
 
 @keyframes fade-in {
