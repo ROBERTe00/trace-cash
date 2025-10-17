@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,8 +19,12 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let step = 'unknown';
+
   try {
-    const { data, step } = await req.json();
+    const requestBody = await req.json();
+    const { data } = requestBody;
+    step = requestBody.step || 'unknown';
     console.log('📊 [Onboarding AI] Generating insights for step:', step);
 
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');

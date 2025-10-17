@@ -1,10 +1,9 @@
-import { useState, useContext } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload, FileText, Plus, TrendingDown } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useUpload } from "@/contexts/UploadContext";
 import { ManualExpenseDialog } from "../ManualExpenseDialog";
 import { toast } from "sonner";
 
@@ -16,21 +15,12 @@ interface ExpensesStepProps {
 export function ExpensesStep({ data, setData }: ExpensesStepProps) {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isManualDialogOpen, setIsManualDialogOpen] = useState(false);
-  const { uploadFile } = useUpload();
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setUploadedFile(file);
-      
-      try {
-        await uploadFile(file);
-        toast.success("Bank statement uploaded! Processing transactions...");
-      } catch (error) {
-        console.error("Error uploading file:", error);
-        toast.error("Failed to upload file. Please try again.");
-        setUploadedFile(null);
-      }
+      toast.success(`${file.name} uploaded! You can upload it from the dashboard after completing onboarding.`);
     }
   };
 
