@@ -12,7 +12,7 @@ import {
   Smartphone, 
   Tablet, 
   Monitor, 
-  TouchIcon,
+  Hand,
   RotateCcw,
   ZoomIn,
   ZoomOut,
@@ -165,7 +165,7 @@ export const MobileOptimizedCard: React.FC<MobileOptimizedCardProps> = ({
           className="absolute inset-0 bg-primary/10 backdrop-blur-sm z-20 flex items-center justify-center"
         >
           <div className="flex items-center gap-2 text-primary font-semibold">
-            <TouchIcon className="h-6 w-6" />
+            <Hand className="h-6 w-6" />
             <span>{touchCount} finger{touchCount > 1 ? 's' : ''}</span>
           </div>
         </motion.div>
