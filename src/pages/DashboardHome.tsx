@@ -1,32 +1,32 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Download, RefreshCw, DollarSign, TrendingUp, PiggyBank, Target } from "lucide-react";
+import { Download, RefreshCw, DollarSign, TrendingUp, PiggyBank, Target, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useInvestments } from "@/hooks/useInvestments";
 import { useFinancialGoals } from "@/hooks/useFinancialGoals";
-import { useInvestmentSuggestions } from "@/hooks/useInvestmentSuggestions";
 import { useLivePricePolling, useManualPriceRefresh } from "@/hooks/useLivePricePolling";
 import { exportToCSV, exportToPDF } from "@/lib/exportUtils";
 import { migrateLocalStorageToDatabase, hasPendingMigration } from "@/lib/migrateExpenses";
 import FinanceScoreCard from "@/components/FinanceScoreCard";
-import BalanceCard from "@/components/BalanceCard";
 import StatCard from "@/components/StatCard";
 import ExpenseBreakdownCard from "@/components/ExpenseBreakdownCard";
 import CashflowCard from "@/components/CashflowCard";
-import SavingPlansCard from "@/components/SavingPlansCard";
 import { FinancialGoals } from "@/components/FinancialGoals";
 import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { LoadingDashboard } from "@/components/LoadingDashboard";
+import { NetWorthHeroCard } from "@/components/NetWorthHeroCard";
+import { AIInsightsCard, Insight } from "@/components/AIInsightsCard";
+import { RecentTransactionsList } from "@/components/RecentTransactionsList";
 import { useApp } from "@/contexts/AppContext";
-import { startOfMonth, eachDayOfInterval, format } from "date-fns";
+import { startOfMonth, subMonths, format, eachDayOfInterval } from "date-fns";
 
 export default function DashboardHome() {
   const { formatCurrency } = useApp();
-  const [showSuggestionDialog, setShowSuggestionDialog] = useState(false);
+  const navigate = useNavigate();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -35,7 +35,6 @@ export default function DashboardHome() {
   const { expenses, isLoading: loadingExpenses } = useExpenses();
   const { investments, totalValue, isLoading: loadingInvestments } = useInvestments();
   const { goals, isLoading: loadingGoals } = useFinancialGoals();
-  const { suggestions: investmentSuggestions } = useInvestmentSuggestions();
   const { refreshPrices } = useManualPriceRefresh();
 
   useLivePricePolling(true);
@@ -216,119 +215,183 @@ export default function DashboardHome() {
   const monthlyExpenses = currentMonthExpenses;
   const monthlySavingsAmount = monthlyIncome - monthlyExpenses;
 
+  // Helper: Calculate monthly trend
+  const calculateMonthlyTrend = () => {
+    const lastMonth = subMonths(new Date(), 1);
+    const lastMonthExpenses = expenses.filter(e => {
+      const date = new Date(e.date);
+      return date >= lastMonth && date < startOfMonth(new Date());
+    });
+    
+    const lastMonthIncome = lastMonthExpenses
+      .filter(e => e.type === 'Income')
+      .reduce((sum, e) => sum + e.amount, 0);
+    const lastMonthExpense = lastMonthExpenses
+      .filter(e => e.type === 'Expense')
+      .reduce((sum, e) => sum + e.amount, 0);
+    const lastMonthNetWorth = cashAvailable + totalInvestments; // Simplified
+    
+    const change = totalNetWorth - lastMonthNetWorth;
+    const percentage = lastMonthNetWorth > 0 ? (change / lastMonthNetWorth) * 100 : 0;
+    
+    return {
+      percentage,
+      amount: change,
+      period: 'vs last month'
+    };
+  };
+
+  // Helper: Generate AI insights
+  const generateInsights = (): Insight[] => {
+    const insights: Insight[] = [];
+    
+    // Insight 1: Savings success
+    if (monthlySavingsAmount > 0) {
+      const savingsRate = monthlyIncome > 0 ? (monthlySavingsAmount / monthlyIncome) * 100 : 0;
+      insights.push({
+        type: 'success',
+        icon: DollarSign,
+        text: `💰 Great job! You saved ${formatCurrency(monthlySavingsAmount)} this month (${savingsRate.toFixed(1)}% savings rate)`
+      });
+    }
+    
+    // Insight 2: Top spending category alert
+    if (categoryBreakdown.length > 0 && monthlyIncome > 0) {
+      const topCategory = categoryBreakdown[0];
+      const categoryPercent = (topCategory.amount / monthlyIncome) * 100;
+      if (categoryPercent > 30) {
+        insights.push({
+          type: 'warning',
+          icon: AlertTriangle,
+          text: `⚠️ ${topCategory.name} expenses are high (${categoryPercent.toFixed(0)}% of income). Consider optimizing this category.`
+        });
+      }
+    }
+    
+    // Insight 3: Goal projection
+    if (goals.length > 0 && monthlySavingsAmount > 0) {
+      const activeGoals = goals.filter(g => g.status === 'active');
+      if (activeGoals.length > 0) {
+        const nextGoal = activeGoals[0];
+        const remaining = nextGoal.target_amount - nextGoal.current_amount;
+        const monthsToGoal = Math.ceil(remaining / monthlySavingsAmount);
+        if (monthsToGoal > 0 && monthsToGoal < 100) {
+          insights.push({
+            type: 'info',
+            icon: Target,
+            text: `🎯 At your current savings rate, you'll reach "${nextGoal.title}" in ${monthsToGoal} months!`
+          });
+        }
+      }
+    }
+    
+    // Insight 4: Investment suggestion
+    if (cashAvailable > 1000 && totalInvestments < cashAvailable * 2) {
+      insights.push({
+        type: 'tip',
+        icon: TrendingUp,
+        text: `💡 You have ${formatCurrency(cashAvailable)} in cash. Consider investing ${formatCurrency(cashAvailable * 0.5)} in diversified assets.`,
+        action: {
+          label: 'View Investments',
+          onClick: () => navigate('/investments')
+        }
+      });
+    }
+    
+    return insights.slice(0, 3);
+  };
+
+  const monthlyChange = totalInvestments > 0 ? 
+    ((totalInvestments - (totalInvestments * 0.95)) / (totalInvestments * 0.95)) * 100 : 0;
+
   return (
     <TooltipProvider>
-      <div className="space-y-4 sm:space-y-6 w-full">
+      <div className="space-y-4 sm:space-y-6 w-full pb-safe">
         {showWelcome && <WelcomeBanner />}
         
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between min-w-0">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-2xl sm:text-3xl lg:text-section font-extrabold tracking-tight mb-2 break-words">
-              Dashboard
-            </h1>
-            <p className="text-muted-foreground text-sm sm:text-base truncate">Your complete financial overview</p>
-          </div>
-          
-          <div className="flex flex-wrap gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleExportCSV}
-              className="gap-2 rounded-2xl"
-            >
-              <Download className="h-4 w-4" />
-              CSV
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleExportPDF}
-              className="gap-2 rounded-2xl"
-            >
-              <Download className="h-4 w-4" />
-              PDF
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="gap-2 rounded-2xl"
-            >
-              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-          </div>
-        </div>
+        {/* 1. HERO: Net Worth Card */}
+        <NetWorthHeroCard
+          netWorth={totalNetWorth}
+          cashBalance={cashAvailable}
+          investmentsValue={totalInvestments}
+          monthlyChange={monthlyChange}
+          onRefreshPrices={handleRefresh}
+        />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* 2. AI Insights + Finance Score */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="lg:col-span-2">
+            <AIInsightsCard insights={generateInsights()} autoRotate={true} />
+          </div>
           <FinanceScoreCard score={financeScore} />
-          <BalanceCard totalBalance={totalBalance} accounts={accounts} />
-          <ExpenseBreakdownCard categories={categoryBreakdown} totalExpenses={totalExpenses} />
         </div>
 
+        {/* 3. Quick Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <StatCard
             icon={DollarSign}
             label="Monthly Income"
             value={formatCurrency(monthlyIncome)}
-            change={8.2}
-            changeType="increase"
-            delay={0.3}
+            delay={0.1}
           />
           <StatCard
             icon={TrendingUp}
             label="Monthly Expenses"
             value={formatCurrency(monthlyExpenses)}
-            change={3.1}
-            changeType="decrease"
-            delay={0.4}
+            delay={0.2}
           />
           <StatCard
             icon={PiggyBank}
             label="Monthly Savings"
             value={formatCurrency(monthlySavingsAmount)}
-            change={12.5}
-            changeType="increase"
-            delay={0.5}
+            delay={0.3}
           />
           <StatCard
             icon={Target}
-            label="Investment"
+            label="Investments"
             value={formatCurrency(totalInvestments)}
-            change={5.8}
-            changeType="increase"
-            delay={0.6}
+            delay={0.4}
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          <div className="lg:col-span-2">
-            <CashflowCard data={cashflowData} />
-          </div>
-          <SavingPlansCard plans={savingPlans} />
+        {/* 4. Enhanced Cashflow */}
+        <CashflowCard expenses={expenses} defaultTimeRange="1m" />
+
+        {/* 5. Expense Breakdown + Recent Transactions */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <ExpenseBreakdownCard categories={categoryBreakdown} totalExpenses={totalExpenses} />
+          <RecentTransactionsList 
+            transactions={expenses.slice().sort((a, b) => 
+              new Date(b.date).getTime() - new Date(a.date).getTime()
+            )}
+            onViewAll={() => navigate('/transactions')}
+          />
         </div>
 
+        {/* 6. Financial Goals */}
         <FinancialGoals />
 
-        <Dialog open={showSuggestionDialog} onOpenChange={setShowSuggestionDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Investment Suggestions</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              {investmentSuggestions && investmentSuggestions.length > 0 ? (
-                investmentSuggestions.map((suggestion: any) => (
-                  <div key={suggestion.id} className="border rounded-lg p-4">
-                    <p className="text-sm">{suggestion.reasoning}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground">No suggestions available</p>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* 7. Export Actions */}
+        <div className="flex justify-end gap-2 flex-wrap">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleExportCSV}
+            className="gap-2 rounded-2xl"
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleExportPDF}
+            className="gap-2 rounded-2xl"
+          >
+            <Download className="h-4 w-4" />
+            Export PDF
+          </Button>
+        </div>
       </div>
     </TooltipProvider>
   );

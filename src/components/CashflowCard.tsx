@@ -1,23 +1,86 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { useState } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useApp } from "@/contexts/AppContext";
-
-interface CashflowData {
-  day: string;
-  income: number;
-  expense: number;
-}
+import { format, eachDayOfInterval, startOfMonth, subMonths, eachMonthOfInterval } from "date-fns";
+import { Expense } from "@/hooks/useExpenses";
 
 interface CashflowCardProps {
-  data: CashflowData[];
+  expenses: Expense[];
+  defaultTimeRange?: '7d' | '1m' | '3m' | '6m';
 }
 
-const CashflowCard = ({ data }: CashflowCardProps) => {
-  const [view, setView] = useState<'income' | 'expense'>('income');
+const CashflowCard = ({ expenses, defaultTimeRange = '7d' }: CashflowCardProps) => {
+  const [timeRange, setTimeRange] = useState<'7d' | '1m' | '3m' | '6m'>(defaultTimeRange);
   const { formatCurrency } = useApp();
+
+  const getCashflowData = (range: '7d' | '1m' | '3m' | '6m') => {
+    const now = new Date();
+    let intervals: Date[];
+    let dateFormat: string;
+
+    switch (range) {
+      case '7d':
+        const sevenDaysAgo = new Date(now);
+        sevenDaysAgo.setDate(now.getDate() - 6);
+        intervals = eachDayOfInterval({ start: sevenDaysAgo, end: now });
+        dateFormat = 'EEE';
+        break;
+      case '1m':
+        intervals = eachDayOfInterval({ start: startOfMonth(now), end: now });
+        dateFormat = 'MMM d';
+        break;
+      case '3m':
+        intervals = eachMonthOfInterval({ start: subMonths(now, 2), end: now });
+        dateFormat = 'MMM';
+        break;
+      case '6m':
+        intervals = eachMonthOfInterval({ start: subMonths(now, 5), end: now });
+        dateFormat = 'MMM';
+        break;
+    }
+
+    return intervals.map(date => {
+      const dateStr = format(date, 'yyyy-MM-dd');
+      const isMonthView = range === '3m' || range === '6m';
+
+      let income = 0;
+      let expense = 0;
+
+      if (isMonthView) {
+        const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+        const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+        
+        expenses.forEach(e => {
+          const expDate = new Date(e.date);
+          if (expDate >= monthStart && expDate <= monthEnd) {
+            if (e.type === 'Income') income += e.amount;
+            if (e.type === 'Expense') expense += e.amount;
+          }
+        });
+      } else {
+        expenses.forEach(e => {
+          if (e.date === dateStr) {
+            if (e.type === 'Income') income += e.amount;
+            if (e.type === 'Expense') expense += e.amount;
+          }
+        });
+      }
+
+      return {
+        day: format(date, dateFormat),
+        income,
+        expense,
+        savings: income - expense
+      };
+    });
+  };
+
+  const data = getCashflowData(timeRange);
+
+  const hasData = data.some(d => d.income > 0 || d.expense > 0);
 
   return (
     <motion.div
@@ -29,50 +92,49 @@ const CashflowCard = ({ data }: CashflowCardProps) => {
     >
       <Card className="h-full border-none shadow-lg hover:shadow-2xl transition-all duration-300 rounded-3xl bg-card overflow-hidden">
         <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold truncate">Cashflow Overview</CardTitle>
-            <ToggleGroup type="single" value={view} onValueChange={(v) => v && setView(v as 'income' | 'expense')}>
-              <ToggleGroupItem value="income" className="text-xs">Income</ToggleGroupItem>
-              <ToggleGroupItem value="expense" className="text-xs">Expense</ToggleGroupItem>
-            </ToggleGroup>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <CardTitle className="text-base font-semibold">Income vs Expenses</CardTitle>
+            <div className="overflow-x-auto pb-1">
+              <ToggleGroup 
+                type="single" 
+                value={timeRange} 
+                onValueChange={(v) => v && setTimeRange(v as '7d' | '1m' | '3m' | '6m')}
+                className="inline-flex"
+              >
+                <ToggleGroupItem value="7d" className="text-xs">7D</ToggleGroupItem>
+                <ToggleGroupItem value="1m" className="text-xs">1M</ToggleGroupItem>
+                <ToggleGroupItem value="3m" className="text-xs">3M</ToggleGroupItem>
+                <ToggleGroupItem value="6m" className="text-xs">6M</ToggleGroupItem>
+              </ToggleGroup>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          {data.length === 0 || data.every(d => d.income === 0 && d.expense === 0) ? (
-            <div className="h-[200px] flex flex-col items-center justify-center text-center space-y-3">
+          {!hasData ? (
+            <div className="h-[250px] flex flex-col items-center justify-center text-center space-y-3">
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <AreaChart className="w-8 h-8 text-primary" />
+                <BarChart className="w-8 h-8 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">No transactions yet</p>
+                <p className="text-sm font-medium text-muted-foreground">No data for this period</p>
                 <p className="text-xs text-muted-foreground mt-1">Add transactions to see your cashflow</p>
               </div>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={data}>
-                <defs>
-                  <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
                 <XAxis 
                   dataKey="day" 
                   stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
+                  fontSize={11}
                   tickLine={false}
                 />
                 <YAxis 
                   stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
+                  fontSize={11}
                   tickLine={false}
-                  tickFormatter={(value) => `$${value}`}
+                  tickFormatter={(value) => `${value}`}
                 />
                 <Tooltip 
                   contentStyle={{
@@ -81,17 +143,30 @@ const CashflowCard = ({ data }: CashflowCardProps) => {
                     borderRadius: '12px',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                   }}
-                  formatter={(value: number) => [formatCurrency(value), view === 'income' ? 'Income' : 'Expense']}
+                  formatter={(value: number, name: string) => {
+                    const label = name === 'income' ? 'Income' : name === 'expense' ? 'Expenses' : 'Net Savings';
+                    return [formatCurrency(value), label];
+                  }}
                 />
-                <Area
-                  type="monotone"
-                  dataKey={view}
-                  stroke={view === 'income' ? 'hsl(var(--success))' : 'hsl(var(--destructive))'}
-                  fillOpacity={1}
-                  fill={view === 'income' ? 'url(#colorIncome)' : 'url(#colorExpense)'}
-                  strokeWidth={3}
+                <Legend 
+                  wrapperStyle={{ fontSize: '12px' }}
+                  formatter={(value) => {
+                    if (value === 'income') return 'Income';
+                    if (value === 'expense') return 'Expenses';
+                    return value;
+                  }}
                 />
-              </AreaChart>
+                <Bar 
+                  dataKey="income" 
+                  fill="hsl(var(--success))" 
+                  radius={[8, 8, 0, 0]}
+                />
+                <Bar 
+                  dataKey="expense" 
+                  fill="hsl(var(--destructive))" 
+                  radius={[8, 8, 0, 0]}
+                />
+              </BarChart>
             </ResponsiveContainer>
           )}
         </CardContent>
