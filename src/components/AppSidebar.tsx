@@ -6,6 +6,7 @@ import {
   Lightbulb,
   Settings,
   Target,
+  CreditCard,
 } from "lucide-react";
 import {
   Sidebar,
@@ -44,6 +45,12 @@ export function AppSidebar() {
       url: "/investments", 
       icon: TrendingUp,
       tooltip: "Investments"
+    },
+    { 
+      title: "Credit Cards", 
+      url: "/credit-cards", 
+      icon: CreditCard,
+      tooltip: "Credit Card Integration"
     },
     { 
       title: "Insights", 

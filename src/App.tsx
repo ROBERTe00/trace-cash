@@ -28,6 +28,7 @@ import Insights from "./pages/Insights";
 import FuturePlanner from "./pages/FuturePlanner";
 import News from "./pages/News";
 import Settings from "./pages/Settings";
+import CreditCardIntegration from "./pages/CreditCardIntegration";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import { SecurityAlerts } from "./components/SecurityAlerts";
@@ -119,6 +120,7 @@ function ProtectedRoutes() {
                 <Route path="/goals" element={<FuturePlanner />} />
                 <Route path="/news" element={<News />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/credit-cards" element={<CreditCardIntegration />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ModernPieChart } from "@/components/charts/ModernPieChart";
+import { EnhancedPieChart } from "@/components/charts/EnhancedCharts";
+import { MobileOptimizedCard } from "@/components/MobileOptimizations";
 import { aggregateSmallCategories } from "@/lib/chartUtils";
 import { useApp } from "@/contexts/AppContext";
 
@@ -46,13 +47,10 @@ const ExpenseBreakdownCard = ({ categories, totalExpenses }: ExpenseBreakdownCar
       whileHover={{ scale: 1.02, y: -4 }}
       className="h-full"
     >
-      <Card className="h-full border-none shadow-lg hover:shadow-2xl transition-all duration-300 rounded-3xl bg-card overflow-hidden">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold text-muted-foreground">Expense Breakdown</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Modern Pie Chart with Center Label */}
-          <ModernPieChart
+      <MobileOptimizedCard title="Expense Breakdown" className="h-full border-none shadow-lg hover:shadow-2xl transition-all duration-300 rounded-3xl bg-card">
+        <div className="space-y-6">
+          {/* Enhanced Pie Chart with Center Label */}
+          <EnhancedPieChart
             data={chartData}
             centerLabel={{
               title: "Total",
@@ -60,6 +58,9 @@ const ExpenseBreakdownCard = ({ categories, totalExpenses }: ExpenseBreakdownCar
             }}
             showPercentages={true}
             height={280}
+            onSegmentClick={(data) => {
+              console.log('Segment clicked:', data);
+            }}
           />
 
           {/* Category List */}
@@ -86,8 +87,8 @@ const ExpenseBreakdownCard = ({ categories, totalExpenses }: ExpenseBreakdownCar
               );
             })}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </MobileOptimizedCard>
     </motion.div>
   );
 };

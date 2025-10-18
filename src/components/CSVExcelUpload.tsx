@@ -1,13 +1,15 @@
 import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileSpreadsheet, Upload, Loader2, AlertCircle, Sparkles } from "lucide-react";
+import { FileSpreadsheet, Upload, Loader2, AlertCircle, Sparkles, Brain, Shield, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { AIFeedbackModal } from "@/components/AIFeedbackModal";
 import { useQueryClient } from "@tanstack/react-query";
+import { geminiAI, TransactionAnalysis } from "@/lib/geminiAI";
+import { AdvancedInsights } from "@/components/AdvancedInsights";
 
 interface ParsedTransaction {
   date: string;
@@ -35,6 +37,9 @@ export const CSVExcelUpload = ({ onTransactionsParsed }: CSVExcelUploadProps) =>
   const [isProcessing, setIsProcessing] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [parsedTransactions, setParsedTransactions] = useState<any[]>([]);
+  const [aiAnalysis, setAiAnalysis] = useState<TransactionAnalysis | null>(null);
+  const [showAdvancedInsights, setShowAdvancedInsights] = useState(false);
+  const [processingStage, setProcessingStage] = useState<'uploading' | 'processing' | 'analyzing' | 'complete'>('uploading');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -102,7 +107,8 @@ export const CSVExcelUpload = ({ onTransactionsParsed }: CSVExcelUploadProps) =>
         }, 800);
 
         try {
-          // Call new smart AI function with batch processing
+          // Stage 1: Basic parsing
+          setProcessingStage('processing');
           const { data, error } = await supabase.functions.invoke('parse-smart-transactions', {
             body: {
               fileContent,
@@ -110,9 +116,6 @@ export const CSVExcelUpload = ({ onTransactionsParsed }: CSVExcelUploadProps) =>
               userId: user.id,
             },
           });
-
-          clearInterval(progressInterval);
-          toast.dismiss(toastId);
 
           if (error || !data?.success) {
             console.error('Parse error:', error || data?.error);
@@ -127,20 +130,50 @@ export const CSVExcelUpload = ({ onTransactionsParsed }: CSVExcelUploadProps) =>
             return;
           }
 
+          // Stage 2: Advanced AI Analysis
+          setProcessingStage('analyzing');
+          try {
+            const analysis = await geminiAI.processFinancialDocument(
+              fileContent,
+              fileType,
+              user.id,
+              {
+                enableAnomalyDetection: true,
+                enableInsights: true,
+                enableSummarization: true
+              }
+            );
+
+            setAiAnalysis(analysis);
+            
+            // Show success toast with enhanced stats
+            toast.success('File processed with AI analysis!', {
+              description: `${analysis.transactions.length} transactions, ${analysis.insights.length} insights, ${analysis.anomalies.length} anomalies`,
+              duration: 5000,
+            });
+
+          } catch (aiError) {
+            console.warn('AI analysis failed, using basic results:', aiError);
+            // Fallback to basic results if AI fails
+            setParsedTransactions(data.transactions);
+            toast.success(data.message, {
+              description: `${data.stats.expenses} spese, ${data.stats.income} entrate`,
+              duration: 5000,
+            });
+          }
+
+          clearInterval(progressInterval);
+          toast.dismiss(toastId);
+
           // Store transactions for feedback modal
           setParsedTransactions(data.transactions);
           
-          // Show success toast with stats
-          toast.success(data.message, {
-            description: `${data.stats.expenses} spese, ${data.stats.income} entrate`,
-            duration: 5000,
-          });
-
           // Refresh expenses query
           queryClient.invalidateQueries({ queryKey: ['expenses'] });
 
           // Show feedback modal for corrections
           setShowFeedbackModal(true);
+          setProcessingStage('complete');
           setIsProcessing(false);
         } catch (err) {
           clearInterval(progressInterval);
@@ -282,6 +315,119 @@ export const CSVExcelUpload = ({ onTransactionsParsed }: CSVExcelUploadProps) =>
       onClose={() => setShowFeedbackModal(false)}
       transactions={parsedTransactions}
     />
+
+    {/* Advanced AI Insights */}
+    {aiAnalysis && (
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-primary" />
+            <h3 className="text-lg font-semibold">AI Analysis Results</h3>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAdvancedInsights(!showAdvancedInsights)}
+            >
+              {showAdvancedInsights ? 'Hide Details' : 'View Details'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAiAnalysis(null)}
+            >
+              Dismiss
+            </Button>
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div className="text-center p-3 bg-primary/5 rounded-lg">
+            <div className="text-2xl font-bold text-primary">
+              {aiAnalysis.transactions.length}
+            </div>
+            <div className="text-xs text-muted-foreground">Transactions</div>
+          </div>
+          
+          <div className="text-center p-3 bg-green-500/5 rounded-lg">
+            <div className="text-2xl font-bold text-green-600">
+              {aiAnalysis.insights.length}
+            </div>
+            <div className="text-xs text-muted-foreground">AI Insights</div>
+          </div>
+          
+          <div className="text-center p-3 bg-yellow-500/5 rounded-lg">
+            <div className="text-2xl font-bold text-yellow-600">
+              {aiAnalysis.anomalies.length}
+            </div>
+            <div className="text-xs text-muted-foreground">Anomalies</div>
+          </div>
+          
+          <div className="text-center p-3 bg-blue-500/5 rounded-lg">
+            <div className="text-2xl font-bold text-blue-600">
+              {(aiAnalysis.confidence * 100).toFixed(0)}%
+            </div>
+            <div className="text-xs text-muted-foreground">Confidence</div>
+          </div>
+        </div>
+
+        {/* AI Features Preview */}
+        <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground mb-4">
+          <div className="flex items-center gap-1">
+            <Brain className="w-4 h-4 text-purple-500" />
+            <span>Smart Analysis</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Shield className="w-4 h-4 text-green-500" />
+            <span>Anomaly Detection</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <BarChart3 className="w-4 h-4 text-blue-500" />
+            <span>Financial Insights</span>
+          </div>
+        </div>
+
+        {/* Top Insights Preview */}
+        {aiAnalysis.insights.length > 0 && (
+          <div className="space-y-2 mb-4">
+            <h4 className="font-medium">Key Insights:</h4>
+            {aiAnalysis.insights.slice(0, 2).map((insight, index) => (
+              <div key={index} className="text-sm p-2 bg-muted/50 rounded">
+                <strong>{insight.title}:</strong> {insight.description}
+              </div>
+            ))}
+            {aiAnalysis.insights.length > 2 && (
+              <p className="text-xs text-muted-foreground">
+                +{aiAnalysis.insights.length - 2} more insights available
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Detailed Analysis */}
+        {showAdvancedInsights && (
+          <AdvancedInsights
+            insights={aiAnalysis.insights}
+            anomalies={aiAnalysis.anomalies}
+            summary={aiAnalysis.summary}
+            onInsightAction={(insight, action) => {
+              console.log('Insight action:', insight.title, action);
+              toast.info(`Applied action: ${action}`, {
+                description: insight.title
+              });
+            }}
+            onAnomalyAction={(anomaly, action) => {
+              console.log('Anomaly action:', anomaly.type, action);
+              toast.info(`Anomaly action: ${action}`, {
+                description: anomaly.description
+              });
+            }}
+          />
+        )}
+      </div>
+    )}
   </>
   );
 };
