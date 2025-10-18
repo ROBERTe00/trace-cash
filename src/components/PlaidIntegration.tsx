@@ -247,39 +247,49 @@ export const PlaidIntegration: React.FC<PlaidIntegrationProps> = ({
   };
 
   const simulatePlaidLink = async (linkToken: string, userId: string) => {
-    // Simulate Plaid Link flow
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Exchange public token for access token
-    const publicToken = 'public-token-mock';
-    const accessToken = await plaidService!.exchangePublicToken(publicToken);
-    
-    // Get accounts
-    const accounts = await plaidService!.getAccounts(accessToken);
-    
-    // Save to database
-    for (const account of accounts) {
-      const { error } = await supabase
-        .from('connected_accounts')
-        .insert({
-          user_id: userId,
-          plaid_account_id: account.id,
-          institution_id: account.institutionId,
-          institution_name: account.institutionName,
-          account_name: account.accountName,
-          account_type: account.accountType,
-          last_four: account.lastFour,
-          access_token: accessToken, // In production, encrypt this
-          is_active: true,
-          connected_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
+    try {
+      // Simulate Plaid Link flow with better error handling
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      onAccountConnected?.(account);
+      // Exchange public token for access token
+      const publicToken = 'public-token-mock';
+      const accessToken = await plaidService!.exchangePublicToken(publicToken);
+      
+      // Get accounts
+      const accounts = await plaidService!.getAccounts(accessToken);
+      
+      // Save to database with better error handling
+      for (const account of accounts) {
+        const { error } = await supabase
+          .from('connected_accounts')
+          .insert({
+            user_id: userId,
+            plaid_account_id: account.id,
+            institution_id: account.institutionId,
+            institution_name: account.institutionName,
+            account_name: account.accountName,
+            account_type: account.accountType,
+            last_four: account.lastFour,
+            access_token: accessToken, // In production, encrypt this
+            is_active: true,
+            connected_at: new Date().toISOString()
+          });
+
+        if (error) {
+          console.error('Error saving account:', error);
+          toast.error(`Failed to save account: ${account.institutionName}`);
+          continue;
+        }
+        
+        onAccountConnected?.(account);
+      }
+      
+      await loadConnectedAccounts();
+      toast.success('Account connected successfully!');
+    } catch (error) {
+      console.error('Error in simulatePlaidLink:', error);
+      toast.error('Failed to connect account. Please try again.');
     }
-    
-    await loadConnectedAccounts();
   };
 
   const handleDisconnectAccount = async (accountId: string) => {

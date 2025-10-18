@@ -89,107 +89,122 @@ export const CSVExcelUpload = ({ onTransactionsParsed }: CSVExcelUploadProps) =>
         return;
       }
 
-      // Read file content
-      const reader = new FileReader();
-      
-      reader.onload = async (e) => {
-        const fileContent = e.target?.result as string;
-        const fileType = file.name.endsWith('.csv') ? 'csv' : 'excel';
-
-        // Simulate real-time progress with interval
-        let currentProgress = 10;
-        const progressInterval = setInterval(() => {
-          currentProgress = Math.min(currentProgress + 8, 90); // Cap at 90%
-          toast.loading(`Elaborazione: ${currentProgress}%`, {
-            id: toastId,
-            description: currentProgress < 40 ? 'Parsing file...' : currentProgress < 70 ? 'AI categorization in progress...' : 'Almost done...'
-          });
-        }, 800);
-
-        try {
-          // Stage 1: Basic parsing
-          setProcessingStage('processing');
-          const { data, error } = await supabase.functions.invoke('parse-smart-transactions', {
-            body: {
-              fileContent,
-              fileType,
-              userId: user.id,
-            },
-          });
-
-          if (error || !data?.success) {
-            console.error('Parse error:', error || data?.error);
-            toast.error(data?.error || "Errore durante l'elaborazione del file");
-            setIsProcessing(false);
+      // Read file content with better error handling
+      const fileContent = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+          const content = e.target?.result as string;
+          if (!content) {
+            reject(new Error('Failed to read file content'));
             return;
           }
+          resolve(content);
+        };
+        
+        reader.onerror = () => {
+          reject(new Error('Failed to read file'));
+        };
+        
+        reader.readAsText(file, 'UTF-8');
+      });
 
-          if (!data.transactions || data.transactions.length === 0) {
-            toast.error('Nessuna transazione valida trovata nel file');
-            setIsProcessing(false);
-            return;
-          }
+      const fileType = file.name.endsWith('.csv') ? 'csv' : 'excel';
 
-          // Stage 2: Advanced AI Analysis
-          setProcessingStage('analyzing');
-          try {
-            const analysis = await geminiAI.processFinancialDocument(
-              fileContent,
-              fileType,
-              user.id,
-              {
-                enableAnomalyDetection: true,
-                enableInsights: true,
-                enableSummarization: true
-              }
-            );
+      // Simulate real-time progress with interval
+      let currentProgress = 10;
+      const progressInterval = setInterval(() => {
+        currentProgress = Math.min(currentProgress + 8, 90); // Cap at 90%
+        toast.loading(`Elaborazione: ${currentProgress}%`, {
+          id: toastId,
+          description: currentProgress < 40 ? 'Parsing file...' : currentProgress < 70 ? 'AI categorization in progress...' : 'Almost done...'
+        });
+      }, 800);
 
-            setAiAnalysis(analysis);
-            
-            // Show success toast with enhanced stats
-            toast.success('File processed with AI analysis!', {
-              description: `${analysis.transactions.length} transactions, ${analysis.insights.length} insights, ${analysis.anomalies.length} anomalies`,
-              duration: 5000,
-            });
+        // Stage 1: Basic parsing
+        setProcessingStage('processing');
+        const { data, error } = await supabase.functions.invoke('parse-smart-transactions', {
+          body: {
+            fileContent,
+            fileType,
+            userId: user.id,
+          },
+        });
 
-          } catch (aiError) {
-            console.warn('AI analysis failed, using basic results:', aiError);
-            // Fallback to basic results if AI fails
-            setParsedTransactions(data.transactions);
-            toast.success(data.message, {
-              description: `${data.stats.expenses} spese, ${data.stats.income} entrate`,
-              duration: 5000,
-            });
-          }
-
+        if (error || !data?.success) {
+          console.error('Parse error:', error || data?.error);
+          toast.error(data?.error || "Errore durante l'elaborazione del file");
           clearInterval(progressInterval);
-          toast.dismiss(toastId);
-
-          // Store transactions for feedback modal
-          setParsedTransactions(data.transactions);
-          
-          // Refresh expenses query
-          queryClient.invalidateQueries({ queryKey: ['expenses'] });
-
-          // Show feedback modal for corrections
-          setShowFeedbackModal(true);
-          setProcessingStage('complete');
           setIsProcessing(false);
-        } catch (err) {
-          clearInterval(progressInterval);
-          toast.dismiss(toastId);
-          console.error('Processing error:', err);
-          toast.error('Errore nell\'elaborazione del file');
-          setIsProcessing(false);
+          return;
         }
-      };
 
-      reader.onerror = () => {
-        toast.error('Errore nella lettura del file');
+        if (!data.transactions || data.transactions.length === 0) {
+          toast.error('Nessuna transazione valida trovata nel file');
+          clearInterval(progressInterval);
+          setIsProcessing(false);
+          return;
+        }
+
+        // Stage 2: Advanced AI Analysis
+        setProcessingStage('analyzing');
+        try {
+          const analysis = await geminiAI.processFinancialDocument(
+            fileContent,
+            fileType,
+            user.id,
+            {
+              enableAnomalyDetection: true,
+              enableInsights: true,
+              enableSummarization: true
+            }
+          );
+
+          setAiAnalysis(analysis);
+          
+          // Show success toast with enhanced stats
+          toast.success('File processed with AI analysis!', {
+            description: `${analysis.transactions.length} transactions, ${analysis.insights.length} insights, ${analysis.anomalies.length} anomalies`,
+            duration: 5000,
+          });
+
+        } catch (aiError) {
+          console.warn('AI analysis failed, using basic results:', aiError);
+          // Fallback to basic results if AI fails
+          setParsedTransactions(data.transactions);
+          toast.success(data.message, {
+            description: `${data.stats.expenses} spese, ${data.stats.income} entrate`,
+            duration: 5000,
+          });
+        }
+
+        clearInterval(progressInterval);
+        toast.dismiss(toastId);
+
+        // Store transactions for feedback modal
+        setParsedTransactions(data.transactions);
+        
+        // Refresh expenses query
+        queryClient.invalidateQueries({ queryKey: ['expenses'] });
+
+        // Show feedback modal for corrections
+        setShowFeedbackModal(true);
+        setProcessingStage('complete');
         setIsProcessing(false);
-      };
 
-      reader.readAsText(file);
+        // Call the callback with results
+        onTransactionsParsed({
+          transactions: data.transactions,
+          errors: data.errors || [],
+          stats: data.stats
+        });
+
+      } catch (error) {
+        console.error('Processing error:', error);
+        clearInterval(progressInterval);
+        toast.error('Errore durante l\'elaborazione del file');
+        setIsProcessing(false);
+      }
 
     } catch (error) {
       console.error('File processing error:', error);
