@@ -121,6 +121,7 @@ export const CSVExcelUpload = ({ onTransactionsParsed }: CSVExcelUploadProps) =>
         });
       }, 800);
 
+      try {
         // Stage 1: Basic parsing
         setProcessingStage('processing');
         const { data, error } = await supabase.functions.invoke('parse-smart-transactions', {
@@ -205,7 +206,6 @@ export const CSVExcelUpload = ({ onTransactionsParsed }: CSVExcelUploadProps) =>
         toast.error('Errore durante l\'elaborazione del file');
         setIsProcessing(false);
       }
-
     } catch (error) {
       console.error('File processing error:', error);
       toast.error('Errore nell\'elaborazione del file');
