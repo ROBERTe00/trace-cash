@@ -3,7 +3,7 @@ import { ExpenseForm } from "@/components/ExpenseForm";
 import { TransactionTable } from "@/components/TransactionTable";
 import { ExpensesSummary } from "@/components/ExpensesSummary";
 import { ExpenseInsights } from "@/components/ExpenseInsights";
-import { BankStatementUpload } from "@/components/NewBankStatementUpload";
+import { DirectPDFTest } from "@/components/DirectPDFTest";
 import { CSVExcelUpload } from "@/components/CSVExcelUpload";
 import { VoiceExpenseInput } from "@/components/VoiceExpenseInput";
 import { useExpenses } from "@/hooks/useExpenses";
@@ -87,6 +87,7 @@ export default function Transactions() {
               Importa Transazioni
             </h3>
             <div className="space-y-4">
+              <DirectPDFTest />
               <VoiceExpenseInput onExpenseDetected={handleAddExpense} />
               <CSVExcelUpload onTransactionsParsed={() => {}} />
               <BankStatementUpload onTransactionsExtracted={handleTransactionsExtracted} />
