@@ -217,7 +217,10 @@ class DefinitivePDFParser {
         console.log(`⚠️ [OCR] Insufficient text: ${ocrResult.text.length} chars`);
       } catch (error) {
         console.log(`❌ [OCR] Failed:`, error);
+        console.log(`⚠️ [OCR] Skipping OCR due to error, trying hybrid approach...`);
       }
+    } else {
+      console.log(`⚠️ [OCR] OCR disabled, skipping to hybrid approach...`);
     }
 
     // Method 3: Hybrid approach (combine both)
@@ -292,36 +295,82 @@ class DefinitivePDFParser {
   }> {
     console.log('🔍 [OCR] Starting Tesseract processing...');
     
-    // Create worker with multiple language support
-    const worker = await Tesseract.createWorker('eng+ita', 1, {
-      logger: (m) => {
-        if (m.status === 'recognizing text') {
-          console.log(`🔍 [OCR] Progress: ${Math.round(m.progress * 100)}%`);
+    // Try different language configurations with fallback
+    const languageConfigs = ['eng', 'ita', 'eng+ita'];
+    let lastError: Error | null = null;
+    
+    for (const lang of languageConfigs) {
+      try {
+        console.log(`🔍 [OCR] Trying language: ${lang}`);
+        
+        // Create worker with timeout
+        const workerPromise = Tesseract.createWorker(lang, 1, {
+          logger: (m) => {
+            if (m.status === 'recognizing text') {
+              console.log(`🔍 [OCR] Progress: ${Math.round(m.progress * 100)}%`);
+            }
+          }
+        });
+        
+        // Add timeout to worker creation
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('OCR worker creation timeout')), 30000)
+        );
+        
+        const worker = await Promise.race([workerPromise, timeoutPromise]);
+
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const blob = new Blob([arrayBuffer], { type: file.type });
+          const imageUrl = URL.createObjectURL(blob);
+
+          console.log(`🔍 [OCR] Processing with ${lang}...`);
+          
+          // Add timeout to recognition
+          const recognitionPromise = worker.recognize(imageUrl);
+          const recognitionTimeout = new Promise<never>((_, reject) => 
+            setTimeout(() => reject(new Error('OCR recognition timeout')), 120000)
+          );
+          
+          const { data: { text, confidence } } = await Promise.race([recognitionPromise, recognitionTimeout]);
+          
+          URL.revokeObjectURL(imageUrl);
+          
+          const detectedLanguage = this.detectLanguage(text);
+          
+          console.log(`✅ [OCR] Success with ${lang}: ${text.length} chars`);
+          
+          return {
+            text: text.trim(),
+            pageCount: 1, // OCR treats PDF as single image
+            confidence: confidence / 100,
+            language: detectedLanguage
+          };
+          
+        } finally {
+          await worker.terminate();
         }
+        
+      } catch (error) {
+        console.log(`❌ [OCR] Failed with ${lang}:`, error);
+        lastError = error instanceof Error ? error : new Error('Unknown OCR error');
+        
+        // If it's a timeout or language pack error, try next language
+        if (error instanceof Error && (
+          error.message.includes('timeout') || 
+          error.message.includes('language') ||
+          error.message.includes('worker')
+        )) {
+          continue;
+        }
+        
+        // If it's a different error, break and throw
+        throw error;
       }
-    });
-
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const blob = new Blob([arrayBuffer], { type: file.type });
-      const imageUrl = URL.createObjectURL(blob);
-
-      const { data: { text, confidence } } = await worker.recognize(imageUrl);
-      
-      URL.revokeObjectURL(imageUrl);
-      
-      const detectedLanguage = this.detectLanguage(text);
-      
-      return {
-        text: text.trim(),
-        pageCount: 1, // OCR treats PDF as single image
-        confidence: confidence / 100,
-        language: detectedLanguage
-      };
-      
-    } finally {
-      await worker.terminate();
     }
+    
+    // If all language configs failed, throw the last error
+    throw lastError || new Error('All OCR language configurations failed');
   }
 
   /**
@@ -498,6 +547,8 @@ ${text}`;
   }
 
   private isTextQualityGood(text: string): boolean {
+    if (text.length < this.MIN_TEXT_LENGTH) return false;
+    
     // Check for corrupted characters
     const corruptedChars = text.match(/[\x00-\x1F\x7F-\xFF]/g)?.length || 0;
     const corruptionRatio = corruptedChars / text.length;
@@ -506,7 +557,23 @@ ${text}`;
     const readableChars = text.replace(/[^a-zA-Z0-9\s]/g, '').length;
     const readabilityRatio = readableChars / text.length;
     
-    return corruptionRatio < 0.1 && readabilityRatio > 0.5;
+    // Check for financial keywords (more lenient)
+    const financialKeywords = /(banca|bank|conto|account|saldo|movimento|transazione|transaction|balance|statement|euro|€|dollar|\$)/i;
+    const hasFinancialContent = financialKeywords.test(text);
+    
+    // Check for dates (more lenient)
+    const hasDates = /\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}/.test(text);
+    
+    // Check for amounts (more lenient)
+    const hasAmounts = /\d+[,\.]\d{2}/.test(text);
+    
+    // More lenient quality check
+    const isGoodQuality = corruptionRatio < 0.2 && readabilityRatio > 0.3;
+    const hasRelevantContent = hasFinancialContent || hasDates || hasAmounts;
+    
+    console.log(`📊 [Text Quality] Length: ${text.length}, Corruption: ${(corruptionRatio * 100).toFixed(1)}%, Readability: ${(readabilityRatio * 100).toFixed(1)}%, Financial: ${hasFinancialContent}, Dates: ${hasDates}, Amounts: ${hasAmounts}`);
+    
+    return isGoodQuality && hasRelevantContent;
   }
 
   private calculateTextConfidence(text: string): number {
