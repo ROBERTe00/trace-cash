@@ -23,6 +23,7 @@ import { AIInsightsCard, Insight } from "@/components/AIInsightsCard";
 import { RecentTransactionsList } from "@/components/RecentTransactionsList";
 import { PDFParserTest } from "@/components/PDFParserTest";
 import { FrontendUpload } from "@/components/FrontendUpload";
+import { DefinitivePDFTest } from "@/components/DefinitivePDFTest";
 import { useApp } from "@/contexts/AppContext";
 import { startOfMonth, subMonths, format, eachDayOfInterval } from "date-fns";
 
@@ -376,6 +377,7 @@ export default function DashboardHome() {
         {/* 7. PDF Parser Test (Development) */}
         {process.env.NODE_ENV === 'development' && (
           <div className="space-y-4">
+            <DefinitivePDFTest />
             <PDFParserTest />
             <FrontendUpload 
               onTransactionsParsed={(transactions, metadata) => {

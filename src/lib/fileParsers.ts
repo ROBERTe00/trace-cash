@@ -262,7 +262,7 @@ class FileParserService {
   }
 
   /**
-   * Enhanced PDF parsing with OCR fallback
+   * Enhanced PDF parsing with definitive system
    */
   private async parsePDF(file: File, enableOCR: boolean): Promise<{
     text: string;
@@ -270,25 +270,37 @@ class FileParserService {
     pageCount: number;
   }> {
     try {
-      // Import the robust PDF parser
-      const { bankStatementPDFParser } = await import('./bankStatementPDFParser');
+      // Import the definitive PDF parser
+      const { definitivePDFParser } = await import('./definitivePDFParser');
       
-      console.log(`📄 Starting robust PDF parsing for: ${file.name}`);
+      console.log(`📄 Starting definitive PDF parsing for: ${file.name}`);
       
-      const result = await bankStatementPDFParser.parsePDF(file, enableOCR);
-      
-      console.log(`✅ PDF parsing completed:`, {
-        method: result.method,
-        confidence: result.confidence,
-        textLength: result.text.length,
-        pageCount: result.pageCount,
-        transactionsFound: result.structuredData.length
+      const result = await definitivePDFParser.parseBankStatement(file, {
+        enableOCR,
+        enableAI: true,
+        language: 'auto',
+        onProgress: (progress, stage) => {
+          console.log(`📊 [PDF Progress] ${progress}% - ${stage}`);
+        }
       });
       
+      console.log(`✅ Definitive PDF parsing completed:`, {
+        success: result.success,
+        transactionsFound: result.transactions.length,
+        confidence: result.metadata.confidence,
+        method: result.metadata.method,
+        bankDetected: result.metadata.bankDetected,
+        language: result.metadata.language
+      });
+      
+      if (!result.success) {
+        throw new Error(`PDF parsing failed: ${result.errors.join(', ')}`);
+      }
+      
       return {
-        text: result.text,
-        structuredData: result.structuredData,
-        pageCount: result.pageCount
+        text: result.rawText,
+        structuredData: result.transactions,
+        pageCount: result.metadata.pageCount
       };
     } catch (error) {
       console.error('PDF parsing error:', error);
