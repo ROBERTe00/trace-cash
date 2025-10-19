@@ -201,13 +201,13 @@ export const CSVExcelUpload = ({ onTransactionsParsed }: CSVExcelUploadProps) =>
         });
 
       } catch (error) {
-        console.error('Processing error:', error);
+        console.error('File processing error:', error);
         clearInterval(progressInterval);
         toast.error('Errore durante l\'elaborazione del file');
         setIsProcessing(false);
       }
     } catch (error) {
-      console.error('File processing error:', error);
+      console.error('Outer processing error:', error);
       toast.error('Errore nell\'elaborazione del file');
       setIsProcessing(false);
     }
