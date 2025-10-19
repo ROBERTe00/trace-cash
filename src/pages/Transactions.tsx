@@ -3,7 +3,7 @@ import { ExpenseForm } from "@/components/ExpenseForm";
 import { TransactionTable } from "@/components/TransactionTable";
 import { ExpensesSummary } from "@/components/ExpensesSummary";
 import { ExpenseInsights } from "@/components/ExpenseInsights";
-import { BankStatementUpload } from "@/components/BankStatementUpload";
+import { BankStatementUpload } from "@/components/NewBankStatementUpload";
 import { CSVExcelUpload } from "@/components/CSVExcelUpload";
 import { VoiceExpenseInput } from "@/components/VoiceExpenseInput";
 import { useExpenses } from "@/hooks/useExpenses";
