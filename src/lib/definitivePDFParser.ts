@@ -50,7 +50,7 @@ export interface ParsedTransaction {
 class DefinitivePDFParser {
   private readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
   private readonly TIMEOUT = 300000; // 5 minutes
-  private readonly MIN_TEXT_LENGTH = 100; // Minimum text length for valid extraction
+  private readonly MIN_TEXT_LENGTH = 50; // Minimum text length for valid extraction (reduced for better compatibility)
 
   /**
    * Main parsing method - handles the complete workflow
@@ -179,20 +179,46 @@ class DefinitivePDFParser {
     // Method 1: PDF.js text extraction
     onProgress?.(25, 'Trying PDF.js extraction...');
     try {
+      console.log(`📄 [PDF.js] Starting extraction for: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
       const pdfjsResult = await this.extractWithPDFJS(file);
       
-      if (pdfjsResult.text.length > this.MIN_TEXT_LENGTH && this.isTextQualityGood(pdfjsResult.text)) {
-        console.log(`✅ [PDF.js] Success: ${pdfjsResult.text.length} chars`);
-        return {
-          text: pdfjsResult.text,
-          pageCount: pdfjsResult.pageCount,
-          method: 'pdfjs',
-          confidence: this.calculateTextConfidence(pdfjsResult.text),
-          language: this.detectLanguage(pdfjsResult.text)
-        };
+      console.log(`📄 [PDF.js] Raw extraction result:`, {
+        textLength: pdfjsResult.text.length,
+        pageCount: pdfjsResult.pageCount,
+        firstChars: pdfjsResult.text.substring(0, 200),
+        lastChars: pdfjsResult.text.substring(Math.max(0, pdfjsResult.text.length - 200))
+      });
+      
+      if (pdfjsResult.text.length > this.MIN_TEXT_LENGTH) {
+        const qualityCheck = this.isTextQualityGood(pdfjsResult.text);
+        console.log(`📄 [PDF.js] Quality check: ${qualityCheck ? 'PASSED' : 'FAILED'}`);
+        
+        if (qualityCheck) {
+          console.log(`✅ [PDF.js] Success: ${pdfjsResult.text.length} chars`);
+          return {
+            text: pdfjsResult.text,
+            pageCount: pdfjsResult.pageCount,
+            method: 'pdfjs',
+            confidence: this.calculateTextConfidence(pdfjsResult.text),
+            language: this.detectLanguage(pdfjsResult.text)
+          };
+        } else {
+          console.log(`⚠️ [PDF.js] Quality check failed, but text length OK: ${pdfjsResult.text.length} chars`);
+          // Even if quality check fails, if we have enough text, let's try it
+          if (pdfjsResult.text.length > 200) {
+            console.log(`🔄 [PDF.js] Using text despite quality issues: ${pdfjsResult.text.length} chars`);
+            return {
+              text: pdfjsResult.text,
+              pageCount: pdfjsResult.pageCount,
+              method: 'pdfjs',
+              confidence: 0.6, // Lower confidence due to quality issues
+              language: this.detectLanguage(pdfjsResult.text)
+            };
+          }
+        }
       }
       
-      console.log(`⚠️ [PDF.js] Insufficient quality: ${pdfjsResult.text.length} chars`);
+      console.log(`⚠️ [PDF.js] Insufficient text: ${pdfjsResult.text.length} chars (min: ${this.MIN_TEXT_LENGTH})`);
     } catch (error) {
       console.log(`❌ [PDF.js] Failed:`, error);
     }
@@ -231,6 +257,8 @@ class DefinitivePDFParser {
       
       const combinedText = this.combineExtractionResults(pdfjsResult.text, ocrResult?.text || '');
       
+      console.log(`🔄 [Hybrid] Combined text length: ${combinedText.length} chars`);
+      
       if (combinedText.length > this.MIN_TEXT_LENGTH) {
         console.log(`✅ [Hybrid] Success: ${combinedText.length} chars`);
         return {
@@ -248,40 +276,99 @@ class DefinitivePDFParser {
       console.log(`❌ [Hybrid] Failed:`, error);
     }
 
-    throw new Error('All text extraction methods failed. PDF might be corrupted or password-protected.');
+    // Method 4: Last resort - try to extract ANY text from PDF.js
+    onProgress?.(60, 'Last resort extraction...');
+    try {
+      console.log(`🆘 [Last Resort] Attempting basic PDF.js extraction...`);
+      const pdfjsResult = await this.extractWithPDFJS(file);
+      
+      if (pdfjsResult.text.length > 0) {
+        console.log(`🆘 [Last Resort] Found some text: ${pdfjsResult.text.length} chars`);
+        console.log(`🆘 [Last Resort] Text preview:`, pdfjsResult.text.substring(0, 500));
+        
+        return {
+          text: pdfjsResult.text,
+          pageCount: pdfjsResult.pageCount,
+          method: 'pdfjs',
+          confidence: 0.3, // Very low confidence
+          language: this.detectLanguage(pdfjsResult.text)
+        };
+      }
+    } catch (error) {
+      console.log(`❌ [Last Resort] Failed:`, error);
+    }
+
+    // Final error with detailed information
+    const errorDetails = {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      minTextLength: this.MIN_TEXT_LENGTH
+    };
+    
+    console.error(`💥 [FINAL ERROR] All extraction methods failed:`, errorDetails);
+    throw new Error(`All text extraction methods failed. File: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB). This might be a corrupted PDF, password-protected file, or image-only PDF without readable text.`);
   }
 
   /**
-   * Extract text using PDF.js
+   * Extract text using PDF.js with enhanced error handling
    */
   private async extractWithPDFJS(file: File): Promise<{
     text: string;
     pageCount: number;
   }> {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    const pageCount = pdf.numPages;
-    
-    let fullText = '';
-    
-    for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const textContent = await page.getTextContent();
+    try {
+      console.log(`📄 [PDF.js] Loading PDF: ${file.name}`);
+      const arrayBuffer = await file.arrayBuffer();
       
-      const pageText = textContent.items
-        .map((item: any) => item.str)
-        .join(' ')
-        .trim();
+      console.log(`📄 [PDF.js] ArrayBuffer size: ${arrayBuffer.byteLength} bytes`);
       
-      if (pageText) {
-        fullText += `\n=== PAGE ${pageNum} ===\n${pageText}\n`;
+      const pdf = await pdfjsLib.getDocument({ 
+        data: arrayBuffer,
+        verbosity: 0 // Reduce console output
+      }).promise;
+      
+      const pageCount = pdf.numPages;
+      console.log(`📄 [PDF.js] PDF loaded successfully: ${pageCount} pages`);
+      
+      let fullText = '';
+      let successfulPages = 0;
+      
+      for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
+        try {
+          console.log(`📄 [PDF.js] Processing page ${pageNum}/${pageCount}`);
+          const page = await pdf.getPage(pageNum);
+          const textContent = await page.getTextContent();
+          
+          const pageText = textContent.items
+            .map((item: any) => item.str)
+            .join(' ')
+            .trim();
+          
+          if (pageText) {
+            fullText += `\n=== PAGE ${pageNum} ===\n${pageText}\n`;
+            successfulPages++;
+            console.log(`📄 [PDF.js] Page ${pageNum}: ${pageText.length} chars`);
+          } else {
+            console.log(`📄 [PDF.js] Page ${pageNum}: No text found`);
+          }
+        } catch (pageError) {
+          console.log(`⚠️ [PDF.js] Error processing page ${pageNum}:`, pageError);
+          // Continue with other pages
+        }
       }
+      
+      console.log(`📄 [PDF.js] Extraction complete: ${successfulPages}/${pageCount} pages successful, ${fullText.length} total chars`);
+      
+      return {
+        text: fullText.trim(),
+        pageCount
+      };
+      
+    } catch (error) {
+      console.error(`❌ [PDF.js] Critical error:`, error);
+      throw new Error(`PDF.js extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-    
-    return {
-      text: fullText.trim(),
-      pageCount
-    };
   }
 
   /**

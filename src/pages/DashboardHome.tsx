@@ -25,6 +25,7 @@ import { PDFParserTest } from "@/components/PDFParserTest";
 import { FrontendUpload } from "@/components/FrontendUpload";
 import { DefinitivePDFTest } from "@/components/DefinitivePDFTest";
 import { OCRTest } from "@/components/OCRTest";
+import { PDFDebug } from "@/components/PDFDebug";
 import { useApp } from "@/contexts/AppContext";
 import { startOfMonth, subMonths, format, eachDayOfInterval } from "date-fns";
 
@@ -378,6 +379,7 @@ export default function DashboardHome() {
         {/* 7. PDF Parser Test (Development) */}
         {process.env.NODE_ENV === 'development' && (
           <div className="space-y-4">
+            <PDFDebug />
             <OCRTest />
             <DefinitivePDFTest />
             <PDFParserTest />
