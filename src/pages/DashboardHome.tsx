@@ -22,6 +22,7 @@ import { NetWorthHeroCard } from "@/components/NetWorthHeroCard";
 import { AIInsightsCard, Insight } from "@/components/AIInsightsCard";
 import { RecentTransactionsList } from "@/components/RecentTransactionsList";
 import { PDFParserTest } from "@/components/PDFParserTest";
+import { FrontendUpload } from "@/components/FrontendUpload";
 import { useApp } from "@/contexts/AppContext";
 import { startOfMonth, subMonths, format, eachDayOfInterval } from "date-fns";
 
@@ -374,7 +375,19 @@ export default function DashboardHome() {
 
         {/* 7. PDF Parser Test (Development) */}
         {process.env.NODE_ENV === 'development' && (
-          <PDFParserTest />
+          <div className="space-y-4">
+            <PDFParserTest />
+            <FrontendUpload 
+              onTransactionsParsed={(transactions, metadata) => {
+                console.log('Transactions parsed:', transactions.length);
+                toast.success(`Processed ${transactions.length} transactions`);
+              }}
+              onError={(error) => {
+                console.error('Upload error:', error);
+                toast.error(error);
+              }}
+            />
+          </div>
         )}
 
         {/* 8. Export Actions */}

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { fileParser } from '@/lib/fileParsers';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TestResult {
   success: boolean;
@@ -94,10 +95,52 @@ export const PDFParserTest: React.FC = () => {
     }
   };
 
-  const resetTest = () => {
-    setResult(null);
-    setProgress(0);
-    setShowDetails(false);
+  const saveTransactionsToDatabase = async (transactions: any[]) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('User not authenticated');
+        return false;
+      }
+
+      console.log(`💾 Saving ${transactions.length} transactions to database...`);
+
+      // Prepare transactions for database
+      const transactionsToSave = transactions.map(transaction => ({
+        user_id: user.id,
+        date: transaction.date,
+        description: transaction.description,
+        amount: transaction.amount,
+        category: transaction.category,
+        payee: transaction.payee,
+        merchant: transaction.merchant,
+        location: transaction.location,
+        confidence: transaction.confidence,
+        tags: transaction.tags || [],
+        source: 'pdf_test',
+        created_at: new Date().toISOString()
+      }));
+
+      // Insert transactions
+      const { error } = await supabase
+        .from('expenses')
+        .insert(transactionsToSave);
+
+      if (error) {
+        console.error('Error saving transactions:', error);
+        toast.error(`Failed to save transactions: ${error.message}`);
+        return false;
+      }
+
+      console.log(`✅ Successfully saved ${transactions.length} transactions`);
+      toast.success(`Saved ${transactions.length} transactions to database`);
+      return true;
+
+    } catch (error) {
+      console.error('Database save error:', error);
+      toast.error(`Database save failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return false;
+    }
   };
 
   return (
@@ -219,6 +262,18 @@ export const PDFParserTest: React.FC = () => {
                   <RefreshCw className="h-4 w-4" />
                   Reset
                 </Button>
+                
+                {result.success && result.transactions.length > 0 && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => saveTransactionsToDatabase(result.transactions)}
+                    className="gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Save to DB
+                  </Button>
+                )}
               </div>
             </div>
           </CardHeader>
