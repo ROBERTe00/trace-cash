@@ -24,40 +24,31 @@ export default function Transactions() {
 
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in pb-safe w-full">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-primary/5 to-background border border-primary/20 p-4 sm:p-6">
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center">
-              <Wallet className="icon-card text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-section">Transazioni</h1>
-              <p className="text-sm sm:text-base text-muted-foreground">Gestisci entrate e uscite</p>
-            </div>
-          </div>
+      {/* Clean Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Transazioni</h1>
+          <p className="text-sm text-muted-foreground mt-1">Gestisci entrate e uscite</p>
         </div>
-        <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(white,transparent_70%)]" />
+        <Wallet className="h-8 w-8 text-primary" />
       </div>
 
-      {/* Simplified Tabs: 3 instead of 5 */}
+      {/* Clean Tabs */}
       <Tabs defaultValue="transactions" className="space-y-4">
-        <div className="overflow-x-auto pb-2">
-          <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl min-w-min">
-            <TabsTrigger value="transactions" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2 whitespace-nowrap">
-              <Wallet className="icon-button" />
-              <span className="hidden sm:inline">Transazioni</span>
-            </TabsTrigger>
-            <TabsTrigger value="analysis" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2 whitespace-nowrap">
-              <BarChart3 className="icon-button" />
-              <span className="hidden sm:inline">Analisi</span>
-            </TabsTrigger>
-            <TabsTrigger value="import" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-4 py-2 whitespace-nowrap">
-              <Upload className="icon-button" />
-              <span className="hidden sm:inline">Importa</span>
-            </TabsTrigger>
-          </TabsList>
-        </div>
+        <TabsList className="grid w-full grid-cols-3 h-12 p-1 bg-muted rounded-xl">
+          <TabsTrigger value="transactions" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <Wallet className="h-4 w-4" />
+            <span className="hidden sm:inline">Transazioni</span>
+          </TabsTrigger>
+          <TabsTrigger value="analysis" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <BarChart3 className="h-4 w-4" />
+            <span className="hidden sm:inline">Analisi</span>
+          </TabsTrigger>
+          <TabsTrigger value="import" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <Upload className="h-4 w-4" />
+            <span className="hidden sm:inline">Importa</span>
+          </TabsTrigger>
+        </TabsList>
 
         {/* TAB 1: Transactions - 2-column layout on desktop */}
         <TabsContent value="transactions" className="space-y-4">
@@ -79,11 +70,11 @@ export default function Transactions() {
           <ExpenseInsights expenses={expenses as any} />
         </TabsContent>
 
-        {/* TAB 3: Import - Clean, focused layout */}
+        {/* TAB 3: Import */}
         <TabsContent value="import" className="space-y-4">
-          <Card className="glass-card p-4 sm:p-6">
-            <h3 className="text-card-title mb-4 flex items-center gap-2">
-              <Upload className="icon-card text-primary" />
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Upload className="h-5 w-5 text-primary" />
               Importa Transazioni
             </h3>
             <div className="space-y-4">

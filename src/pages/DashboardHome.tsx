@@ -21,6 +21,8 @@ import { LoadingDashboard } from "@/components/LoadingDashboard";
 import { NetWorthHeroCard } from "@/components/NetWorthHeroCard";
 import { AIInsightsCard, Insight } from "@/components/AIInsightsCard";
 import { RecentTransactionsList } from "@/components/RecentTransactionsList";
+import { QuickActionsGrid } from "@/components/QuickActionsGrid";
+import { SpendingsProgressCard } from "@/components/SpendingsProgressCard";
 import { useApp } from "@/contexts/AppContext";
 import { startOfMonth, subMonths, format, eachDayOfInterval } from "date-fns";
 
@@ -304,6 +306,14 @@ export default function DashboardHome() {
   const monthlyChange = totalInvestments > 0 ? 
     ((totalInvestments - (totalInvestments * 0.95)) / (totalInvestments * 0.95)) * 100 : 0;
 
+  // Calculate category budgets and spending
+  const categorySpending = categoryBreakdown.map(cat => ({
+    name: cat.name,
+    amount: cat.amount,
+    budget: monthlyIncome * 0.2, // Example: 20% per category
+    color: cat.color
+  }));
+
   return (
     <TooltipProvider>
       <div className="space-y-4 sm:space-y-6 w-full pb-safe">
@@ -318,66 +328,74 @@ export default function DashboardHome() {
           onRefreshPrices={handleRefresh}
         />
 
-        {/* 2. AI Insights + Finance Score */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          <div className="lg:col-span-2">
-            <AIInsightsCard insights={generateInsights()} autoRotate={true} />
-          </div>
+        {/* 2. Quick Actions Grid */}
+        <QuickActionsGrid />
+
+        {/* 3. Overview Cards: Spendings + Finance Score */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <SpendingsProgressCard 
+            categories={categorySpending}
+            totalSpent={monthlyExpenses}
+            totalBudget={monthlyIncome}
+          />
           <FinanceScoreCard score={financeScore} />
         </div>
 
-        {/* 3. Quick Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        {/* 4. Recent Transactions */}
+        <RecentTransactionsList 
+          transactions={expenses.slice().sort((a, b) => 
+            new Date(b.date).getTime() - new Date(a.date).getTime()
+          )}
+          onViewAll={() => navigate('/transactions')}
+        />
+
+        {/* 5. AI Insights */}
+        <AIInsightsCard insights={generateInsights()} autoRotate={true} />
+
+        {/* 6. Quick Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <StatCard
             icon={DollarSign}
-            label="Monthly Income"
+            label="Entrate Mensili"
             value={formatCurrency(monthlyIncome)}
             delay={0.1}
           />
           <StatCard
             icon={TrendingUp}
-            label="Monthly Expenses"
+            label="Spese Mensili"
             value={formatCurrency(monthlyExpenses)}
             delay={0.2}
           />
           <StatCard
             icon={PiggyBank}
-            label="Monthly Savings"
+            label="Risparmi Mensili"
             value={formatCurrency(monthlySavingsAmount)}
             delay={0.3}
           />
           <StatCard
             icon={Target}
-            label="Investments"
+            label="Investimenti"
             value={formatCurrency(totalInvestments)}
             delay={0.4}
           />
         </div>
 
-        {/* 4. Enhanced Cashflow */}
-        <CashflowCard expenses={expenses} defaultTimeRange="1m" />
-
-        {/* 5. Expense Breakdown + Recent Transactions */}
+        {/* 7. Expense Breakdown + Cashflow */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <ExpenseBreakdownCard categories={categoryBreakdown} totalExpenses={totalExpenses} />
-          <RecentTransactionsList 
-            transactions={expenses.slice().sort((a, b) => 
-              new Date(b.date).getTime() - new Date(a.date).getTime()
-            )}
-            onViewAll={() => navigate('/transactions')}
-          />
+          <CashflowCard expenses={expenses} defaultTimeRange="1m" />
         </div>
 
-        {/* 6. Financial Goals */}
+        {/* 8. Financial Goals */}
         <FinancialGoals />
 
-        {/* 7. Export Actions */}
+        {/* 9. Export Actions */}
         <div className="flex justify-end gap-2 flex-wrap">
           <Button 
             variant="outline" 
             size="sm"
             onClick={handleExportCSV}
-            className="gap-2 rounded-2xl"
+            className="gap-2"
           >
             <Download className="h-4 w-4" />
             Export CSV
@@ -386,7 +404,7 @@ export default function DashboardHome() {
             variant="outline" 
             size="sm"
             onClick={handleExportPDF}
-            className="gap-2 rounded-2xl"
+            className="gap-2"
           >
             <Download className="h-4 w-4" />
             Export PDF
