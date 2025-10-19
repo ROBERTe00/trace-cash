@@ -270,20 +270,28 @@ class FileParserService {
     pageCount: number;
   }> {
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdfDoc = await PDFDocument.load(arrayBuffer);
-      const pageCount = pdfDoc.getPageCount();
-
-      // For now, we'll use a simplified approach
-      // In production, you'd integrate with OCR services like Tesseract.js
-      const text = `PDF content extraction from ${file.name} (${pageCount} pages)`;
+      // Import the robust PDF parser
+      const { bankStatementPDFParser } = await import('./bankStatementPDFParser');
+      
+      console.log(`📄 Starting robust PDF parsing for: ${file.name}`);
+      
+      const result = await bankStatementPDFParser.parsePDF(file, enableOCR);
+      
+      console.log(`✅ PDF parsing completed:`, {
+        method: result.method,
+        confidence: result.confidence,
+        textLength: result.text.length,
+        pageCount: result.pageCount,
+        transactionsFound: result.structuredData.length
+      });
       
       return {
-        text,
-        structuredData: [],
-        pageCount
+        text: result.text,
+        structuredData: result.structuredData,
+        pageCount: result.pageCount
       };
     } catch (error) {
+      console.error('PDF parsing error:', error);
       throw new Error(`PDF parsing error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -338,17 +346,38 @@ class FileParserService {
    * Fallback parsing for structured data
    */
   private parseStructuredData(data: any[]): ParsedTransaction[] {
-    return data.map((row, index) => ({
-      date: this.parseDate(row.date || row.data || ''),
-      description: row.description || row.descrizione || row.details || '',
-      amount: this.parseAmount(row.amount || row.importo || row.value || ''),
-      category: this.categorizeTransaction(row.description || '', row.amount || ''),
-      payee: row.merchant || row.payee || '',
-      confidence: 0.7,
-      merchant: row.merchant || '',
-      location: row.location || '',
-      tags: []
-    })).filter(t => t.date && t.description && t.amount !== 0);
+    return data.map((row, index) => {
+      // Handle both CSV/Excel rows and PDF structured data
+      const isPDFStructured = row.date && row.description && typeof row.amount === 'number';
+      
+      if (isPDFStructured) {
+        // This is already structured data from PDF parser
+        return {
+          date: row.date,
+          description: row.description,
+          amount: row.amount,
+          category: this.categorizeTransaction(row.description, row.amount.toString()),
+          payee: row.payee || '',
+          confidence: 0.8, // Higher confidence for structured PDF data
+          merchant: row.merchant || '',
+          location: row.location || '',
+          tags: []
+        };
+      } else {
+        // This is CSV/Excel row data
+        return {
+          date: this.parseDate(row.date || row.data || ''),
+          description: row.description || row.descrizione || row.details || '',
+          amount: this.parseAmount(row.amount || row.importo || row.value || ''),
+          category: this.categorizeTransaction(row.description || '', row.amount || ''),
+          payee: row.merchant || row.payee || '',
+          confidence: 0.7,
+          merchant: row.merchant || '',
+          location: row.location || '',
+          tags: []
+        };
+      }
+    }).filter(t => t.date && t.description && t.amount !== 0);
   }
 
   /**

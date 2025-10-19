@@ -21,6 +21,7 @@ import { LoadingDashboard } from "@/components/LoadingDashboard";
 import { NetWorthHeroCard } from "@/components/NetWorthHeroCard";
 import { AIInsightsCard, Insight } from "@/components/AIInsightsCard";
 import { RecentTransactionsList } from "@/components/RecentTransactionsList";
+import { PDFParserTest } from "@/components/PDFParserTest";
 import { useApp } from "@/contexts/AppContext";
 import { startOfMonth, subMonths, format, eachDayOfInterval } from "date-fns";
 
@@ -371,7 +372,12 @@ export default function DashboardHome() {
         {/* 6. Financial Goals */}
         <FinancialGoals />
 
-        {/* 7. Export Actions */}
+        {/* 7. PDF Parser Test (Development) */}
+        {process.env.NODE_ENV === 'development' && (
+          <PDFParserTest />
+        )}
+
+        {/* 8. Export Actions */}
         <div className="flex justify-end gap-2 flex-wrap">
           <Button 
             variant="outline" 
