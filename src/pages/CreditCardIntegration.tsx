@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   CreditCard, 
   Settings, 
@@ -18,9 +19,9 @@ import {
   TrendingUp,
   AlertTriangle,
   CheckCircle,
-  Info
+  Info,
+  Construction
 } from 'lucide-react';
-import { PlaidIntegration } from '@/components/PlaidIntegration';
 import { BugAuditPanel } from '@/components/BugAuditSystem';
 import { MobileOptimizedCard } from '@/components/MobileOptimizations';
 import { toast } from 'sonner';
@@ -146,15 +147,16 @@ export default function CreditCardIntegrationPage() {
         {/* Integration Tab */}
         <TabsContent value="integration" className="space-y-6">
           <MobileOptimizedCard
-            title="Plaid Integration"
+            title="Credit Card Integration"
             enableTouch={true}
-            enableZoom={true}
             className="w-full"
           >
-            <PlaidIntegration
-              onAccountConnected={handleAccountConnected}
-              onTransactionReceived={handleTransactionReceived}
-            />
+            <Alert>
+              <Construction className="h-4 w-4" />
+              <AlertDescription>
+                Plaid integration is currently under maintenance. This feature will be available soon with the connected_accounts database table.
+              </AlertDescription>
+            </Alert>
           </MobileOptimizedCard>
         </TabsContent>
 
