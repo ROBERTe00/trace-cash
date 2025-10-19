@@ -376,25 +376,23 @@ export default function DashboardHome() {
         {/* 6. Financial Goals */}
         <FinancialGoals />
 
-        {/* 7. PDF Parser Test (Development) */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="space-y-4">
-            <PDFDebug />
-            <OCRTest />
-            <DefinitivePDFTest />
-            <PDFParserTest />
-            <FrontendUpload 
-              onTransactionsParsed={(transactions, metadata) => {
-                console.log('Transactions parsed:', transactions.length);
-                toast.success(`Processed ${transactions.length} transactions`);
-              }}
-              onError={(error) => {
-                console.error('Upload error:', error);
-                toast.error(error);
-              }}
-            />
-          </div>
-        )}
+        {/* 7. PDF Parser Test (Always Visible for Debugging) */}
+        <div className="space-y-4">
+          <PDFDebug />
+          <OCRTest />
+          <DefinitivePDFTest />
+          <PDFParserTest />
+          <FrontendUpload 
+            onTransactionsParsed={(transactions, metadata) => {
+              console.log('Transactions parsed:', transactions.length);
+              toast.success(`Processed ${transactions.length} transactions`);
+            }}
+            onError={(error) => {
+              console.error('Upload error:', error);
+              toast.error(error);
+            }}
+          />
+        </div>
 
         {/* 8. Export Actions */}
         <div className="flex justify-end gap-2 flex-wrap">
