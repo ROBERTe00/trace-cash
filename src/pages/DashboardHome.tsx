@@ -21,17 +21,8 @@ import { LoadingDashboard } from "@/components/LoadingDashboard";
 import { NetWorthHeroCard } from "@/components/NetWorthHeroCard";
 import { AIInsightsCard, Insight } from "@/components/AIInsightsCard";
 import { RecentTransactionsList } from "@/components/RecentTransactionsList";
-<<<<<<< HEAD
-import { PDFParserTest } from "@/components/PDFParserTest";
-import { FrontendUpload } from "@/components/FrontendUpload";
-import { DefinitivePDFTest } from "@/components/DefinitivePDFTest";
-import { OCRTest } from "@/components/OCRTest";
-import { PDFDebug } from "@/components/PDFDebug";
-import { DirectPDFTest } from "@/components/DirectPDFTest";
-=======
 import { QuickActionsGrid } from "@/components/QuickActionsGrid";
 import { SpendingsProgressCard } from "@/components/SpendingsProgressCard";
->>>>>>> 7d0a1d15cc79b16a992307d5f3e7094f5bc31bf1
 import { useApp } from "@/contexts/AppContext";
 import { startOfMonth, subMonths, format, eachDayOfInterval } from "date-fns";
 
@@ -398,30 +389,7 @@ export default function DashboardHome() {
         {/* 8. Financial Goals */}
         <FinancialGoals />
 
-<<<<<<< HEAD
-        {/* 7. PDF Parser Test (Always Visible for Debugging) */}
-        <div className="space-y-4">
-          <DirectPDFTest />
-          <PDFDebug />
-          <OCRTest />
-          <DefinitivePDFTest />
-          <PDFParserTest />
-          <FrontendUpload 
-            onTransactionsParsed={(transactions, metadata) => {
-              console.log('Transactions parsed:', transactions.length);
-              toast.success(`Processed ${transactions.length} transactions`);
-            }}
-            onError={(error) => {
-              console.error('Upload error:', error);
-              toast.error(error);
-            }}
-          />
-        </div>
-
-        {/* 8. Export Actions */}
-=======
         {/* 9. Export Actions */}
->>>>>>> 7d0a1d15cc79b16a992307d5f3e7094f5bc31bf1
         <div className="flex justify-end gap-2 flex-wrap">
           <Button 
             variant="outline" 

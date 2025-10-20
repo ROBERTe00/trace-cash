@@ -3,10 +3,9 @@ import { ExpenseForm } from "@/components/ExpenseForm";
 import { TransactionTable } from "@/components/TransactionTable";
 import { ExpensesSummary } from "@/components/ExpensesSummary";
 import { ExpenseInsights } from "@/components/ExpenseInsights";
-import { DirectPDFTest } from "@/components/DirectPDFTest";
+import { BankStatementUpload } from "@/components/BankStatementUpload";
 import { CSVExcelUpload } from "@/components/CSVExcelUpload";
 import { VoiceExpenseInput } from "@/components/VoiceExpenseInput";
-import { NewBankStatementUpload } from "@/components/NewBankStatementUpload";
 import { useExpenses } from "@/hooks/useExpenses";
 import { Wallet, BarChart3, Upload } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -79,10 +78,9 @@ export default function Transactions() {
               Importa Transazioni
             </h3>
             <div className="space-y-4">
-              <DirectPDFTest />
               <VoiceExpenseInput onExpenseDetected={handleAddExpense} />
               <CSVExcelUpload onTransactionsParsed={() => {}} />
-              <NewBankStatementUpload onTransactionsExtracted={handleTransactionsExtracted} />
+              <BankStatementUpload onTransactionsExtracted={handleTransactionsExtracted} />
             </div>
           </Card>
         </TabsContent>
