@@ -6,6 +6,8 @@ import { BrokerIntegration } from "@/components/BrokerIntegration";
 import { PortfolioMetricsPanel } from "@/components/PortfolioMetricsPanel";
 import { InvestmentScenarioSimulator } from "@/components/InvestmentScenarioSimulator";
 import { InvestmentHero } from "@/components/InvestmentHero";
+import { TransferOptionsGrid } from "@/components/TransferOptionsGrid";
+import { RecentTransfersAvatars } from "@/components/RecentTransfersAvatars";
 import { Investment } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -200,8 +202,8 @@ export default function Investments() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 animate-fade-in pb-safe w-full">
-      {/* Hero Section with New Design */}
+    <div className="space-y-6 animate-fade-in safe-width">
+      {/* Hero Section */}
       <InvestmentHero
         totalValue={totalValue}
         totalGain={totalReturn}
@@ -219,6 +221,12 @@ export default function Investments() {
         onExportPDF={handleExportPDF}
         onExportCSV={handleExportCSV}
       />
+
+      {/* Transfer Options */}
+      <TransferOptionsGrid />
+
+      {/* Recent Transfers */}
+      <RecentTransfersAvatars />
 
       {/* 3 Tabs: Portfolio, Performance, Import */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">

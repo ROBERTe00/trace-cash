@@ -145,22 +145,19 @@ export const InvestmentTable = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('investments.category')}</TableHead>
-              <TableHead>{t('investments.name')}</TableHead>
-              <TableHead className="text-right">{t('investments.quantity')}</TableHead>
-              <TableHead className="text-right">{t('investments.purchasePrice')}</TableHead>
-              <TableHead className="text-right">{t('investments.currentPrice')}</TableHead>
-              <TableHead className="text-right">{t('investments.initialValue')}</TableHead>
-              <TableHead className="text-right">{t('investments.currentValue')}</TableHead>
-              <TableHead className="text-right">{t('investments.yield')}</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
+              <TableHead className="min-w-[200px]">Nome & Categoria</TableHead>
+              <TableHead className="text-right min-w-[100px]">Quantità</TableHead>
+              <TableHead className="text-right min-w-[120px]">Val. Acquisto</TableHead>
+              <TableHead className="text-right min-w-[120px]">Val. Corrente</TableHead>
+              <TableHead className="text-right min-w-[120px]">Rendimento</TableHead>
+              <TableHead className="w-[100px]">Azioni</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {investments.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={9}
+                  colSpan={6}
                   className="text-center text-muted-foreground py-8"
                 >
                   {t('investments.noInvestments')}
@@ -168,49 +165,39 @@ export const InvestmentTable = ({
               </TableRow>
             ) : (
               investments.map((investment) => {
-                const initialValue = investment.quantity * investment.purchasePrice;
                 const currentValue = investment.quantity * investment.currentPrice;
                 const yieldPercent = calculateYield(investment);
                 const isPositive = yieldPercent >= 0;
 
                 return (
-                  <TableRow key={investment.id}>
-                    <TableCell>{investment.type}</TableCell>
-                    <TableCell className="font-medium">
+                  <TableRow key={investment.id} className="hover:bg-muted/50">
+                    <TableCell>
                       <div className="flex items-center gap-2">
-                        {investment.name}
-                        {investment.liveTracking && (
-                          <Badge variant="outline" className="text-xs gap-1">
-                            <Zap className="icon-small text-primary" />
-                            Live
-                          </Badge>
-                        )}
+                        <div>
+                          <p className="font-medium">{investment.name}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-muted-foreground">{investment.type}</span>
+                            {investment.liveTracking && (
+                              <Badge variant="outline" className="text-xs gap-1">
+                                <Zap className="icon-small text-primary" />
+                                Live
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      {investment.symbol && (
-                        <div className="text-xs text-muted-foreground">{investment.symbol}</div>
-                      )}
                     </TableCell>
+                    <TableCell className="text-right">{investment.quantity}</TableCell>
                     <TableCell className="text-right">
-                      {investment.quantity}
+                      {formatCurrency(investment.quantity * investment.purchasePrice)}
                     </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(investment.purchasePrice)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(investment.currentPrice)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(initialValue)}
-                    </TableCell>
-                    <TableCell className="text-right text-base font-bold">
+                    <TableCell className="text-right font-medium">
                       {formatCurrency(currentValue)}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div
-                        className={`flex items-center justify-end gap-1 ${
-                          isPositive ? "text-success" : "text-destructive"
-                        }`}
-                      >
+                      <div className={`flex items-center justify-end gap-1 ${
+                        isPositive ? "text-success" : "text-destructive"
+                      }`}>
                         {isPositive ? (
                           <TrendingUp className="icon-button" />
                         ) : (

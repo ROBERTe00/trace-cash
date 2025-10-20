@@ -25,17 +25,15 @@ export const TransactionTable = ({
   );
 
   return (
-    <Card className="glass-card p-6">
-      <h3 className="text-lg font-semibold mb-4">Recent Transactions</h3>
+    <Card className="modern-card">
+      <h3 className="text-lg font-semibold mb-4">Transazioni Recenti</h3>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
+              <TableHead className="min-w-[200px]">Data & Descrizione</TableHead>
+              <TableHead className="min-w-[120px]">Categoria</TableHead>
+              <TableHead className="text-right min-w-[120px]">Importo</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -43,38 +41,39 @@ export const TransactionTable = ({
             {sortedTransactions.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
-                  className="text-center text-muted-foreground"
+                  colSpan={4}
+                  className="text-center text-muted-foreground py-8"
                 >
-                  No transactions yet
+                  Nessuna transazione ancora
                 </TableCell>
               </TableRow>
             ) : (
               sortedTransactions.map((transaction) => (
-                <TableRow key={transaction.id}>
+                <TableRow key={transaction.id} className="hover:bg-muted/50">
                   <TableCell>
-                    {new Date(transaction.date).toLocaleDateString()}
+                    <div>
+                      <p className="font-medium">{transaction.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(transaction.date).toLocaleDateString("it-IT", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <span
-                      className={
-                        transaction.type === "Income"
-                          ? "text-success"
-                          : "text-foreground"
-                      }
-                    >
-                      {transaction.type}
+                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary">
+                      {transaction.category}
                     </span>
                   </TableCell>
-                  <TableCell>{transaction.category}</TableCell>
-                  <TableCell>{transaction.description}</TableCell>
-                  <TableCell className="text-right font-medium">
+                  <TableCell className="text-right">
                     <span
-                      className={
+                      className={`font-bold text-base ${
                         transaction.type === "Income"
                           ? "text-success"
                           : "text-foreground"
-                      }
+                      }`}
                     >
                       {transaction.type === "Income" ? "+" : "-"}€
                       {transaction.amount.toFixed(2)}

@@ -113,6 +113,43 @@
 }
 
 @layer utilities {
+  /* Container constraints */
+  .page-container {
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .safe-width {
+    @apply w-full min-w-0 max-w-full overflow-hidden;
+  }
+
+  /* Modern card styles */
+  .modern-card {
+    @apply rounded-2xl bg-card border-0 shadow-sm p-6;
+  }
+
+  .modern-card-gradient {
+    @apply modern-card bg-gradient-to-br from-card via-card to-muted/20;
+  }
+
+  /* Gradient utilities */
+  .gradient-purple {
+    @apply bg-gradient-to-br from-purple-500 to-purple-600;
+  }
+
+  .gradient-green {
+    @apply bg-gradient-to-br from-green-500 to-emerald-600;
+  }
+
+  .gradient-blue {
+    @apply bg-gradient-to-br from-blue-500 to-cyan-600;
+  }
+
+  .gradient-orange {
+    @apply bg-gradient-to-br from-orange-500 to-red-600;
+  }
+}
+
+@layer utilities {
   .glass-morphism {
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(20px);
