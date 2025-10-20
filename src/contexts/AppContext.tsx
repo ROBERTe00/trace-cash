@@ -306,6 +306,43 @@ const translations: Record<Language, Record<string, string>> = {
     loginRequired: "Please log in to add investments",
     loadFailed: "Failed to load data",
     logoutError: "Logout error",
+    
+    // Search
+    "search.transactions": "Search transactions",
+    "search.placeholder": "Search transactions by description…",
+    
+    // Budget
+    "budget.exceeded": "Budget exceeded! You spent",
+    "budget.on": "on",
+    "budget.modify": "Modify budget",
+    "budget.used": "Budget Used",
+    "budget.remaining": "remaining",
+    
+    // Metrics
+    "metrics.totalExpenses": "Total Expenses",
+    "metrics.budgetUsed": "Budget Used",
+    "metrics.topCategory": "Top Category",
+    "metrics.balanceSummary": "Balance Summary",
+    "metrics.initialBalance": "Initial Balance",
+    "metrics.outflows": "Outflows",
+    "metrics.inflows": "Inflows",
+    "metrics.closingBalance": "Closing Balance",
+    
+    // Categories
+    "categories.top": "Top Spending Categories",
+    
+    // Transactions
+    "transactions.recent": "Recent Transactions",
+    "transactions.noTransactions": "No transactions found",
+    
+    // Table
+    "table.date": "Date",
+    "table.description": "Description",
+    "table.outflow": "Outflow",
+    "table.inflow": "Inflow",
+    "table.balance": "Balance",
+    "table.category": "Category",
+    "table.actions": "Actions",
   },
   it: {
     // Navigation
@@ -569,6 +606,43 @@ const translations: Record<Language, Record<string, string>> = {
     loginRequired: "Effettua il login per aggiungere investimenti",
     loadFailed: "Caricamento dati fallito",
     logoutError: "Errore durante il logout",
+    
+    // Search
+    "search.transactions": "Cerca transazioni",
+    "search.placeholder": "Cerca transazioni per descrizione…",
+    
+    // Budget
+    "budget.exceeded": "Budget superato! Hai speso",
+    "budget.on": "su",
+    "budget.modify": "Modifica budget",
+    "budget.used": "Budget Utilizzato",
+    "budget.remaining": "rimanenti",
+    
+    // Metrics
+    "metrics.totalExpenses": "Spese Totali",
+    "metrics.budgetUsed": "Budget Utilizzato",
+    "metrics.topCategory": "Categoria Principale",
+    "metrics.balanceSummary": "Riepilogo del Saldo",
+    "metrics.initialBalance": "Saldo Iniziale",
+    "metrics.outflows": "Denaro in Uscita",
+    "metrics.inflows": "Denaro in Entrata",
+    "metrics.closingBalance": "Saldo di Chiusura",
+    
+    // Categories
+    "categories.top": "Top Categorie di Spesa",
+    
+    // Transactions
+    "transactions.recent": "Transazioni Recenti",
+    "transactions.noTransactions": "Nessuna transazione trovata",
+    
+    // Table
+    "table.date": "Data",
+    "table.description": "Descrizione",
+    "table.outflow": "Denaro in Uscita",
+    "table.inflow": "Denaro in Entrata",
+    "table.balance": "Saldo",
+    "table.category": "Categoria",
+    "table.actions": "Azioni",
   },
   es: {
     // Navigation

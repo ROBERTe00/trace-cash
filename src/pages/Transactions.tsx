@@ -71,20 +71,22 @@ export default function Transactions() {
 
       {/* Tabs */}
       <Tabs defaultValue="transactions" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 h-11 p-1 bg-muted rounded-xl">
-          <TabsTrigger value="transactions" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <Wallet className="h-4 w-4" />
-            <span className="text-xs sm:text-sm">Transazioni</span>
-          </TabsTrigger>
-          <TabsTrigger value="analysis" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <BarChart3 className="h-4 w-4" />
-            <span className="text-xs sm:text-sm">Analisi</span>
-          </TabsTrigger>
-          <TabsTrigger value="import" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <Upload className="h-4 w-4" />
-            <span className="text-xs sm:text-sm">Importa</span>
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <TabsList className="grid w-full min-w-[300px] grid-cols-3 h-11 p-1 bg-muted rounded-xl">
+            <TabsTrigger value="transactions" className="gap-1 sm:gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm min-h-[44px]">
+              <Wallet className="h-4 w-4 flex-shrink-0" />
+              <span className="text-xs sm:text-sm truncate">Transazioni</span>
+            </TabsTrigger>
+            <TabsTrigger value="analysis" className="gap-1 sm:gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm min-h-[44px]">
+              <BarChart3 className="h-4 w-4 flex-shrink-0" />
+              <span className="text-xs sm:text-sm truncate">Analisi</span>
+            </TabsTrigger>
+            <TabsTrigger value="import" className="gap-1 sm:gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm min-h-[44px]">
+              <Upload className="h-4 w-4 flex-shrink-0" />
+              <span className="text-xs sm:text-sm truncate">Importa</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* TAB 1: Transactions - New Design */}
         <TabsContent value="transactions" className="space-y-0">

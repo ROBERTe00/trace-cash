@@ -18,6 +18,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useEffect, useState } from "react";
 import { registerServiceWorker, captureInstallPrompt } from "@/lib/pwaUtils";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealTimeSync } from "@/hooks/useRealTimeSync";
 import { Session } from "@supabase/supabase-js";
 import { LoadingDashboard } from "@/components/LoadingDashboard";
 import Index from "./pages/Index";
@@ -39,6 +40,9 @@ const queryClient = new QueryClient();
 function ProtectedRoutes() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Enable real-time sync for expenses and investments
+  useRealTimeSync();
 
   useEffect(() => {
     let previousUserId: string | undefined;

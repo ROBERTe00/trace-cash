@@ -1,4 +1,5 @@
 // Market data API integration for live crypto and stock prices
+import { convertCurrency } from "./currencyConverter";
 
 const COINGECKO_API = "https://api.coingecko.com/api/v3";
 const YAHOO_FINANCE_PROXY = "https://query1.finance.yahoo.com/v8/finance/chart";
@@ -29,7 +30,7 @@ const cryptoIdMap: Record<string, string> = {
   LTC: "litecoin",
 };
 
-export const fetchCryptoPrice = async (symbol: string): Promise<MarketPrice | null> => {
+export const fetchCryptoPrice = async (symbol: string, targetCurrency: string = 'EUR'): Promise<MarketPrice | null> => {
   try {
     const cryptoId = cryptoIdMap[symbol.toUpperCase()] || symbol.toLowerCase();
     const response = await fetch(
@@ -43,10 +44,24 @@ export const fetchCryptoPrice = async (symbol: string): Promise<MarketPrice | nu
 
     if (!coinData) return null;
 
+    // Prefer EUR if targeting EUR, otherwise use USD and convert
+    let price = coinData.eur || 0;
+    let change24h = coinData.eur_24h_change || 0;
+
+    // If EUR not available or target is different, use USD and convert
+    if (!coinData.eur && coinData.usd && targetCurrency === 'EUR') {
+      price = await convertCurrency(coinData.usd, 'USD', 'EUR');
+      change24h = coinData.usd_24h_change || 0;
+      console.log(`💱 [Crypto] Converted ${symbol}: $${coinData.usd} → ${price.toFixed(2)} EUR`);
+    } else if (coinData.eur && targetCurrency !== 'EUR') {
+      price = await convertCurrency(coinData.eur, 'EUR', targetCurrency);
+      console.log(`💱 [Crypto] Converted ${symbol}: €${coinData.eur} → ${price.toFixed(2)} ${targetCurrency}`);
+    }
+
     return {
       symbol: symbol.toUpperCase(),
-      price: coinData.eur || coinData.usd || 0,
-      change24h: coinData.eur_24h_change || coinData.usd_24h_change || 0,
+      price,
+      change24h,
       lastUpdate: new Date().toISOString(),
     };
   } catch (error) {
@@ -80,7 +95,7 @@ export const isCryptoSymbol = (symbol: string): boolean => {
 };
 
 // Fetch stock/ETF price from Yahoo Finance
-export const fetchStockPrice = async (symbol: string): Promise<MarketPrice | null> => {
+export const fetchStockPrice = async (symbol: string, targetCurrency: string = 'EUR'): Promise<MarketPrice | null> => {
   try {
     const response = await fetch(
       `${YAHOO_FINANCE_PROXY}/${symbol}?interval=1d&range=1d`
@@ -93,9 +108,16 @@ export const fetchStockPrice = async (symbol: string): Promise<MarketPrice | nul
 
     if (!result) return null;
 
-    const price = result.meta?.regularMarketPrice;
+    let price = result.meta?.regularMarketPrice || 0;
     const previousClose = result.meta?.chartPreviousClose;
     const change24h = previousClose ? ((price - previousClose) / previousClose) * 100 : 0;
+    const stockCurrency = result.meta?.currency || 'USD';
+
+    // Convert to target currency if needed
+    if (stockCurrency !== targetCurrency) {
+      price = await convertCurrency(price, stockCurrency, targetCurrency);
+      console.log(`💱 [Stock] ${symbol}: ${result.meta?.regularMarketPrice} ${stockCurrency} → ${price.toFixed(2)} ${targetCurrency}`);
+    }
 
     return {
       symbol: symbol.toUpperCase(),

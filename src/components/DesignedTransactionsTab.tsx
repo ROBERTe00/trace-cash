@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Expense } from "@/lib/storage";
+import { useApp } from "@/contexts/AppContext";
 
 interface DesignedTransactionsTabProps {
   transactions: Expense[];
@@ -54,6 +55,7 @@ export const DesignedTransactionsTab = ({
   onAddTransaction,
   onEditBudget,
 }: DesignedTransactionsTabProps) => {
+  const { t, formatCurrency } = useApp();
   const budgetExceeded = totalExpenses > budget;
   const trend = "+224,5%"; // Calculate from real data
   const remaining = Math.max(0, budget - totalExpenses);
@@ -64,7 +66,7 @@ export const DesignedTransactionsTab = ({
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border p-4 lg:p-6 flex items-center gap-4">
         <Search className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         <Input
-          placeholder="Cerca transazioni per descrizione…"
+          placeholder={t('search.placeholder')}
           onChange={(e) => onSearch(e.target.value)}
           className="flex-1 border-0 bg-muted/50 focus:bg-muted rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88FF]"
         />
@@ -73,7 +75,7 @@ export const DesignedTransactionsTab = ({
           className="bg-[#1E88FF] hover:bg-[#1E88FF]/90 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
-          Aggiungi
+          {t('add')}
         </Button>
       </div>
 
@@ -85,7 +87,7 @@ export const DesignedTransactionsTab = ({
           className="mx-4 lg:mx-6 mt-4 p-4 bg-[#FF4D4F]/10 border border-[#FF4D4F]/20 rounded-xl flex items-center justify-between gap-4 flex-wrap"
         >
           <p className="text-sm font-medium text-[#FF4D4F]">
-            ⚠️ Budget superato! Hai speso €{totalExpenses.toLocaleString('it-IT', { minimumFractionDigits: 2 })} su €{budget.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+            ⚠️ {t('budget.exceeded')} {formatCurrency(totalExpenses)} {t('budget.on')} {formatCurrency(budget)}
           </p>
           <Button
             variant="ghost"
@@ -93,7 +95,7 @@ export const DesignedTransactionsTab = ({
             onClick={onEditBudget}
             className="text-[#FF4D4F] hover:bg-[#FF4D4F]/10 px-3 py-1.5 rounded-lg text-sm transition-colors"
           >
-            Modifica budget
+            {t('budget.modify')}
           </Button>
         </motion.div>
       )}
@@ -110,10 +112,10 @@ export const DesignedTransactionsTab = ({
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
                 <Wallet className="h-5 w-5 text-[#1E88FF]" />
-                <p className="text-sm text-muted-foreground font-medium">Spese Totali</p>
+                <p className="text-sm text-muted-foreground font-medium">{t('metrics.totalExpenses')}</p>
               </div>
               <p className="text-3xl font-bold font-mono tabular-nums">
-                €{totalExpenses.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                {formatCurrency(totalExpenses)}
               </p>
               <p className="text-xs text-[#FF4D4F] font-medium">↗ {trend} vs mese scorso</p>
             </div>
@@ -128,7 +130,7 @@ export const DesignedTransactionsTab = ({
         >
           <Card className="p-6 bg-card/80 backdrop-blur-sm border border-border rounded-xl hover:shadow-lg transition-shadow">
             <div className="flex flex-col gap-3">
-              <p className="text-sm text-muted-foreground font-medium">Budget Utilizzato</p>
+              <p className="text-sm text-muted-foreground font-medium">{t('metrics.budgetUsed')}</p>
               <p className="text-3xl font-bold font-mono tabular-nums">{budgetUsedPercentage}%</p>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <motion.div
@@ -139,7 +141,7 @@ export const DesignedTransactionsTab = ({
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                €{remaining.toLocaleString('it-IT', { minimumFractionDigits: 2 })} rimanenti
+                {formatCurrency(remaining)} {t('budget.remaining')}
               </p>
             </div>
           </Card>
@@ -153,10 +155,10 @@ export const DesignedTransactionsTab = ({
         >
           <Card className="p-6 bg-card/80 backdrop-blur-sm border border-border rounded-xl hover:shadow-lg transition-shadow">
             <div className="flex flex-col gap-3">
-              <p className="text-sm text-muted-foreground font-medium">Categoria Principale</p>
+              <p className="text-sm text-muted-foreground font-medium">{t('metrics.topCategory')}</p>
               <p className="text-2xl font-bold">{topCategory.name}</p>
               <p className="text-lg font-mono tabular-nums text-[#1E88FF]">
-                €{topCategory.amount.toLocaleString('it-IT', { minimumFractionDigits: 2 })}
+                {formatCurrency(topCategory.amount)}
               </p>
             </div>
           </Card>
@@ -166,7 +168,7 @@ export const DesignedTransactionsTab = ({
       {/* 4. TOP CATEGORIES CHART */}
       <div className="px-4 lg:px-6 mt-6">
         <Card className="p-6 bg-card/80 backdrop-blur-sm border border-border rounded-xl">
-          <h3 className="text-lg font-semibold mb-4">Top Categorie di Spesa</h3>
+          <h3 className="text-lg font-semibold mb-4">{t('categories.top')}</h3>
           <div className="space-y-3">
             {categoryBreakdown.map((cat, index) => (
               <motion.div
@@ -198,7 +200,7 @@ export const DesignedTransactionsTab = ({
       <div className="px-4 lg:px-6 mt-6 pb-24">
         <Card className="p-6 bg-card/80 backdrop-blur-sm border border-border rounded-xl max-h-[600px] overflow-y-auto">
           <h3 className="text-lg font-semibold mb-4 sticky top-0 bg-card pb-2">
-            Transazioni Recenti
+            {t('transactions.recent')}
           </h3>
           <div className="space-y-2">
             {transactions.slice(0, 20).map((transaction, index) => {
@@ -244,7 +246,7 @@ export const DesignedTransactionsTab = ({
 
             {transactions.length === 0 && (
               <p className="text-center text-muted-foreground py-8">
-                Nessuna transazione trovata
+                {t('transactions.noTransactions')}
               </p>
             )}
           </div>

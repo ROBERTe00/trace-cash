@@ -41,7 +41,7 @@ export const ImprovedBalanceSummary = ({
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Wallet className="h-5 w-5 text-primary" />
-            Riepilogo del Saldo
+            {formatCurrency.length > 0 ? 'Riepilogo del Saldo' : 'Riepilogo del Saldo'}
           </h2>
           <Button onClick={onAddClick} size="sm" className="gap-2">
             <Plus className="h-4 w-4" />
