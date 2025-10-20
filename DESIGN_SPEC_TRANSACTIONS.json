@@ -1,0 +1,362 @@
+{
+  "designSpec": {
+    "name": "Transactions Tab UI",
+    "version": "1.0.0",
+    "style": "Modern Minimalist Fintech",
+    "mobileFirst": true,
+    "darkModeSupport": true
+  },
+  "brandTokens": {
+    "colors": {
+      "primary": "#1E88FF",
+      "success": "#28A745",
+      "danger": "#FF4D4F",
+      "neutral": "#9E9E9E",
+      "background": {
+        "light": "#F7FAFC",
+        "dark": "#121212"
+      },
+      "card": {
+        "light": "#FFFFFF",
+        "dark": "#1E1E1E"
+      }
+    },
+    "fonts": {
+      "text": "Inter",
+      "numbers": "JetBrains Mono"
+    },
+    "spacing": {
+      "xs": "4px",
+      "sm": "8px",
+      "md": "16px",
+      "lg": "24px",
+      "xl": "32px"
+    },
+    "borderRadius": {
+      "sm": "8px",
+      "md": "12px",
+      "lg": "16px"
+    }
+  },
+  "components": [
+    {
+      "id": "sticky-header",
+      "name": "Sticky Search Header",
+      "position": "sticky top-0 z-10",
+      "layout": "flex items-center gap-4",
+      "padding": "p-4 lg:p-6",
+      "background": "bg-background/95 backdrop-blur-sm",
+      "border": "border-b border-border",
+      "children": [
+        {
+          "type": "icon",
+          "icon": "Search",
+          "className": "h-5 w-5 text-muted-foreground flex-shrink-0"
+        },
+        {
+          "type": "input",
+          "placeholder": "Cerca transazioni per descrizione…",
+          "className": "flex-1 border-0 bg-muted/50 focus:bg-muted rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        },
+        {
+          "type": "button",
+          "text": "+ Aggiungi",
+          "variant": "primary",
+          "className": "bg-[#1E88FF] hover:bg-[#1E88FF]/90 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+        }
+      ]
+    },
+    {
+      "id": "budget-alert-banner",
+      "name": "Budget Exceeded Alert",
+      "condition": "budgetExceeded === true",
+      "layout": "flex items-center justify-between gap-4 flex-wrap",
+      "padding": "p-4",
+      "margin": "mx-4 lg:mx-6 mt-4",
+      "background": "bg-[#FF4D4F]/10",
+      "border": "border border-[#FF4D4F]/20 rounded-xl",
+      "children": [
+        {
+          "type": "text",
+          "content": "⚠️ Budget superato! Hai speso €11.177,75 su €1.500,00",
+          "className": "text-sm font-medium text-[#FF4D4F]"
+        },
+        {
+          "type": "button",
+          "text": "Modifica budget",
+          "variant": "ghost",
+          "className": "text-[#FF4D4F] hover:bg-[#FF4D4F]/10 px-3 py-1.5 rounded-lg text-sm transition-colors"
+        }
+      ]
+    },
+    {
+      "id": "metric-cards-grid",
+      "name": "Metrics Grid (3 cards)",
+      "layout": "grid grid-cols-1 md:grid-cols-3 gap-4",
+      "padding": "px-4 lg:px-6 mt-6",
+      "cards": [
+        {
+          "id": "total-expenses-card",
+          "layout": "flex flex-col gap-3",
+          "padding": "p-6",
+          "background": "bg-card/80 backdrop-blur-sm",
+          "border": "border border-border rounded-xl",
+          "hover": "hover:shadow-lg transition-shadow",
+          "children": [
+            {
+              "type": "header",
+              "layout": "flex items-center gap-2",
+              "children": [
+                {
+                  "type": "icon",
+                  "icon": "Wallet",
+                  "className": "h-5 w-5 text-primary"
+                },
+                {
+                  "type": "text",
+                  "content": "Spese Totali",
+                  "className": "text-sm text-muted-foreground font-medium"
+                }
+              ]
+            },
+            {
+              "type": "value",
+              "content": "€11.177,75",
+              "className": "text-3xl font-bold font-mono tabular-nums"
+            },
+            {
+              "type": "subtext",
+              "content": "↗ 224,5% vs mese scorso",
+              "className": "text-xs text-[#FF4D4F] font-medium"
+            }
+          ]
+        },
+        {
+          "id": "budget-used-card",
+          "layout": "flex flex-col gap-3",
+          "padding": "p-6",
+          "background": "bg-card/80 backdrop-blur-sm",
+          "border": "border border-border rounded-xl",
+          "hover": "hover:shadow-lg transition-shadow",
+          "children": [
+            {
+              "type": "text",
+              "content": "Budget Utilizzato",
+              "className": "text-sm text-muted-foreground font-medium"
+            },
+            {
+              "type": "value",
+              "content": "100%",
+              "className": "text-3xl font-bold font-mono tabular-nums"
+            },
+            {
+              "type": "progress",
+              "value": 100,
+              "className": "h-2 bg-muted rounded-full overflow-hidden",
+              "barClassName": "h-full bg-[#28A745] rounded-full transition-all duration-300",
+              "style": "width: 100%"
+            },
+            {
+              "type": "subtext",
+              "content": "€0,00 rimanenti",
+              "className": "text-xs text-muted-foreground"
+            }
+          ]
+        },
+        {
+          "id": "top-category-card",
+          "layout": "flex flex-col gap-3",
+          "padding": "p-6",
+          "background": "bg-card/80 backdrop-blur-sm",
+          "border": "border border-border rounded-xl",
+          "hover": "hover:shadow-lg transition-shadow",
+          "children": [
+            {
+              "type": "text",
+              "content": "Categoria Principale",
+              "className": "text-sm text-muted-foreground font-medium"
+            },
+            {
+              "type": "value",
+              "content": "Investment",
+              "className": "text-2xl font-bold"
+            },
+            {
+              "type": "subtext",
+              "content": "€8.871,40",
+              "className": "text-lg font-mono tabular-nums text-primary"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "category-chart-section",
+      "name": "Top Categorie di Spesa",
+      "padding": "px-4 lg:px-6 mt-6",
+      "children": [
+        {
+          "type": "card",
+          "padding": "p-6",
+          "background": "bg-card/80 backdrop-blur-sm",
+          "border": "border border-border rounded-xl",
+          "children": [
+            {
+              "type": "title",
+              "content": "Top Categorie di Spesa",
+              "className": "text-lg font-semibold mb-4"
+            },
+            {
+              "type": "chart-bars",
+              "layout": "space-y-3",
+              "data": [
+                {
+                  "category": "Investment",
+                  "amount": "€8.871,40",
+                  "percentage": 79.3,
+                  "color": "bg-gradient-to-r from-[#1E88FF] to-[#1E88FF]/60"
+                },
+                {
+                  "category": "Entertainment",
+                  "amount": "€2.000,00",
+                  "percentage": 17.9,
+                  "color": "bg-gradient-to-r from-[#1E88FF] to-[#1E88FF]/60"
+                },
+                {
+                  "category": "Rent",
+                  "amount": "€190,00",
+                  "percentage": 1.7,
+                  "color": "bg-gradient-to-r from-[#1E88FF] to-[#1E88FF]/60"
+                },
+                {
+                  "category": "Shopping",
+                  "amount": "€43,35",
+                  "percentage": 0.4,
+                  "color": "bg-gradient-to-r from-[#1E88FF] to-[#1E88FF]/60"
+                }
+              ],
+              "barTemplate": {
+                "layout": "flex items-center gap-3",
+                "labelClassName": "text-sm font-medium min-w-[120px]",
+                "barContainerClassName": "flex-1 h-8 bg-muted rounded-lg overflow-hidden",
+                "barClassName": "h-full transition-all duration-500 ease-out",
+                "valueClassName": "text-sm font-mono tabular-nums text-muted-foreground min-w-[100px] text-right"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "transactions-list",
+      "name": "Scrollable Transaction List",
+      "padding": "px-4 lg:px-6 mt-6 pb-24",
+      "children": [
+        {
+          "type": "card",
+          "padding": "p-6",
+          "background": "bg-card/80 backdrop-blur-sm",
+          "border": "border border-border rounded-xl",
+          "maxHeight": "max-h-[600px] overflow-y-auto",
+          "children": [
+            {
+              "type": "title",
+              "content": "Transazioni Recenti",
+              "className": "text-lg font-semibold mb-4 sticky top-0 bg-card pb-2"
+            },
+            {
+              "type": "transaction-list",
+              "layout": "space-y-2",
+              "animation": "animate-fade-in",
+              "rowTemplate": {
+                "layout": "flex items-center justify-between gap-4 p-4 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer",
+                "animation": "motion-safe:animate-slide-in-left",
+                "stagger": "delay-[var(--index)*50ms]",
+                "children": [
+                  {
+                    "type": "left-section",
+                    "layout": "flex items-center gap-3 flex-1 min-w-0",
+                    "children": [
+                      {
+                        "type": "icon",
+                        "size": "h-10 w-10 rounded-full flex items-center justify-center",
+                        "background": "bg-primary/10",
+                        "iconClassName": "h-5 w-5 text-primary"
+                      },
+                      {
+                        "type": "info",
+                        "layout": "flex flex-col min-w-0",
+                        "children": [
+                          {
+                            "type": "description",
+                            "className": "text-sm font-medium truncate text-left"
+                          },
+                          {
+                            "type": "date",
+                            "className": "text-xs text-muted-foreground text-left"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "type": "amount",
+                    "className": "text-base font-bold font-mono tabular-nums text-right flex-shrink-0",
+                    "colorLogic": "amount < 0 ? 'text-[#FF4D4F]' : 'text-[#28A745]'"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "tailwindClasses": {
+    "container": "min-h-screen bg-background",
+    "stickyHeader": "sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border p-4 lg:p-6 flex items-center gap-4",
+    "searchInput": "flex-1 border-0 bg-muted/50 focus:bg-muted rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88FF]",
+    "primaryButton": "bg-[#1E88FF] hover:bg-[#1E88FF]/90 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+    "budgetBanner": "mx-4 lg:mx-6 mt-4 p-4 bg-[#FF4D4F]/10 border border-[#FF4D4F]/20 rounded-xl flex items-center justify-between gap-4 flex-wrap",
+    "metricCard": "p-6 bg-card/80 backdrop-blur-sm border border-border rounded-xl hover:shadow-lg transition-shadow",
+    "categoryBar": "flex items-center gap-3 group hover:scale-[1.02] transition-transform",
+    "transactionRow": "flex items-center justify-between gap-4 p-4 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer",
+    "amountNegative": "text-base font-bold font-mono tabular-nums text-[#FF4D4F] text-right",
+    "amountPositive": "text-base font-bold font-mono tabular-nums text-[#28A745] text-right"
+  },
+  "animations": {
+    "fadeIn": {
+      "initial": "{ opacity: 0, y: 10 }",
+      "animate": "{ opacity: 1, y: 0 }",
+      "transition": "{ duration: 0.3 }"
+    },
+    "slideInLeft": {
+      "initial": "{ opacity: 0, x: -20 }",
+      "animate": "{ opacity: 1, x: 0 }",
+      "transition": "{ duration: 0.3, delay: index * 0.05 }"
+    },
+    "scaleOnHover": {
+      "whileHover": "{ scale: 1.02 }",
+      "transition": "{ duration: 0.2 }"
+    },
+    "progressBar": {
+      "initial": "{ width: 0 }",
+      "animate": "{ width: '100%' }",
+      "transition": "{ duration: 1, ease: 'easeOut' }"
+    }
+  },
+  "responsiveBreakpoints": {
+    "mobile": "< 768px (stack all, single column, bottom nav visible)",
+    "tablet": "768px - 1024px (2-column grid for cards)",
+    "desktop": "> 1024px (3-column grid, full layout)"
+  },
+  "darkModeOverrides": {
+    "background": "#121212",
+    "card": "#1E1E1E with opacity-80",
+    "text": "text-white",
+    "border": "border-gray-800",
+    "muted": "text-gray-400",
+    "hover": "hover:bg-gray-800/50"
+  }
+}
+

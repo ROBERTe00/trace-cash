@@ -1,7 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import { TransactionTable } from "@/components/TransactionTable";
-import { EnhancedTransactionTable } from "@/components/EnhancedTransactionTable";
 import { ExpensesSummary } from "@/components/ExpensesSummary";
 import { ExpenseInsights } from "@/components/ExpenseInsights";
 import { BankStatementUpload } from "@/components/BankStatementUpload";
@@ -9,46 +8,24 @@ import { AdvancedBankStatementUpload } from "@/components/AdvancedBankStatementU
 import { CSVExcelUpload } from "@/components/CSVExcelUpload";
 import { VoiceExpenseInput } from "@/components/VoiceExpenseInput";
 import { GroupedTransactionList } from "@/components/GroupedTransactionList";
-import { ImprovedBalanceSummary } from "@/components/ImprovedBalanceSummary";
-import { DesignedTransactionsTab } from "@/components/DesignedTransactionsTab";
+import { SpendingsProgressCard } from "@/components/SpendingsProgressCard";
 import { useExpenses } from "@/hooks/useExpenses";
 import { Wallet, BarChart3, Upload } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useState } from "react";
 
 export default function Transactions() {
   const { expenses, createExpense, deleteExpense } = useExpenses();
   const isMobile = useIsMobile();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showAddForm, setShowAddForm] = useState(false);
 
   // Convert Supabase expense format to local storage format for compatibility
   const handleAddExpense = (expense: any) => {
     createExpense(expense);
-    setShowAddForm(false);
   };
 
   const handleTransactionsExtracted = (extractedExpenses: any[]) => {
     extractedExpenses.forEach(exp => createExpense(exp));
   };
-
-  // Calculate totals
-  const totalIncome = expenses
-    .filter((e) => e.type === "Income")
-    .reduce((sum, e) => sum + e.amount, 0);
-
-  const totalExpenses = expenses
-    .filter((e) => e.type === "Expense")
-    .reduce((sum, e) => sum + e.amount, 0);
-
-  // Filter transactions by search query
-  const filteredExpenses = searchQuery
-    ? expenses.filter((e) =>
-        e.description.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : expenses;
 
   return (
     <div className="space-y-6 animate-fade-in safe-width">
@@ -61,12 +38,11 @@ export default function Transactions() {
         <Wallet className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
       </div>
 
-      {/* Improved Balance Summary */}
-      <ImprovedBalanceSummary
-        totalIncome={totalIncome}
-        totalExpenses={totalExpenses}
-        onAddClick={() => setShowAddForm(!showAddForm)}
-        onSearch={setSearchQuery}
+      {/* Spendings Progress Card */}
+      <SpendingsProgressCard 
+        categories={[]}
+        totalSpent={0}
+        totalBudget={0}
       />
 
       {/* Tabs */}
@@ -86,64 +62,24 @@ export default function Transactions() {
           </TabsTrigger>
         </TabsList>
 
-        {/* TAB 1: Transactions - New Design */}
-        <TabsContent value="transactions" className="space-y-0">
-          <DesignedTransactionsTab
-            transactions={filteredExpenses as any}
-            totalExpenses={totalExpenses}
-            budget={1500}
-            budgetUsedPercentage={Math.min(100, (totalExpenses / 1500) * 100)}
-            topCategory={{ 
-              name: expenses
-                .filter(e => e.type === 'Expense')
-                .reduce((acc, e) => {
-                  const current = acc.get(e.category) || 0;
-                  acc.set(e.category, current + e.amount);
-                  return acc;
-                }, new Map<string, number>())
-                .entries()
-                .next().value?.[0] || 'Other',
-              amount: expenses
-                .filter(e => e.type === 'Expense')
-                .reduce((acc, e) => {
-                  const current = acc.get(e.category) || 0;
-                  acc.set(e.category, current + e.amount);
-                  return acc;
-                }, new Map<string, number>())
-                .entries()
-                .next().value?.[1] || 0
-            }}
-            categoryBreakdown={
-              Array.from(
-                expenses
-                  .filter(e => e.type === 'Expense')
-                  .reduce((map, e) => {
-                    const current = map.get(e.category) || 0;
-                    map.set(e.category, current + e.amount);
-                    return map;
-                  }, new Map<string, number>())
-                  .entries()
-              )
-                .map(([name, amount]) => ({
-                  name,
-                  amount,
-                  percentage: totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0
-                }))
-                .sort((a, b) => b.amount - a.amount)
-                .slice(0, 4)
-            }
-            onSearch={setSearchQuery}
-            onAddTransaction={() => setShowAddForm(true)}
-            onEditBudget={() => alert('Navigate to settings to edit budget')}
-          />
+        {/* TAB 1: Transactions */}
+        <TabsContent value="transactions" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <ExpensesSummary expenses={expenses as any} />
+            <ExpenseForm onAdd={handleAddExpense} />
+          </div>
           
-          {/* Add Form Modal (shown when "+ Aggiungi" clicked) */}
-          {showAddForm && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <Card className="p-6 max-w-md w-full">
-                <ExpenseForm onAdd={handleAddExpense} />
-              </Card>
-            </div>
+          {/* Mobile: Grouped List | Desktop: Table */}
+          {isMobile ? (
+            <GroupedTransactionList
+              transactions={expenses as any}
+              onDelete={deleteExpense}
+            />
+          ) : (
+            <TransactionTable
+              transactions={expenses as any}
+              onDelete={deleteExpense}
+            />
           )}
         </TabsContent>
 
@@ -171,7 +107,6 @@ export default function Transactions() {
             </div>
           </Card>
         </TabsContent>
-
       </Tabs>
     </div>
   );

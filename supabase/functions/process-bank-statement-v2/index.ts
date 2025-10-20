@@ -134,10 +134,10 @@ serve(async (req) => {
       
       // Check if extraction failed (corrupted text or insufficient length)
       const hasCorruptedChars = /[\x00-\x1F\x7F-\xFF]{10,}/.test(extractedText);
-      const insufficientText = extractedText.length < 1000;
+      const insufficientText = extractedText.length < 500; // REDUCED from 1000 to 500 for shorter statements
       const totalChars = extractedText.length;
       const nonAsciiCount = extractedText.split('').filter(c => c.charCodeAt(0) > 127).length;
-      const hasGarbage = totalChars > 0 && (nonAsciiCount / totalChars) > 0.3;
+      const hasGarbage = totalChars > 0 && (nonAsciiCount / totalChars) > 0.5; // INCREASED from 0.3 to 0.5 to tolerate Italian accents (à, è, ì, ò, ù)
 
       if (hasCorruptedChars || insufficientText || hasGarbage) {
         console.log("⚠️ Native text extraction failed - corrupted chars:", hasCorruptedChars, "insufficient:", insufficientText, "garbage:", hasGarbage);

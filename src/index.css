@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* JetBrains Mono for numbers */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+/* Apply JetBrains Mono to .font-mono class */
+.font-mono {
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
 /* Typography System - Standardized */
 @layer utilities {
   .text-hero-number {
