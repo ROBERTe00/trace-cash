@@ -384,6 +384,7 @@ export const MobileScrollContainer: React.FC<MobileScrollContainerProps> = ({
 
     // Enable momentum scrolling on iOS
     if (enableMomentum) {
+      // @ts-ignore - webkitOverflowScrolling is a non-standard property
       scrollContainer.style.webkitOverflowScrolling = 'touch';
     }
 
