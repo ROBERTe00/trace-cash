@@ -773,8 +773,8 @@ function normalizeDate(dateStr: string): string | null {
       january: '01', february: '02', march: '03', april: '04', june: '06',
       july: '07', august: '08', september: '09', october: '10', november: '11', december: '12',
       // Italian abbreviated (Revolut format)
-      gen: '01', feb: '02', mar: '03', apr: '04', mag: '05', giu: '06',
-      lug: '07', ago: '08', set: '09', ott: '10', nov: '11', dic: '12',
+      gen: '01', febi: '02', mari: '03', apri: '04', mag: '05', giu: '06',
+      lug: '07', ago: '08', set: '09', ott: '10', novi: '11', dic: '12',
       // Italian full
       gennaio: '01', febbraio: '02', marzo: '03', aprile: '04', maggio: '05', giugno: '06',
       luglio: '07', agosto: '08', settembre: '09', ottobre: '10', novembre: '11', dicembre: '12',

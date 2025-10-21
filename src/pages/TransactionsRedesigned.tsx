@@ -18,7 +18,7 @@ import { motion } from "framer-motion";
 
 export default function TransactionsRedesigned() {
   const { expenses, createExpense, deleteExpense } = useExpenses();
-  const { filters, setFilters, filteredTransactions, availableCategories } = useTransactionFilters(expenses);
+  const { filters, setFilters, filteredTransactions, availableCategories } = useTransactionFilters(expenses as any);
   
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showImportSection, setShowImportSection] = useState(false);

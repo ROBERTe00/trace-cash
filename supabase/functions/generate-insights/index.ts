@@ -130,15 +130,21 @@ Be specific, use actual numbers from the data, and make insights actionable.`;
     // Deterministic temperature for financial analysis
     const temperature = 0.15;
 
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const aiEndpoint = LOVABLE_API_KEY 
+      ? 'https://ai.gateway.lovable.dev/v1/chat/completions'
+      : 'https://api.openai.com/v1/chat/completions';
+    const aiKey = LOVABLE_API_KEY || OPENAI_API_KEY;
+
     const startTime = Date.now();
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch(aiEndpoint, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${aiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: LOVABLE_API_KEY ? 'google/gemini-2.5-flash' : 'gpt-4o',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Analyze this financial data and provide insights:\n${financialContext}` },

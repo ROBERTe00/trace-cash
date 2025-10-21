@@ -417,8 +417,8 @@ function extractPayee(description: string): string {
 function normalizeDate(dateStr: string): string | null {
   try {
     const monthMap: Record<string, string> = {
-      gen: '01', feb: '02', mar: '03', apr: '04', mag: '05', giu: '06',
-      lug: '07', ago: '08', set: '09', ott: '10', nov: '11', dic: '12',
+      gen: '01', febi: '02', mari: '03', apri: '04', mag: '05', giu: '06',
+      lug: '07', ago: '08', set: '09', ott: '10', novi: '11', dici: '12',
       jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
       jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12',
     };

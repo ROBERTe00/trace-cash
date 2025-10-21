@@ -15,14 +15,15 @@ import FinanceScoreCard from "@/components/FinanceScoreCard";
 import StatCard from "@/components/StatCard";
 import ExpenseBreakdownCard from "@/components/ExpenseBreakdownCard";
 import CashflowCard from "@/components/CashflowCard";
-import { FinancialGoals } from "@/components/FinancialGoals";
 import { WelcomeBanner } from "@/components/WelcomeBanner";
 import { LoadingDashboard } from "@/components/LoadingDashboard";
-import { NetWorthHeroCard } from "@/components/NetWorthHeroCard";
-import { AIInsightsCard, Insight } from "@/components/AIInsightsCard";
 import { RecentTransactionsList } from "@/components/RecentTransactionsList";
+import { FinancialGoals } from "@/components/FinancialGoals";
 import { QuickActionsGrid } from "@/components/QuickActionsGrid";
-import { SpendingsProgressCard } from "@/components/SpendingsProgressCard";
+import { DashboardSummaryCard } from "@/components/dashboard/DashboardSummaryCard";
+import { NetWorthChart } from "@/components/dashboard/NetWorthChart";
+import { CashflowChart } from "@/components/dashboard/CashflowChart";
+import { CategoriesDonutChart } from "@/components/dashboard/CategoriesDonutChart";
 import { useApp } from "@/contexts/AppContext";
 import { startOfMonth, subMonths, format, eachDayOfInterval } from "date-fns";
 
@@ -244,8 +245,8 @@ export default function DashboardHome() {
   };
 
   // Helper: Generate AI insights
-  const generateInsights = (): Insight[] => {
-    const insights: Insight[] = [];
+  const generateInsights = () => {
+    const insights: any[] = [];
     
     // Insight 1: Savings success
     if (monthlySavingsAmount > 0) {
@@ -316,32 +317,31 @@ export default function DashboardHome() {
 
   return (
     <TooltipProvider>
-      <div className="space-y-4 sm:space-y-6 w-full pb-safe">
+      <div className="space-y-4 sm:space-y-6 w-full pb-safe page-container">
         {showWelcome && <WelcomeBanner />}
         
-        {/* 1. HERO: Net Worth Card */}
-        <NetWorthHeroCard
-          netWorth={totalNetWorth}
-          cashBalance={cashAvailable}
-          investmentsValue={totalInvestments}
-          monthlyChange={monthlyChange}
-          onRefreshPrices={handleRefresh}
-        />
-
-        {/* 2. Quick Actions Grid */}
-        <QuickActionsGrid />
-
-        {/* 3. Overview Cards: Spendings + Finance Score */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          <SpendingsProgressCard 
-            categories={categorySpending}
-            totalSpent={monthlyExpenses}
-            totalBudget={monthlyIncome}
-          />
-          <FinanceScoreCard score={financeScore} />
+        {/* Dashboard Summary KPIs */}
+        <DashboardSummaryCard />
+        
+        {/* Financial Goals */}
+        <FinancialGoals />
+        
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <NetWorthChart />
+          <CashflowChart />
         </div>
-
-        {/* 4. Recent Transactions */}
+        
+        {/* Second Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CategoriesDonutChart />
+          <div className="modern-card p-6">
+            <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+            <QuickActionsGrid />
+          </div>
+        </div>
+        
+        {/* Recent Transactions */}
         <RecentTransactionsList 
           transactions={expenses.slice().sort((a, b) => 
             new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -349,47 +349,7 @@ export default function DashboardHome() {
           onViewAll={() => navigate('/transactions')}
         />
 
-        {/* 5. AI Insights */}
-        <AIInsightsCard insights={generateInsights()} autoRotate={true} />
-
-        {/* 6. Quick Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <StatCard
-            icon={DollarSign}
-            label="Entrate Mensili"
-            value={formatCurrency(monthlyIncome)}
-            delay={0.1}
-          />
-          <StatCard
-            icon={TrendingUp}
-            label="Spese Mensili"
-            value={formatCurrency(monthlyExpenses)}
-            delay={0.2}
-          />
-          <StatCard
-            icon={PiggyBank}
-            label="Risparmi Mensili"
-            value={formatCurrency(monthlySavingsAmount)}
-            delay={0.3}
-          />
-          <StatCard
-            icon={Target}
-            label="Investimenti"
-            value={formatCurrency(totalInvestments)}
-            delay={0.4}
-          />
-        </div>
-
-        {/* 7. Expense Breakdown + Cashflow */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          <ExpenseBreakdownCard categories={categoryBreakdown} totalExpenses={totalExpenses} />
-          <CashflowCard expenses={expenses} defaultTimeRange="1m" />
-        </div>
-
-        {/* 8. Financial Goals */}
-        <FinancialGoals />
-
-        {/* 9. Export Actions */}
+        {/* Export Actions */}
         <div className="flex justify-end gap-2 flex-wrap">
           <Button 
             variant="outline" 

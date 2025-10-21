@@ -47,3 +47,21 @@ verify_jwt = true
 
 [functions.onboarding-ai-insights]
 verify_jwt = true
+
+[functions.dashboard-summary]
+verify_jwt = true
+
+[functions.dashboard-networth]
+verify_jwt = true
+
+[functions.dashboard-cashflow]
+verify_jwt = true
+
+[functions.dashboard-categories]
+verify_jwt = true
+
+[functions.dashboard-investments]
+verify_jwt = true
+
+[functions.dashboard-actions]
+verify_jwt = true
