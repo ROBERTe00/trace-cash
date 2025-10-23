@@ -26,6 +26,7 @@ import { BugAuditPanel } from '@/components/BugAuditSystem';
 import { MobileOptimizedCard } from '@/components/MobileOptimizations';
 import { PlaidLinkComponent } from '@/components/PlaidLinkComponent';
 import { PlaidDemo } from '@/components/PlaidDemo';
+import { CreditCardComingSoon } from '@/components/CreditCardComingSoon';
 import { toast } from 'sonner';
 
 export default function CreditCardIntegrationPage() {
@@ -148,21 +149,8 @@ export default function CreditCardIntegrationPage() {
 
         {/* Integration Tab */}
         <TabsContent value="integration" className="space-y-6">
-          {/* Plaid Demo Component - Works without credentials */}
-          <PlaidDemo />
-          
-          {/* Real Plaid component ready but commented out until credentials configured */}
-          {/* <PlaidLinkComponent /> */}
-
-          {/* Information Alert */}
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Secure Integration via Plaid:</strong> Your bank credentials are never stored on our servers. 
-              All connections use bank-level encryption and read-only access to transactions.
-              Currently in <strong>Demo Mode</strong> - configure PLAID_CLIENT_ID to enable real connections.
-            </AlertDescription>
-          </Alert>
+          {/* Coming Soon Overlay */}
+          <CreditCardComingSoon />
         </TabsContent>
 
         {/* Analytics Tab */}

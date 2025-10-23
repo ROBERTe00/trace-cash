@@ -4,7 +4,6 @@ import { TransactionTable } from "@/components/TransactionTable";
 import { EnhancedTransactionTable } from "@/components/EnhancedTransactionTable";
 import { ExpensesSummary } from "@/components/ExpensesSummary";
 import { ExpenseInsights } from "@/components/ExpenseInsights";
-import { BankStatementUpload } from "@/components/BankStatementUpload";
 import { AdvancedBankStatementUpload } from "@/components/AdvancedBankStatementUpload";
 import { CSVExcelUpload } from "@/components/CSVExcelUpload";
 import { VoiceExpenseInput } from "@/components/VoiceExpenseInput";
@@ -167,9 +166,6 @@ export default function Transactions() {
               
               {/* Advanced Frontend PDF Reader with OCR */}
               <AdvancedBankStatementUpload onTransactionsExtracted={handleTransactionsExtracted} />
-              
-              {/* Original Backend PDF Reader (Edge Function) */}
-              <BankStatementUpload onTransactionsExtracted={handleTransactionsExtracted} />
             </div>
           </Card>
         </TabsContent>

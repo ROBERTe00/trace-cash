@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -7,6 +8,8 @@ import { TrendingUp, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const RevolutStatisticsChart = () => {
+  const [timeRange, setTimeRange] = React.useState<'weekly' | 'monthly'>('weekly');
+  
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard-cashflow'],
     queryFn: async () => {
@@ -45,10 +48,20 @@ export const RevolutStatisticsChart = () => {
           <h3 className="text-lg font-semibold">Statistics</h3>
         </div>
         <div className="flex gap-2">
-          <Button variant="default" size="sm" className="rounded-full">
+          <Button 
+            variant={timeRange === 'weekly' ? 'default' : 'ghost'} 
+            size="sm" 
+            className="rounded-full"
+            onClick={() => setTimeRange('weekly')}
+          >
             Weekly
           </Button>
-          <Button variant="ghost" size="sm" className="rounded-full">
+          <Button 
+            variant={timeRange === 'monthly' ? 'default' : 'ghost'} 
+            size="sm" 
+            className="rounded-full"
+            onClick={() => setTimeRange('monthly')}
+          >
             Monthly
           </Button>
           <Button variant="ghost" size="icon" className="rounded-full">

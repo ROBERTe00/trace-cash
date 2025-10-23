@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Table, CreditCard, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AdvancedBankStatementUpload } from "@/components/AdvancedBankStatementUpload";
-import { BankStatementUpload } from "@/components/BankStatementUpload";
 import { CSVExcelUpload } from "@/components/CSVExcelUpload";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -76,30 +75,15 @@ export const UnifiedImportSection = ({
 
                 {/* PDF Upload Tab */}
                 <TabsContent value="pdf" className="space-y-4">
-                  <div className="text-sm text-muted-foreground mb-4">
-                    <p>
-                      Carica estratti conto PDF da banche come Revolut, Intesa Sanpaolo, UniCredit, ecc.
-                      Il sistema estrae automaticamente tutte le transazioni e le categorizza.
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Upload your bank statement PDF for automatic transaction extraction.
+                      Advanced coordinate-based parsing for multiple banks and formats.
                     </p>
                   </div>
                   
-                  {/* Advanced PDF Reader (Coordinate-based) */}
+                  {/* Advanced PDF Reader (Coordinate-based) - Primary method */}
                   <AdvancedBankStatementUpload onTransactionsExtracted={onTransactionsExtracted} />
-                  
-                  {/* Divider */}
-                  <div className="relative my-6">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-background px-2 text-muted-foreground">
-                        Oppure usa il metodo backend
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {/* Backend PDF Reader (Edge Function with Vision API) */}
-                  <BankStatementUpload onTransactionsExtracted={onTransactionsExtracted} />
                 </TabsContent>
 
                 {/* CSV Upload Tab */}

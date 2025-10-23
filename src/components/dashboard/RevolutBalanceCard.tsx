@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowUpRight, ArrowDownLeft, Repeat, Plus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { QuickActionModals } from "./QuickActionModals";
 
 export const RevolutBalanceCard = () => {
+  const [activeModal, setActiveModal] = useState<'send' | 'request' | 'exchange' | 'topup' | null>(null);
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard-summary'],
     queryFn: async () => {
@@ -33,10 +36,10 @@ export const RevolutBalanceCard = () => {
   const balance = data?.summary?.balance_total || 0;
 
   const quickActions = [
-    { icon: ArrowUpRight, label: "Send", color: "bg-black/20 hover:bg-black/30" },
-    { icon: ArrowDownLeft, label: "Request", color: "bg-black/20 hover:bg-black/30" },
-    { icon: Repeat, label: "Exchange", color: "bg-black/20 hover:bg-black/30" },
-    { icon: Plus, label: "Top Up", color: "bg-black/20 hover:bg-black/30" },
+    { icon: ArrowUpRight, label: "Send", color: "bg-black/20 hover:bg-black/30", action: 'send' as const },
+    { icon: ArrowDownLeft, label: "Request", color: "bg-black/20 hover:bg-black/30", action: 'request' as const },
+    { icon: Repeat, label: "Exchange", color: "bg-black/20 hover:bg-black/30", action: 'exchange' as const },
+    { icon: Plus, label: "Top Up", color: "bg-black/20 hover:bg-black/30", action: 'topup' as const },
   ];
 
   return (
@@ -50,7 +53,8 @@ export const RevolutBalanceCard = () => {
         {quickActions.map((action, idx) => (
           <button
             key={idx}
-            className={`${action.color} rounded-2xl p-4 flex flex-col items-center gap-2 transition-all hover:scale-105 active:scale-95`}
+            onClick={() => setActiveModal(action.action)}
+            className={`${action.color} rounded-2xl p-4 flex flex-col items-center gap-2 transition-all hover:scale-105 active:scale-95 hover:shadow-[0_0_20px_rgba(139,0,255,0.3)] cursor-pointer`}
           >
             <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
               <action.icon className="w-6 h-6" />
@@ -59,6 +63,8 @@ export const RevolutBalanceCard = () => {
           </button>
         ))}
       </div>
+      
+      <QuickActionModals activeModal={activeModal} onClose={() => setActiveModal(null)} />
     </div>
   );
 };

@@ -167,11 +167,11 @@ export default function News() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i} className="glass-card animate-pulse">
+            <Card key={i} className="glass-card overflow-hidden">
               <CardContent className="p-6 space-y-3">
-                <div className="h-4 bg-muted rounded w-3/4" />
-                <div className="h-3 bg-muted rounded w-full" />
-                <div className="h-3 bg-muted rounded w-5/6" />
+                <div className="h-4 bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20 rounded animate-shimmer bg-[length:200%_100%]" />
+                <div className="h-3 bg-gradient-to-r from-muted via-muted-foreground/20 to-muted rounded animate-shimmer bg-[length:200%_100%]" />
+                <div className="h-3 bg-gradient-to-r from-muted via-muted-foreground/20 to-muted rounded w-5/6 animate-shimmer bg-[length:200%_100%]" />
               </CardContent>
             </Card>
           ))}
