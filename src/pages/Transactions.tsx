@@ -10,8 +10,11 @@ import { VoiceExpenseInput } from "@/components/VoiceExpenseInput";
 import { GroupedTransactionList } from "@/components/GroupedTransactionList";
 import { ImprovedBalanceSummary } from "@/components/ImprovedBalanceSummary";
 import { DesignedTransactionsTab } from "@/components/DesignedTransactionsTab";
+import { TransactionStats } from "@/components/transactions/TransactionStats";
+import { TopCategoriesWidget } from "@/components/transactions/TopCategoriesWidget";
+import { RecentTransactionDetails } from "@/components/transactions/RecentTransactionDetails";
 import { useExpenses } from "@/hooks/useExpenses";
-import { Wallet, BarChart3, Upload } from "lucide-react";
+import { Wallet, BarChart3, Upload, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -49,6 +52,30 @@ export default function Transactions() {
       )
     : expenses;
 
+  // Calculate category data
+  const categoryMap = expenses
+    .filter(e => e.type === 'Expense')
+    .reduce((map, e) => {
+      const current = map.get(e.category) || 0;
+      map.set(e.category, current + e.amount);
+      return map;
+    }, new Map<string, number>());
+
+  const topCategoryData = Array.from(categoryMap.entries())
+    .sort((a, b) => b[1] - a[1])[0];
+
+  const categoriesForWidget = Array.from(categoryMap.entries())
+    .map(([name, amount]) => ({
+      name,
+      amount,
+      percentage: totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0,
+      icon: name.toLowerCase().includes('food') ? 'food' : 
+            name.toLowerCase().includes('shopping') ? 'shopping' :
+            name.toLowerCase().includes('transport') ? 'transport' : 'other'
+    }))
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 5);
+
   return (
     <div className="space-y-6 animate-fade-in safe-width">
       {/* Header */}
@@ -59,6 +86,18 @@ export default function Transactions() {
         </div>
         <Wallet className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
       </div>
+
+      {/* Monthly Statistics */}
+      <TransactionStats
+        totalExpenses={totalExpenses}
+        transactionCount={expenses.filter(e => e.type === 'Expense').length}
+        topCategory={{
+          name: topCategoryData?.[0] || 'N/A',
+          percentage: topCategoryData && totalExpenses > 0 
+            ? Math.round((topCategoryData[1] / totalExpenses) * 100) 
+            : 0
+        }}
+      />
 
       {/* Improved Balance Summary */}
       <ImprovedBalanceSummary
@@ -138,10 +177,30 @@ export default function Transactions() {
             onEditBudget={() => alert('Navigate to settings to edit budget')}
           />
           
+          {/* New Widgets Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <TopCategoriesWidget categories={categoriesForWidget} />
+            <RecentTransactionDetails 
+              transactions={filteredExpenses.map(e => ({
+                id: e.id,
+                description: e.description,
+                amount: e.amount,
+                category: e.category,
+                date: e.date
+              }))}
+            />
+          </div>
+
           {/* Add Form Modal (shown when "+ Aggiungi" clicked) */}
           {showAddForm && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <Card className="p-6 max-w-md w-full">
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <Card className="p-6 max-w-md w-full relative border-primary/20">
+                <button
+                  onClick={() => setShowAddForm(false)}
+                  className="absolute top-4 right-4 w-8 h-8 rounded-full bg-muted hover:bg-primary/20 flex items-center justify-center transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
                 <ExpenseForm onAdd={handleAddExpense} />
               </Card>
             </div>
