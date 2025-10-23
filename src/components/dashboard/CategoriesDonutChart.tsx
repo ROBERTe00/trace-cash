@@ -5,11 +5,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 const COLORS = [
-  '#6C00FF',
-  '#9A5BFF',
-  '#22C55E',
-  '#EAB308',
-  '#EF4444',
+  'hsl(262, 83%, 58%)',
+  'hsl(142, 76%, 36%)',
+  'hsl(38, 92%, 50%)',
+  'hsl(0, 84%, 60%)',
+  'hsl(221, 83%, 53%)',
 ];
 
 export const CategoriesDonutChart = () => {

@@ -6,7 +6,8 @@ import { BrokerIntegration } from "@/components/BrokerIntegration";
 import { PortfolioMetricsPanel } from "@/components/PortfolioMetricsPanel";
 import { InvestmentScenarioSimulator } from "@/components/InvestmentScenarioSimulator";
 import { InvestmentHero } from "@/components/InvestmentHero";
-import { PerformanceMetrics } from "@/components/investments/PerformanceMetrics";
+import { TransferOptionsGrid } from "@/components/TransferOptionsGrid";
+import { RecentTransfersAvatars } from "@/components/RecentTransfersAvatars";
 import { Investment } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -221,6 +222,12 @@ export default function Investments() {
         onExportCSV={handleExportCSV}
       />
 
+      {/* Transfer Options */}
+      <TransferOptionsGrid />
+
+      {/* Recent Transfers */}
+      <RecentTransfersAvatars />
+
       {/* 3 Tabs: Portfolio, Performance, Import */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
         <div className="overflow-x-auto pb-2">
@@ -298,27 +305,19 @@ export default function Investments() {
               </div>
             </Card>
           ) : (
-            <>
-              <PerformanceMetrics
-                projectedValue={Math.round(totalValue * 1.15)}
-                totalContributions={totalCost}
-                totalGains={totalReturn}
-                taxLiability={Math.round(totalReturn * 0.15)}
-              />
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-                <div className="space-y-4 sm:space-y-6 order-1">
-                  <PortfolioMetricsPanel investments={investments} />
-                </div>
-                
-                <div className="order-2">
-                  <Card className="glass-card">
-                    <div className="p-4 sm:p-6">
-                      <InvestmentScenarioSimulator />
-                    </div>
-                  </Card>
-                </div>
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+              <div className="space-y-4 sm:space-y-6 order-1">
+                <PortfolioMetricsPanel investments={investments} />
               </div>
-            </>
+              
+              <div className="order-2">
+                <Card className="glass-card">
+                  <div className="p-4 sm:p-6">
+                    <InvestmentScenarioSimulator />
+                  </div>
+                </Card>
+              </div>
+            </div>
           )}
         </TabsContent>
 
