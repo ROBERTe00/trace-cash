@@ -4,9 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Search, Bell, DollarSign, AlertTriangle, Target, TrendingUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { RevolutBalanceCard } from "@/components/dashboard/RevolutBalanceCard";
+import { PremiumBalanceCard } from "@/components/dashboard/PremiumBalanceCard";
 import { QuickOverviewCards } from "@/components/dashboard/QuickOverviewCards";
-import { RevolutStatisticsChart } from "@/components/dashboard/RevolutStatisticsChart";
+import { PremiumCashflowChart } from "@/components/dashboard/PremiumCashflowChart";
 import { RecentTransactionsList } from "@/components/RecentTransactionsList";
 import { QuickActionsGrid } from "@/components/QuickActionsGrid";
 import { AIInsightsCard, Insight } from "@/components/AIInsightsCard";
@@ -99,22 +99,16 @@ export default function DashboardHome() {
       </div>
 
       {/* Balance Card with Quick Actions */}
-      <RevolutBalanceCard />
+      <PremiumBalanceCard 
+        totalBalance={29757.46}
+        availableBalance={27320.18}
+      />
 
       {/* Quick Overview Cards */}
       <QuickOverviewCards />
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Quick Transfer Section */}
-        <div>
-          <h3 className="text-xl font-semibold mb-4">Quick transfer</h3>
-          <RecentTransfersAvatars />
-        </div>
-
-        {/* Statistics Chart */}
-        <RevolutStatisticsChart />
-      </div>
+      {/* Statistics Chart */}
+      <PremiumCashflowChart />
 
       {/* Transactions and Categories */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

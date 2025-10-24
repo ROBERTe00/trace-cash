@@ -11,6 +11,9 @@ import { TransactionFilters } from "@/components/transactions/TransactionFilters
 import { InteractiveCategoryChart } from "@/components/transactions/InteractiveCategoryChart";
 import { EnhancedTransactionList } from "@/components/transactions/EnhancedTransactionList";
 import { UnifiedImportSection } from "@/components/transactions/UnifiedImportSection";
+import { TransactionStats } from "@/components/transactions/TransactionStats";
+import { TopCategoriesWidget } from "@/components/transactions/TopCategoriesWidget";
+import { RecentTransactionDetails } from "@/components/transactions/RecentTransactionDetails";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Wallet } from "lucide-react";
@@ -102,6 +105,20 @@ export default function TransactionsRedesigned() {
         onImport={() => setShowImportSection(true)}
       />
 
+      {/* Transaction Stats */}
+      <TransactionStats
+        totalExpenses={totalExpenses}
+        transactionCount={expenses.filter(e => e.type === "Expense").length}
+        topCategory={
+          categoryData.length > 0
+            ? {
+                name: categoryData[0].name,
+                percentage: (categoryData[0].amount / totalExpenses) * 100,
+              }
+            : null
+        }
+      />
+
       {/* Filters */}
       <TransactionFilters
         filters={filters}
@@ -109,10 +126,10 @@ export default function TransactionsRedesigned() {
         availableCategories={availableCategories}
       />
 
-      {/* Main Content Grid: Chart + List */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Category Chart (40% on desktop) */}
-        <div className="lg:col-span-2">
+      {/* Main Content Grid: Chart + Categories + Recent */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Category Chart */}
+        <div className="lg:col-span-1">
           <InteractiveCategoryChart
             data={categoryData}
             onCategoryClick={handleCategoryClick}
@@ -120,14 +137,28 @@ export default function TransactionsRedesigned() {
           />
         </div>
 
-        {/* Transaction List (60% on desktop) */}
-        <div className="lg:col-span-3">
-          <EnhancedTransactionList
-            transactions={filteredTransactions as any}
-            onDelete={deleteExpense}
+        {/* Top Categories Widget */}
+        <div className="lg:col-span-1">
+          <TopCategoriesWidget 
+            categories={categoryData.map(cat => ({
+              name: cat.name,
+              amount: cat.amount,
+              percentage: (cat.amount / totalExpenses) * 100,
+            }))}
           />
         </div>
+
+        {/* Recent Transaction Details */}
+        <div className="lg:col-span-1">
+          <RecentTransactionDetails transactions={filteredTransactions as any} />
+        </div>
       </div>
+
+      {/* Transaction List */}
+      <EnhancedTransactionList
+        transactions={filteredTransactions as any}
+        onDelete={deleteExpense}
+      />
 
       {/* Import Section (Collapsible, at bottom) */}
       <UnifiedImportSection

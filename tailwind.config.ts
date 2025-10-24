@@ -66,6 +66,12 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      boxShadow: {
+        'neon-purple': '0 0 20px rgba(123, 47, 247, 0.3)',
+        'neon-green': '0 0 20px rgba(0, 255, 157, 0.3)',
+        'card-soft': '0 4px 20px rgba(0, 0, 0, 0.25)',
+        'glow-purple': '0 0 25px rgba(123, 47, 247, 0.4)',
+      },
       keyframes: {
         "accordion-down": {
           from: {

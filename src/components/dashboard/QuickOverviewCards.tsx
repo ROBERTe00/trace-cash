@@ -83,8 +83,8 @@ export const QuickOverviewCards = () => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {cards.map((card, idx) => (
-        <Card key={idx} className="p-6 hover:shadow-lg transition-shadow">
-          <div className={`w-12 h-12 rounded-full ${card.bgColor} flex items-center justify-center mb-4`}>
+        <Card key={idx} className="stat-card group cursor-pointer">
+          <div className={`w-12 h-12 rounded-full ${card.bgColor} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
             <card.icon className={`w-6 h-6 ${card.color}`} />
           </div>
           <p className="text-sm text-muted-foreground mb-2">{card.label}</p>

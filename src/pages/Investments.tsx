@@ -6,8 +6,8 @@ import { BrokerIntegration } from "@/components/BrokerIntegration";
 import { PortfolioMetricsPanel } from "@/components/PortfolioMetricsPanel";
 import { InvestmentScenarioSimulator } from "@/components/InvestmentScenarioSimulator";
 import { InvestmentHero } from "@/components/InvestmentHero";
-import { TransferOptionsGrid } from "@/components/TransferOptionsGrid";
-import { RecentTransfersAvatars } from "@/components/RecentTransfersAvatars";
+import { PortfolioBreakdown } from "@/components/investments/PortfolioBreakdown";
+import { PerformanceInsights } from "@/components/investments/PerformanceInsights";
 import { Investment } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -222,11 +222,17 @@ export default function Investments() {
         onExportCSV={handleExportCSV}
       />
 
-      {/* Transfer Options */}
-      <TransferOptionsGrid />
-
-      {/* Recent Transfers */}
-      <RecentTransfersAvatars />
+      {/* Portfolio Breakdown & Insights */}
+      {investments.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <PortfolioBreakdown investments={investments} />
+          <PerformanceInsights 
+            investments={investments}
+            totalReturn={totalReturn}
+            returnPercentage={returnPercentage}
+          />
+        </div>
+      )}
 
       {/* 3 Tabs: Portfolio, Performance, Import */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">

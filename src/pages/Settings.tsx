@@ -65,15 +65,15 @@ export default function Settings() {
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in pb-safe overflow-y-auto w-full">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-background border border-primary/20 p-4 sm:p-6 md:p-8">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary-dark to-black border border-primary/30 p-4 sm:p-6 md:p-8 shadow-neon-purple">
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
-            <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center">
-              <SettingsIcon className="h-6 w-6 text-primary" />
+            <div className="h-12 w-12 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
+              <SettingsIcon className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-section">{t("settings")}</h1>
-              <p className="text-muted-foreground text-sm sm:text-base mt-1">{t("managePreferences")}</p>
+              <h1 className="text-2xl sm:text-3xl lg:text-section text-white">{t("settings")}</h1>
+              <p className="text-white/70 text-sm sm:text-base mt-1">{t("managePreferences")}</p>
             </div>
           </div>
         </div>
@@ -138,10 +138,10 @@ export default function Settings() {
 
         {/* Appearance Tab */}
         <TabsContent value="appearance" className="space-y-6">
-          <Card className="glass-card">
+          <Card className="premium-card">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Palette className="icon-card text-primary" />
+                <Palette className="icon-card text-primary neon-text-purple" />
                 <CardTitle className="text-card-title">{t("settings.appearance")}</CardTitle>
               </div>
               <CardDescription>{t("settings.appearanceDesc")}</CardDescription>
@@ -212,10 +212,10 @@ export default function Settings() {
 
         {/* Security Tab */}
         <TabsContent value="security" className="space-y-6">
-          <Card className="glass-card">
+          <Card className="premium-card">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Shield className="icon-card text-primary" />
+                <Shield className="icon-card text-primary neon-text-purple" />
                 <CardTitle className="text-card-title">{t("settings.security")}</CardTitle>
               </div>
               <CardDescription>{t("settings.securityDesc")}</CardDescription>
@@ -231,10 +231,10 @@ export default function Settings() {
 
         {/* Data & Privacy Tab */}
         <TabsContent value="data" className="space-y-6">
-          <Card className="glass-card">
+          <Card className="premium-card">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Database className="icon-card text-primary" />
+                <Database className="icon-card text-primary neon-text-purple" />
                 <CardTitle className="text-card-title">{t("settings.data")}</CardTitle>
               </div>
               <CardDescription>{t("settings.dataDesc")}</CardDescription>
@@ -267,10 +267,10 @@ export default function Settings() {
 
         {/* Offline Mode Tab */}
         <TabsContent value="offline" className="space-y-6">
-          <Card className="glass-card">
+          <Card className="premium-card">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <WifiOff className="icon-card text-primary" />
+                <WifiOff className="icon-card text-primary neon-text-purple" />
                 <CardTitle className="text-card-title">{t("settings.offline")}</CardTitle>
               </div>
               <CardDescription>{t("settings.offlineDesc")}</CardDescription>
