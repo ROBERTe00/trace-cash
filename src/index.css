@@ -434,6 +434,24 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 0 0% 9%;
     --sidebar-border: 240 10% 90%;
     --sidebar-ring: 270 91% 58%;
+
+    /* MyMoney.ai Custom Design System Variables */
+    --mm-primary-500: 270 91% 58%;
+    --mm-primary-600: 270 85% 50%;
+    --mm-primary-700: 270 91% 34%;
+    --mm-accent-500: 184 100% 50%;
+    --mm-success-500: 160 100% 50%;
+    --mm-warning-500: 38 92% 50%;
+    --mm-error-500: 351 100% 60%;
+    
+    --mm-surface-base: 0 0% 100%;
+    --mm-surface-elevated: 240 10% 97%;
+    --mm-text-primary: 0 0% 9%;
+    --mm-text-secondary: 0 0% 45%;
+    
+    --mm-border-subtle: 270 91% 58% / 0.1;
+    --mm-border-default: 270 91% 58% / 0.2;
+    --mm-border-strong: 270 91% 58% / 0.4;
   }
 
   .dark {
@@ -476,6 +494,26 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 270 91% 58% / 0.2;
     --sidebar-ring: 270 91% 58%;
+
+    /* MyMoney.ai Dark Theme Custom Variables */
+    --mm-primary-500: 270 91% 58%;
+    --mm-primary-600: 270 85% 50%;
+    --mm-primary-700: 270 91% 34%;
+    --mm-accent-500: 184 100% 50%;
+    --mm-success-500: 160 100% 50%;
+    --mm-warning-500: 38 92% 50%;
+    --mm-error-500: 351 100% 60%;
+    
+    --mm-surface-base: 222 10% 4%;
+    --mm-surface-elevated: 222 10% 10%;
+    --mm-surface-elevated-2: 222 10% 14%;
+    --mm-text-primary: 0 0% 98%;
+    --mm-text-secondary: 0 0% 70%;
+    --mm-text-tertiary: 0 0% 55%;
+    
+    --mm-border-subtle: 270 91% 58% / 0.1;
+    --mm-border-default: 270 91% 58% / 0.2;
+    --mm-border-strong: 270 91% 58% / 0.4;
   }
 }
 
@@ -486,12 +524,30 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground overflow-x-hidden antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1, "tnum" 1;
+    font-family: 'DM Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   
   html {
     @apply overflow-x-hidden;
+  }
+
+  /* Typography styles using custom fonts */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  .font-display {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+  }
+
+  .font-body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace !important;
   }
 }
 
