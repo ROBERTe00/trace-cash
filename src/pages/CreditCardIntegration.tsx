@@ -224,8 +224,8 @@ export default function CreditCardIntegrationPage() {
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <RefreshCw className="h-4 w-4 text-blue-600" />
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <RefreshCw className="h-4 w-4 text-primary" />
                     </div>
                     <div>
                       <div className="font-medium">Transactions Synced</div>
@@ -290,7 +290,7 @@ export default function CreditCardIntegrationPage() {
                   <p className="text-sm text-muted-foreground">
                     Automatically log out after 30 minutes of inactivity
                   </p>
-                  <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                  <Badge variant="outline" className="bg-primary/10 text-primary">
                     <Info className="h-3 w-3 mr-1" />
                     30 minutes
                   </Badge>
@@ -361,7 +361,7 @@ export default function CreditCardIntegrationPage() {
                 </div>
 
                 <div className="text-center p-4 border rounded-lg">
-                  <CheckCircle className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                  <CheckCircle className="h-8 w-8 text-primary mx-auto mb-2" />
                   <h4 className="font-medium">SOC 2 Type II</h4>
                   <p className="text-sm text-muted-foreground">
                     Audited security controls

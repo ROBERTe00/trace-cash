@@ -68,11 +68,11 @@ export const DesignedTransactionsTab = ({
         <Input
           placeholder={t('search.placeholder')}
           onChange={(e) => onSearch(e.target.value)}
-          className="flex-1 border-0 bg-muted/50 focus:bg-muted rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E88FF]"
+          className="flex-1 border-0 bg-muted/50 focus:bg-muted rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
         />
         <Button
           onClick={onAddTransaction}
-          className="bg-[#1E88FF] hover:bg-[#1E88FF]/90 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+          className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
           {t('add')}
@@ -111,7 +111,7 @@ export const DesignedTransactionsTab = ({
           <Card className="p-6 bg-card/80 backdrop-blur-sm border border-border rounded-xl hover:shadow-lg transition-shadow">
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
-                <Wallet className="h-5 w-5 text-[#1E88FF]" />
+                <Wallet className="h-5 w-5 text-primary" />
                 <p className="text-sm text-muted-foreground font-medium">{t('metrics.totalExpenses')}</p>
               </div>
               <p className="text-3xl font-bold font-mono tabular-nums">
@@ -157,7 +157,7 @@ export const DesignedTransactionsTab = ({
             <div className="flex flex-col gap-3">
               <p className="text-sm text-muted-foreground font-medium">{t('metrics.topCategory')}</p>
               <p className="text-2xl font-bold">{topCategory.name}</p>
-              <p className="text-lg font-mono tabular-nums text-[#1E88FF]">
+              <p className="text-lg font-mono tabular-nums text-primary">
                 {formatCurrency(topCategory.amount)}
               </p>
             </div>
@@ -184,7 +184,7 @@ export const DesignedTransactionsTab = ({
                     initial={{ width: 0 }}
                     animate={{ width: `${cat.percentage}%` }}
                     transition={{ duration: 0.8, delay: index * 0.1, ease: "easeOut" }}
-                    className="h-full bg-gradient-to-r from-[#1E88FF] to-[#1E88FF]/60 transition-all duration-500"
+                    className="h-full bg-gradient-to-r from-primary to-primary/60 transition-all duration-500"
                   />
                 </div>
                 <p className="text-sm font-mono tabular-nums text-muted-foreground min-w-[100px] text-right">
@@ -217,8 +217,8 @@ export const DesignedTransactionsTab = ({
                 >
                   {/* Left: Icon + Info */}
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="h-10 w-10 rounded-full flex items-center justify-center bg-[#1E88FF]/10">
-                      <Icon className="h-5 w-5 text-[#1E88FF]" />
+                    <div className="h-10 w-10 rounded-full flex items-center justify-center bg-primary/10">
+                      <Icon className="h-5 w-5 text-primary" />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <p className="text-sm font-medium truncate text-left">

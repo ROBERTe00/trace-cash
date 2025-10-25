@@ -456,7 +456,7 @@ export const AdvancedBankStatementUpload = ({
               </span>
 
               {extractionMethod && (
-                <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">
+                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
                   <FileText className="h-3 w-3 mr-1" />
                   {extractionMethod.toUpperCase()} Method
                 </Badge>

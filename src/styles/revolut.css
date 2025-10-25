@@ -1,0 +1,103 @@
+/* Revolut Design System Styles */
+
+/* Card Variants */
+.revolut-card-minimal {
+  @apply rounded-3xl bg-card border-0 shadow-lg p-6;
+  background: hsl(var(--card));
+}
+
+.revolut-card-gradient {
+  @apply rounded-3xl text-primary-foreground shadow-xl p-6 border-0;
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-dark)) 100%);
+}
+
+.revolut-card-outlined {
+  @apply rounded-3xl border border-border/50 bg-card shadow-lg p-6;
+}
+
+/* Button Styles */
+.revolut-button {
+  @apply rounded-2xl px-6 py-3 font-medium transition-all duration-300;
+  @apply hover:scale-105 active:scale-95;
+}
+
+.revolut-button-primary {
+  @apply revolut-button text-primary-foreground;
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-dark)) 100%);
+  @apply hover:shadow-[0_0_20px_rgba(139,0,255,0.3)];
+}
+
+.revolut-button-secondary {
+  @apply revolut-button bg-black/20 hover:bg-black/30 text-white;
+}
+
+.revolut-button-outlined {
+  @apply revolut-button border border-border bg-card hover:bg-muted;
+}
+
+/* Metric Display */
+.revolut-metric-value {
+  @apply text-5xl font-bold font-mono;
+}
+
+.revolut-metric-label {
+  @apply text-sm font-medium opacity-90;
+}
+
+/* Action Grid */
+.revolut-action-button {
+  @apply bg-black/20 hover:bg-black/30 rounded-2xl p-4 flex flex-col items-center gap-2;
+  @apply transition-all hover:scale-105 active:scale-95 hover:shadow-[0_0_20px_rgba(139,0,255,0.3)];
+  @apply cursor-pointer;
+}
+
+/* Icon Backgrounds */
+.revolut-icon-bg {
+  @apply w-12 h-12 rounded-full bg-white/20 flex items-center justify-center;
+}
+
+.revolut-icon-bg-colored {
+  @apply w-12 h-12 rounded-xl flex items-center justify-center;
+}
+
+/* Text Styles */
+.revolut-title {
+  @apply text-3xl font-bold tracking-tight;
+}
+
+.revolut-subtitle {
+  @apply text-sm text-muted-foreground;
+}
+
+.revolut-section-title {
+  @apply text-xl font-semibold mb-4;
+}
+
+/* Spacing */
+.revolut-spacing-section {
+  @apply space-y-6;
+}
+
+.revolut-spacing-card {
+  @apply p-6;
+}
+
+/* Hover Effects */
+.revolut-hover-lift {
+  @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl;
+}
+
+.revolut-hover-scale {
+  @apply transition-all duration-300 hover:scale-105;
+}
+
+/* Loading States */
+.revolut-skeleton {
+  @apply animate-pulse bg-muted rounded-xl;
+}
+
+/* Scroll */
+.revolut-scroll {
+  @apply scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent;
+}
+

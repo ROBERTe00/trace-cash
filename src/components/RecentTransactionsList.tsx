@@ -44,14 +44,14 @@ const getCategoryIcon = (category: string) => {
 const getCategoryColor = (category: string) => {
   const colorMap: Record<string, string> = {
     'Shopping': 'text-purple-600 bg-purple-500/10',
-    'Housing': 'text-blue-600 bg-blue-500/10',
+    'Housing': 'text-primary bg-primary/10',
     'Transportation': 'text-orange-600 bg-orange-500/10',
     'Food': 'text-green-600 bg-green-500/10',
-    'Groceries': 'text-emerald-600 bg-emerald-500/10',
-    'Rent': 'text-indigo-600 bg-indigo-500/10',
-    'Utilities': 'text-cyan-600 bg-cyan-500/10',
+    'Groceries': 'text-green-600 bg-green-500/10',
+    'Rent': 'text-primary bg-primary/10',
+    'Utilities': 'text-primary bg-primary/10',
   };
-  return colorMap[category] || 'text-gray-600 bg-gray-500/10';
+  return colorMap[category] || 'text-muted-foreground bg-muted';
 };
 
 const formatDate = (dateStr: string) => {
@@ -71,7 +71,7 @@ export const RecentTransactionsList = ({
 
   if (transactions.length === 0) {
     return (
-      <Card className="border-none shadow-lg rounded-3xl">
+      <Card className="border-0 shadow-lg rounded-3xl">
         <CardHeader>
           <CardTitle className="text-lg">Recent Transactions</CardTitle>
         </CardHeader>
@@ -93,8 +93,8 @@ export const RecentTransactionsList = ({
   }
 
   return (
-    <Card className="border-none shadow-lg rounded-3xl">
-      <CardHeader className="flex flex-row items-center justify-between pb-3">
+    <Card className="border-0 shadow-none bg-transparent p-0">
+      <CardHeader className="flex flex-row items-center justify-between pb-3 px-0">
         <CardTitle className="text-lg">Recent Transactions</CardTitle>
         {onViewAll && (
           <Button 
@@ -108,7 +108,7 @@ export const RecentTransactionsList = ({
           </Button>
         )}
       </CardHeader>
-      <CardContent className="space-y-1">
+      <CardContent className="space-y-1 px-0">
         {displayTransactions.map((transaction) => {
           const Icon = getCategoryIcon(transaction.category);
           const colorClass = getCategoryColor(transaction.category);
@@ -117,9 +117,9 @@ export const RecentTransactionsList = ({
           return (
             <div
               key={transaction.id}
-              className="flex items-center gap-3 p-3 rounded-xl hover:bg-accent/50 transition-colors group"
+              className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/30 transition-colors group border-0"
             >
-              <div className={`p-2 rounded-lg ${colorClass}`}>
+              <div className={`p-2 rounded-xl flex items-center justify-center ${colorClass}`}>
                 <Icon className="w-4 h-4" />
               </div>
               

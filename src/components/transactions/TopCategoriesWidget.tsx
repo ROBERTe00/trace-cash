@@ -24,17 +24,17 @@ const categoryIcons: Record<string, any> = {
 const categoryColors = [
   "bg-primary",
   "bg-success",
-  "bg-blue-500",
   "bg-orange-500",
   "bg-pink-500",
-  "bg-cyan-500",
+  "bg-purple-500",
+  "bg-primary",
 ];
 
 export const TopCategoriesWidget = ({ categories }: TopCategoriesWidgetProps) => {
   const topCategories = categories.slice(0, 6);
 
   return (
-    <Card className="premium-card">
+    <Card className="premium-card border-0">
       <CardHeader>
         <CardTitle className="text-card-title">Top Categories</CardTitle>
       </CardHeader>

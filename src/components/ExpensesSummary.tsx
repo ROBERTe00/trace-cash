@@ -81,7 +81,7 @@ export function ExpensesSummary({ expenses }: ExpensesSummaryProps) {
 
       {/* Metriche principali */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden border-0">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <DollarSign className="h-4 w-4 flex-shrink-0" />
@@ -101,7 +101,7 @@ export function ExpensesSummary({ expenses }: ExpensesSummaryProps) {
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden border-0">
           <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <PieChart className="h-4 w-4 flex-shrink-0" />
@@ -146,7 +146,7 @@ export function ExpensesSummary({ expenses }: ExpensesSummaryProps) {
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden border-0">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Categoria Principale

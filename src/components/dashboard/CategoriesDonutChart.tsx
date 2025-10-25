@@ -5,11 +5,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 const COLORS = [
-  'hsl(262, 83%, 58%)',
-  'hsl(142, 76%, 36%)',
-  'hsl(38, 92%, 50%)',
-  'hsl(0, 84%, 60%)',
-  'hsl(221, 83%, 53%)',
+  'hsl(262, 83%, 58%)', // purple (primary Revolut)
+  'hsl(142, 76%, 36%)', // green
+  'hsl(38, 92%, 50%)',  // orange
+  'hsl(0, 84%, 60%)',   // red
+  'hsl(262, 83%, 58%)', // purple invece di blue
 ];
 
 export const CategoriesDonutChart = () => {

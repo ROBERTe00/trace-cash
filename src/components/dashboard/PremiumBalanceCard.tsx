@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, ArrowDownLeft, RefreshCw, Plus } from "lucide-react";
+import { Plus, TrendingUp, FileUp, Receipt } from "lucide-react";
 import { StatNumber } from "@/components/ui/stat-number";
 import { QuickActionModals } from "./QuickActionModals";
 import { useState } from "react";
@@ -14,67 +14,62 @@ export const PremiumBalanceCard = ({
   totalBalance = 0, 
   availableBalance = 0 
 }: PremiumBalanceCardProps) => {
-  const [activeModal, setActiveModal] = useState<"send" | "request" | "exchange" | "topup" | null>(null);
+  const [activeModal, setActiveModal] = useState<"add_expense" | "add_income" | "import_file" | "bank_statement" | null>(null);
 
   const actionButtons = [
     { 
-      icon: ArrowUpRight, 
-      label: "Send", 
-      action: "send" as const,
+      icon: Receipt, 
+      label: "Aggiungi Spesa", 
+      action: "add_expense" as const,
+      gradient: "from-red-500 to-orange-600"
+    },
+    { 
+      icon: TrendingUp, 
+      label: "Aggiungi Entrata", 
+      action: "add_income" as const,
+      gradient: "from-green-500 to-emerald-600"
+    },
+    { 
+      icon: FileUp, 
+      label: "Importa File", 
+      action: "import_file" as const,
       gradient: "from-primary to-primary-dark"
     },
     { 
-      icon: ArrowDownLeft, 
-      label: "Request", 
-      action: "request" as const,
-      gradient: "from-success to-emerald-600"
-    },
-    { 
-      icon: RefreshCw, 
-      label: "Exchange", 
-      action: "exchange" as const,
+      icon: Receipt, 
+      label: "Estratto Conto", 
+      action: "bank_statement" as const,
       gradient: "from-blue-500 to-cyan-600"
-    },
-    { 
-      icon: Plus, 
-      label: "Top Up", 
-      action: "topup" as const,
-      gradient: "from-orange-500 to-red-600"
     },
   ];
 
   return (
     <>
-      <Card className="premium-card-glow bg-gradient-to-br from-primary via-primary-dark to-black text-white overflow-hidden relative">
-        <div className="absolute inset-0 bg-grid-white/[0.02] [mask-image:radial-gradient(white,transparent_70%)]" />
-        
-        <div className="relative z-10 space-y-6">
+      <Card className="revolut-card hover:shadow-2xl transition-all duration-300">
+        <div className="space-y-6">
           {/* Balance Section */}
           <div className="space-y-2">
-            <p className="text-sm text-white/60 uppercase tracking-wide">Total Balance</p>
-            <StatNumber 
-              value={totalBalance} 
-              color="default" 
-              size="xl" 
-              className="text-white"
-            />
-            <p className="text-sm text-white/60">
-              Available: <span className="text-white/90 font-mono">${availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+            <p className="text-sm font-medium opacity-90">Available balance</p>
+            <h2 className="text-5xl font-bold font-mono">
+              ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </h2>
+            <p className="text-sm opacity-75">
+              Total: <span className="font-mono">${availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
             </p>
           </div>
 
           {/* Action Buttons */}
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-4 gap-4">
             {actionButtons.map((btn) => (
               <button
                 key={btn.action}
                 onClick={() => setActiveModal(btn.action)}
-                className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 transition-all duration-300 hover:scale-105 hover:shadow-neon-purple"
+                className="group bg-black/20 hover:bg-black/30 rounded-2xl p-4 flex flex-col items-center gap-2 transition-all hover:scale-105 active:scale-95 hover:shadow-[0_0_20px_rgba(139,0,255,0.3)] cursor-pointer"
               >
-                <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${btn.gradient} flex items-center justify-center group-hover:shadow-glow-purple transition-shadow duration-300`}>
-                  <btn.icon className="w-5 h-5 text-white" />
+                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                  <btn.icon className="w-6 h-6" />
                 </div>
-                <span className="text-xs font-medium text-white/90">{btn.label}</span>
+                <span className="text-sm font-medium">{btn.label}</span>
               </button>
             ))}
           </div>

@@ -3,11 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { X, ArrowUpRight, ArrowDownLeft, Repeat, Plus } from "lucide-react";
+import { X, Receipt, TrendingUp, FileUp, Receipt as Banknote } from "lucide-react";
 import { toast } from "sonner";
 
 interface QuickActionModalsProps {
-  activeModal: 'send' | 'request' | 'exchange' | 'topup' | null;
+  activeModal: 'add_expense' | 'add_income' | 'import_file' | 'bank_statement' | null;
   onClose: () => void;
 }
 
@@ -26,35 +26,35 @@ export const QuickActionModals = ({ activeModal, onClose }: QuickActionModalsPro
 
   return (
     <>
-      {/* Send Modal */}
-      <Dialog open={activeModal === 'send'} onOpenChange={onClose}>
+      {/* Add Expense Modal */}
+      <Dialog open={activeModal === 'add_expense'} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md bg-card border-primary/20">
           <DialogClose className="absolute right-4 top-4 rounded-full opacity-70 hover:opacity-100 transition-opacity hover:bg-primary/10 p-2">
             <X className="h-4 w-4" />
           </DialogClose>
           <DialogHeader>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                <ArrowUpRight className="w-6 h-6 text-primary" />
+              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
+                <Receipt className="w-6 h-6 text-red-500" />
               </div>
-              <DialogTitle className="text-2xl">Send Money</DialogTitle>
+              <DialogTitle className="text-2xl">Aggiungi Spesa</DialogTitle>
             </div>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="send-recipient">Recipient</Label>
+              <Label htmlFor="expense-description">Descrizione</Label>
               <Input
-                id="send-recipient"
-                placeholder="Enter name or account"
+                id="expense-description"
+                placeholder="Es. Pranzo al ristorante"
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value)}
                 className="mt-2"
               />
             </div>
             <div>
-              <Label htmlFor="send-amount">Amount (AUD)</Label>
+              <Label htmlFor="expense-amount">Importo (€)</Label>
               <Input
-                id="send-amount"
+                id="expense-amount"
                 type="number"
                 placeholder="0.00"
                 value={amount}
@@ -63,44 +63,44 @@ export const QuickActionModals = ({ activeModal, onClose }: QuickActionModalsPro
               />
             </div>
             <Button 
-              className="w-full hover:shadow-[0_0_20px_rgba(139,0,255,0.4)] transition-all"
-              onClick={() => handleSubmit("Send")}
+              className="w-full bg-red-500 hover:bg-red-600 hover:shadow-[0_0_20px_rgba(239,68,68,0.4)] transition-all"
+              onClick={() => handleSubmit("Aggiungi Spesa")}
             >
-              Send ${amount || "0.00"}
+              Registra €{amount || "0.00"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Request Modal */}
-      <Dialog open={activeModal === 'request'} onOpenChange={onClose}>
+      {/* Add Income Modal */}
+      <Dialog open={activeModal === 'add_income'} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md bg-card border-primary/20">
           <DialogClose className="absolute right-4 top-4 rounded-full opacity-70 hover:opacity-100 transition-opacity hover:bg-primary/10 p-2">
             <X className="h-4 w-4" />
           </DialogClose>
           <DialogHeader>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                <ArrowDownLeft className="w-6 h-6 text-primary" />
+              <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-green-500" />
               </div>
-              <DialogTitle className="text-2xl">Request Money</DialogTitle>
+              <DialogTitle className="text-2xl">Aggiungi Entrata</DialogTitle>
             </div>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="request-from">Request from</Label>
+              <Label htmlFor="income-description">Descrizione</Label>
               <Input
-                id="request-from"
-                placeholder="Enter name or email"
+                id="income-description"
+                placeholder="Es. Stipendio mensile"
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value)}
                 className="mt-2"
               />
             </div>
             <div>
-              <Label htmlFor="request-amount">Amount (AUD)</Label>
+              <Label htmlFor="income-amount">Importo (€)</Label>
               <Input
-                id="request-amount"
+                id="income-amount"
                 type="number"
                 placeholder="0.00"
                 value={amount}
@@ -109,17 +109,17 @@ export const QuickActionModals = ({ activeModal, onClose }: QuickActionModalsPro
               />
             </div>
             <Button 
-              className="w-full hover:shadow-[0_0_20px_rgba(139,0,255,0.4)] transition-all"
-              onClick={() => handleSubmit("Request")}
+              className="w-full bg-green-500 hover:bg-green-600 hover:shadow-[0_0_20px_rgba(34,197,94,0.4)] transition-all"
+              onClick={() => handleSubmit("Aggiungi Entrata")}
             >
-              Request ${amount || "0.00"}
+              Registra €{amount || "0.00"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Exchange Modal */}
-      <Dialog open={activeModal === 'exchange'} onOpenChange={onClose}>
+      {/* Import File Modal */}
+      <Dialog open={activeModal === 'import_file'} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md bg-card border-primary/20">
           <DialogClose className="absolute right-4 top-4 rounded-full opacity-70 hover:opacity-100 transition-opacity hover:bg-primary/10 p-2">
             <X className="h-4 w-4" />
@@ -127,52 +127,27 @@ export const QuickActionModals = ({ activeModal, onClose }: QuickActionModalsPro
           <DialogHeader>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                <Repeat className="w-6 h-6 text-primary" />
+                <FileUp className="w-6 h-6 text-primary" />
               </div>
-              <DialogTitle className="text-2xl">Exchange Currency</DialogTitle>
+              <DialogTitle className="text-2xl">Importa File</DialogTitle>
             </div>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="exchange-from">From</Label>
-              <Input
-                id="exchange-from"
-                placeholder="AUD"
-                defaultValue="AUD"
-                className="mt-2"
-              />
-            </div>
-            <div>
-              <Label htmlFor="exchange-to">To</Label>
-              <Input
-                id="exchange-to"
-                placeholder="USD, EUR, GBP..."
-                className="mt-2"
-              />
-            </div>
-            <div>
-              <Label htmlFor="exchange-amount">Amount</Label>
-              <Input
-                id="exchange-amount"
-                type="number"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="mt-2 text-2xl font-mono"
-              />
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Carica un file CSV o Excel con le tue transazioni bancarie per importarle automaticamente.
+            </p>
             <Button 
               className="w-full hover:shadow-[0_0_20px_rgba(139,0,255,0.4)] transition-all"
-              onClick={() => handleSubmit("Exchange")}
+              onClick={() => handleSubmit("Importa File")}
             >
-              Exchange ${amount || "0.00"}
+              Scegli File da Importare
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Top Up Modal */}
-      <Dialog open={activeModal === 'topup'} onOpenChange={onClose}>
+      {/* Bank Statement Modal */}
+      <Dialog open={activeModal === 'bank_statement'} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md bg-card border-primary/20">
           <DialogClose className="absolute right-4 top-4 rounded-full opacity-70 hover:opacity-100 transition-opacity hover:bg-primary/10 p-2">
             <X className="h-4 w-4" />
@@ -180,36 +155,20 @@ export const QuickActionModals = ({ activeModal, onClose }: QuickActionModalsPro
           <DialogHeader>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                <Plus className="w-6 h-6 text-primary" />
+                <Banknote className="w-6 h-6 text-primary" />
               </div>
-              <DialogTitle className="text-2xl">Top Up Account</DialogTitle>
+              <DialogTitle className="text-2xl">Estratto Conto</DialogTitle>
             </div>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="topup-method">Payment Method</Label>
-              <Input
-                id="topup-method"
-                placeholder="Credit Card, Bank Transfer..."
-                className="mt-2"
-              />
-            </div>
-            <div>
-              <Label htmlFor="topup-amount">Amount (AUD)</Label>
-              <Input
-                id="topup-amount"
-                type="number"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="mt-2 text-2xl font-mono"
-              />
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Carica un estratto conto bancario in formato PDF per estrarre automaticamente tutte le transazioni.
+            </p>
             <Button 
-              className="w-full hover:shadow-[0_0_20px_rgba(139,0,255,0.4)] transition-all"
-              onClick={() => handleSubmit("Top Up")}
+              className="w-full bg-primary hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(139,0,255,0.4)] transition-all"
+              onClick={() => handleSubmit("Estratto Conto")}
             >
-              Add ${amount || "0.00"}
+              Carica PDF Estrado Conto
             </Button>
           </div>
         </DialogContent>

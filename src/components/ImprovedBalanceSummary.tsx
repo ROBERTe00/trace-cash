@@ -35,7 +35,7 @@ export const ImprovedBalanceSummary = ({
   const expenseRatio = total > 0 ? (totalExpenses / total) * 100 : 0;
 
   return (
-    <Card className="p-6 glass-card border-2">
+    <Card className="p-6 glass-card border-0">
       <div className="space-y-4">
         {/* Top Row: Title + Add Button */}
         <div className="flex items-center justify-between">

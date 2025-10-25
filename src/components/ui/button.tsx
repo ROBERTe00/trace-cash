@@ -5,26 +5,26 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl text-sm font-medium ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-gradient-to-r from-[hsl(270,91%,58%)] to-[hsl(270,91%,68%)] text-primary-foreground shadow-neon-purple hover:shadow-glow-purple transition-all duration-300 hover:scale-105",
+          "bg-gradient-to-r from-primary to-primary-dark text-primary-foreground shadow-lg hover:shadow-[0_0_20px_rgba(139,0,255,0.3)] hover:scale-105 active:scale-95",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-lg hover:bg-destructive/90 hover:shadow-xl transition-all duration-300",
+          "bg-destructive text-destructive-foreground shadow-lg hover:bg-destructive/90 transition-all duration-300",
         outline:
-          "border-2 border-primary/50 text-primary bg-transparent hover:bg-primary/10 hover:shadow-neon-purple transition-all duration-300",
+          "border border-border text-foreground bg-card hover:bg-muted transition-all duration-300",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80 transition-all duration-300",
-        ghost: "hover:bg-accent/10 hover:text-accent transition-all duration-300",
+          "bg-muted text-muted-foreground hover:bg-muted/80 transition-all duration-300",
+        ghost: "hover:bg-muted/50 transition-all duration-300",
         link: "text-primary underline-offset-4 hover:underline transition-all duration-300",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10",
+        default: "h-10 px-6 py-2",
+        sm: "h-9 rounded-xl px-4",
+        lg: "h-12 rounded-2xl px-8",
+        icon: "h-10 w-10 rounded-xl",
       },
     },
     defaultVariants: {

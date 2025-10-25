@@ -37,7 +37,7 @@ export const TransactionBalanceSummary = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="p-6 glass-card border-2 hover-lift">
+      <Card className="p-6 glass-card border-0 hover-lift">
         <div className="space-y-4">
           {/* Header with Actions */}
           <div className="flex items-center justify-between">

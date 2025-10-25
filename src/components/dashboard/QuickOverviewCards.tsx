@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, TrendingDown, PieChart, PiggyBank } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { motion } from "framer-motion";
 
 export const QuickOverviewCards = () => {
   const { data, isLoading } = useQuery({
@@ -80,19 +81,45 @@ export const QuickOverviewCards = () => {
     }
   ];
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <motion.div 
+      className="grid grid-cols-2 md:grid-cols-4 gap-4"
+      variants={container}
+      initial="hidden"
+      animate="show"
+    >
       {cards.map((card, idx) => (
-        <Card key={idx} className="stat-card group cursor-pointer">
-          <div className={`w-12 h-12 rounded-full ${card.bgColor} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-            <card.icon className={`w-6 h-6 ${card.color}`} />
-          </div>
-          <p className="text-sm text-muted-foreground mb-2">{card.label}</p>
-          <p className="text-2xl font-bold font-mono">
-            ${card.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
-        </Card>
+        <motion.div key={idx} variants={item}>
+          <Card className="stat-card group cursor-pointer hover:shadow-[0_0_30px_rgba(123,47,247,0.3)]">
+            <motion.div 
+              className={`w-12 h-12 rounded-full ${card.bgColor} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}
+              whileHover={{ rotate: 5 }}
+            >
+              <card.icon className={`w-6 h-6 ${card.color}`} />
+            </motion.div>
+            <p className="text-sm text-muted-foreground mb-2">{card.label}</p>
+            <p className="text-2xl font-bold font-mono">
+              ${card.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+          </Card>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 };

@@ -71,10 +71,10 @@ const insightColors = {
     icon: 'text-yellow-600 dark:text-yellow-400'
   },
   info: {
-    bg: 'bg-blue-500/10',
-    text: 'text-blue-700 dark:text-blue-300',
-    border: 'border-blue-200 dark:border-blue-800',
-    icon: 'text-blue-600 dark:text-blue-400'
+    bg: 'bg-primary/10',
+    text: 'text-primary',
+    border: 'border-primary/20',
+    icon: 'text-primary'
   },
   tip: {
     bg: 'bg-purple-500/10',
@@ -93,9 +93,9 @@ const anomalyIcons = {
 
 const anomalyColors = {
   low: {
-    bg: 'bg-blue-500/10',
-    text: 'text-blue-700 dark:text-blue-300',
-    icon: 'text-blue-600 dark:text-blue-400'
+    bg: 'bg-primary/10',
+    text: 'text-primary',
+    icon: 'text-primary'
   },
   medium: {
     bg: 'bg-yellow-500/10',

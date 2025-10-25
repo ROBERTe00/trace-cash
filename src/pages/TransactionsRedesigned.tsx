@@ -56,7 +56,7 @@ export default function TransactionsRedesigned() {
         name,
         amount: data.amount,
         count: data.count,
-        color: '#3B82F6',
+        color: 'hsl(262, 83%, 58%)', // purple Revolut
       }))
       .sort((a, b) => b.amount - a.amount);
   }, [expenses]);

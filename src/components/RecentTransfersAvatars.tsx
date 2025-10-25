@@ -12,7 +12,7 @@ interface RecentTransfer {
 const recentTransfers: RecentTransfer[] = [
   { id: "1", name: "Marco Rossi", initials: "MR", color: "bg-purple-500" },
   { id: "2", name: "Laura Bianchi", initials: "LB", color: "bg-green-500" },
-  { id: "3", name: "Giovanni Verdi", initials: "GV", color: "bg-blue-500" },
+  { id: "3", name: "Giovanni Verdi", initials: "GV", color: "bg-primary" },
   { id: "4", name: "Sofia Neri", initials: "SN", color: "bg-orange-500" },
   { id: "5", name: "Alessandro Gialli", initials: "AG", color: "bg-pink-500" },
 ];

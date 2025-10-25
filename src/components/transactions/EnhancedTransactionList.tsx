@@ -35,13 +35,13 @@ const categoryIcons: Record<string, string> = {
 // Category colors
 const categoryColors: Record<string, string> = {
   'Food & Dining': 'bg-green-500/10 text-green-600 border-green-500/20',
-  'Transportation': 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  'Transportation': 'bg-orange-500/10 text-orange-600 border-orange-500/20',
   'Shopping': 'bg-purple-500/10 text-purple-600 border-purple-500/20',
   'Entertainment': 'bg-amber-500/10 text-amber-600 border-amber-500/20',
   'Healthcare': 'bg-red-500/10 text-red-600 border-red-500/20',
-  'Bills & Utilities': 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20',
-  'Income': 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
-  'Other': 'bg-gray-500/10 text-gray-600 border-gray-500/20',
+  'Bills & Utilities': 'bg-primary/10 text-primary border-primary/20',
+  'Income': 'bg-green-500/10 text-green-600 border-green-500/20',
+  'Other': 'bg-muted text-muted-foreground border-border',
 };
 
 export const EnhancedTransactionList = ({

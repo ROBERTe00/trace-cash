@@ -11,7 +11,7 @@ import { GroupedTransactionList } from "@/components/GroupedTransactionList";
 import { ImprovedBalanceSummary } from "@/components/ImprovedBalanceSummary";
 import { DesignedTransactionsTab } from "@/components/DesignedTransactionsTab";
 import { useExpenses } from "@/hooks/useExpenses";
-import { Wallet, BarChart3, Upload } from "lucide-react";
+import { Wallet, BarChart3, Upload, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -141,7 +141,14 @@ export default function Transactions() {
           {/* Add Form Modal (shown when "+ Aggiungi" clicked) */}
           {showAddForm && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <Card className="p-6 max-w-md w-full">
+              <Card className="p-6 max-w-md w-full relative">
+                <button
+                  onClick={() => setShowAddForm(false)}
+                  className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 transition-opacity p-1 hover:bg-muted"
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Close</span>
+                </button>
                 <ExpenseForm onAdd={handleAddExpense} />
               </Card>
             </div>

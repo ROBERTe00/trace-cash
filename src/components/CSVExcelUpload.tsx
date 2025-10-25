@@ -380,8 +380,8 @@ export const CSVExcelUpload = ({ onTransactionsParsed }: CSVExcelUploadProps) =>
             <div className="text-xs text-muted-foreground">Anomalies</div>
           </div>
           
-          <div className="text-center p-3 bg-blue-500/5 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">
+          <div className="text-center p-3 bg-primary/5 rounded-lg">
+            <div className="text-2xl font-bold text-primary">
               {(aiAnalysis.confidence * 100).toFixed(0)}%
             </div>
             <div className="text-xs text-muted-foreground">Confidence</div>
@@ -399,7 +399,7 @@ export const CSVExcelUpload = ({ onTransactionsParsed }: CSVExcelUploadProps) =>
             <span>Anomaly Detection</span>
           </div>
           <div className="flex items-center gap-1">
-            <BarChart3 className="w-4 h-4 text-blue-500" />
+            <BarChart3 className="w-4 h-4 text-primary" />
             <span>Financial Insights</span>
           </div>
         </div>

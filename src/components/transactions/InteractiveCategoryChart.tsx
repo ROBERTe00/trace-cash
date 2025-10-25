@@ -24,11 +24,11 @@ interface InteractiveCategoryChartProps {
 // Category color mapping
 const categoryColors: Record<string, string> = {
   'Food & Dining': '#10B981',
-  'Transportation': '#3B82F6',
+  'Transportation': 'hsl(262, 83%, 58%)', // purple instead of blue
   'Shopping': '#8B5CF6',
   'Entertainment': '#F59E0B',
   'Healthcare': '#EF4444',
-  'Bills & Utilities': '#6366F1',
+  'Bills & Utilities': 'hsl(262, 83%, 58%)', // purple instead of indigo
   'Income': '#059669',
   'Other': '#6B7280',
 };
@@ -45,7 +45,7 @@ export const InteractiveCategoryChart = ({
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <Card className="p-3 shadow-lg border-2">
+        <Card className="p-3 shadow-lg border-0">
           <p className="font-semibold text-sm">{data.name}</p>
           <p className="text-lg font-bold text-primary">{formatCurrency(data.amount)}</p>
           <p className="text-xs text-muted-foreground">{data.count} transazioni</p>
@@ -62,7 +62,7 @@ export const InteractiveCategoryChart = ({
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3, delay: 0.1 }}
     >
-      <Card className="p-6 glass-card border-2 hover-lift">
+      <Card className="p-6 glass-card border-0 hover-lift">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Categorie</h3>
@@ -87,7 +87,7 @@ export const InteractiveCategoryChart = ({
                 height={80}
               />
               <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(262, 83%, 58%, 0.1)' }} />
               <Bar
                 dataKey="amount"
                 radius={[8, 8, 0, 0]}

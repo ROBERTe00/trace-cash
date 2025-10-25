@@ -32,15 +32,15 @@ const categoryIcons: Record<string, any> = {
 
 const categoryColors: Record<string, string> = {
   "Shopping": "bg-purple-500",
-  "Housing": "bg-blue-500",
+  "Housing": "bg-primary",
   "Transportation": "bg-orange-500",
   "Food": "bg-green-500",
   "Dining": "bg-yellow-500",
   "Entertainment": "bg-pink-500",
-  "Travel": "bg-cyan-500",
+  "Travel": "bg-primary",
   "Healthcare": "bg-red-500",
-  "Income": "bg-emerald-500",
-  "Other": "bg-gray-500",
+  "Income": "bg-green-500",
+  "Other": "bg-muted",
 };
 
 export const GroupedTransactionList = ({ transactions, onDelete }: GroupedTransactionListProps) => {

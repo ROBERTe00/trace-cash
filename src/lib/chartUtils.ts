@@ -170,11 +170,11 @@ export const formatCompactNumber = (num: number): string => {
 export const assignCategoryColors = (categories: string[]): Record<string, string> => {
   const colorPalette = [
     "#10b981", // green-500
-    "#3b82f6", // blue-500
+    "#8b5cf6", // violet-500 (primary Revolut invece di blue)
     "#8b5cf6", // violet-500
     "#f59e0b", // amber-500
     "#ef4444", // red-500
-    "#06b6d4", // cyan-500
+    "#8b5cf6", // violet-500 invece di cyan
     "#ec4899", // pink-500
     "#64748b", // slate-500
   ];

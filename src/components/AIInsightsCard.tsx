@@ -38,9 +38,9 @@ const typeConfig = {
     iconColor: "text-yellow-600 dark:text-yellow-400"
   },
   info: {
-    badge: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-    iconBg: "bg-blue-500/20",
-    iconColor: "text-blue-600 dark:text-blue-400"
+    badge: "bg-primary/10 text-primary",
+    iconBg: "bg-primary/20",
+    iconColor: "text-primary"
   },
   tip: {
     badge: "bg-purple-500/10 text-purple-600 dark:text-purple-400",

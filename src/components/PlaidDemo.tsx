@@ -133,7 +133,7 @@ export const PlaidDemo = () => {
                             ••••{account.mask}
                           </Badge>
                           {account.status === 'syncing' && (
-                            <Badge className="text-xs bg-blue-500">
+                            <Badge className="text-xs bg-primary">
                               Syncing...
                             </Badge>
                           )}
