@@ -1,13 +1,22 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { GlassCard, GlassCardContent } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AnimatedNumber } from "@/components/animated/AnimatedNumber";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { TrendingUp, TrendingDown, Plus, Upload, Download, ChevronDown, Trophy } from "lucide-react";
+import { 
+  TrendUp as PhosphorTrendingUp, 
+  TrendDown as PhosphorTrendingDown, 
+  Plus as PhosphorPlus, 
+  Upload as PhosphorUpload, 
+  Download as PhosphorDownload, 
+  CaretDown as PhosphorCaretDown, 
+  Trophy as PhosphorTrophy 
+} from "phosphor-react";
 import { useApp } from "@/contexts/AppContext";
 
 interface InvestmentHeroProps {
@@ -38,20 +47,25 @@ export function InvestmentHero({
   const isPositive = totalGain >= 0;
 
   return (
-    <Card className="glass-card overflow-hidden relative">
+    <GlassCard variant="hero" glow className="overflow-hidden relative">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
-      <CardContent className="p-6 relative z-10">
+      <GlassCardContent className="p-6 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Total Portfolio Value */}
           <div className="lg:col-span-2">
             <p className="text-sm font-medium text-muted-foreground mb-2">Total Portfolio Value</p>
-            <h2 className="text-large-number gradient-text mb-3">
-              {formatCurrency(totalValue)}
+            <h2 className="text-large-number gradient-text mb-3 font-display">
+              <AnimatedNumber 
+                value={totalValue} 
+                prefix="€" 
+                decimals={2}
+                className="text-large-number"
+              />
             </h2>
             <div className="flex items-center gap-3 mb-4">
               <div className={`flex items-center gap-2 ${isPositive ? 'text-success' : 'text-destructive'}`}>
-                {isPositive ? <TrendingUp className="icon-card" /> : <TrendingDown className="icon-card" />}
-                <span className="text-medium-number font-bold">
+                {isPositive ? <PhosphorTrendingUp size={24} weight="bold" /> : <PhosphorTrendingDown size={24} weight="bold" />}
+                <span className="text-medium-number font-bold font-mono">
                   {isPositive ? '+' : ''}{formatCurrency(totalGain)}
                 </span>
               </div>
@@ -62,11 +76,11 @@ export function InvestmentHero({
 
             {bestPerformer && (
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20">
-                <Trophy className="icon-small text-primary" />
+                <PhosphorTrophy size={16} weight="fill" className="text-primary" />
                 <span className="text-sm font-medium">
                   Best: {bestPerformer.name}
                 </span>
-                <span className="text-sm font-bold text-success">
+                <span className="text-sm font-bold text-success font-mono">
                   +{bestPerformer.gainPercent.toFixed(1)}%
                 </span>
               </div>
@@ -75,20 +89,20 @@ export function InvestmentHero({
 
           {/* Quick Actions */}
           <div className="flex flex-col gap-2">
-            <Button onClick={onAddInvestment} className="w-full gap-2">
-              <Plus className="icon-button" />
+            <Button onClick={onAddInvestment} variant="glow" className="w-full gap-2">
+              <PhosphorPlus size={20} weight="bold" />
               Add Investment
             </Button>
-            <Button onClick={onImport} variant="outline" className="w-full gap-2">
-              <Upload className="icon-button" />
+            <Button onClick={onImport} variant="ghost-premium" className="w-full gap-2">
+              <PhosphorUpload size={20} weight="bold" />
               Import
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="w-full gap-2">
-                  <Download className="icon-button" />
+                  <PhosphorDownload size={20} weight="bold" />
                   Export
-                  <ChevronDown className="icon-button ml-auto" />
+                  <PhosphorCaretDown size={20} weight="bold" className="ml-auto" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -102,7 +116,7 @@ export function InvestmentHero({
             </DropdownMenu>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </GlassCardContent>
+    </GlassCard>
   );
 }
