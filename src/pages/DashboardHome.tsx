@@ -21,12 +21,17 @@ import { IncomeDetailView, getIncomeInsights } from "@/components/dashboard/Inco
 import { ExpensesDetailView, getExpensesInsights } from "@/components/dashboard/ExpensesDetailView";
 import { InvestmentsDetailView, getInvestmentsInsights } from "@/components/dashboard/InvestmentsDetailView";
 import { SavingsDetailView, getSavingsInsights } from "@/components/dashboard/SavingsDetailView";
+import { QuestLog } from "@/components/gamification/QuestLog";
+import { XPProgressWidget } from "@/components/gamification/XPProgressWidget";
+import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
 
 export default function DashboardHome() {
   const [user, setUser] = useState<any>(null);
   const { formatCurrency } = useApp();
   const { metrics, expenses, isLoading } = useDashboardData();
   const [openDrawer, setOpenDrawer] = useState<'income' | 'expenses' | 'investments' | 'savings' | null>(null);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [newLevel, setNewLevel] = useState(1);
 
   useEffect(() => {
     const getUser = async () => {
@@ -169,6 +174,16 @@ export default function DashboardHome() {
       ) : (
         <QuickOverviewCards />
       )}
+
+      {/* Gamification Widgets */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <XPProgressWidget />
+        </div>
+        <div className="lg:col-span-2">
+          <QuestLog />
+        </div>
+      </div>
 
       {/* Statistics Chart */}
       <div>
@@ -350,6 +365,13 @@ export default function DashboardHome() {
           </MetricDetailDrawer>
         </>
       )}
+
+      {/* Level Up Celebration */}
+      <LevelUpCelebration 
+        show={showLevelUp} 
+        newLevel={newLevel}
+        onClose={() => setShowLevelUp(false)}
+      />
     </div>
   );
 }

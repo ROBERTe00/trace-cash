@@ -104,8 +104,10 @@ export const useGamification = () => {
       if (!user) throw new Error('Not authenticated');
 
       const currentLevel = userLevel || { total_points: 0, level: 1 };
+      const oldLevel = currentLevel.level || 1;
       const newTotalPoints = currentLevel.total_points + points;
       const newLevel = Math.floor(newTotalPoints / 100) + 1; // Level up every 100 points
+      const leveledUp = newLevel > oldLevel;
 
       const { error } = await supabase
         .from('user_levels')
@@ -118,14 +120,14 @@ export const useGamification = () => {
 
       if (error) throw error;
 
-      return { points, newLevel: newLevel > (currentLevel.level || 1) };
+      return { points, leveledUp, newLevel, oldLevel };
     },
-    onSuccess: ({ points, newLevel }) => {
+    onSuccess: ({ points, leveledUp, newLevel }) => {
       queryClient.invalidateQueries({ queryKey: ['user-level'] });
       
-      if (newLevel) {
+      if (leveledUp) {
         toast.success(`🎉 Level Up!`, {
-          description: `You've reached level ${(userLevel?.level || 1) + 1}!`
+          description: `You've reached level ${newLevel}!`
         });
       } else {
         toast.success(`+${points} points`, {
