@@ -222,19 +222,7 @@ export default function Investments() {
         onExportCSV={handleExportCSV}
       />
 
-      {/* Portfolio Breakdown & Insights */}
-      {investments.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <PortfolioBreakdown investments={investments} />
-          <PerformanceInsights 
-            investments={investments}
-            totalReturn={totalReturn}
-            returnPercentage={returnPercentage}
-          />
-        </div>
-      )}
-
-      {/* 3 Tabs: Portfolio, Performance, Import */}
+      {/* 3 Tabs: Portfolio, Performance, Import - SUBITO DOPO HERO */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
         <div className="overflow-x-auto pb-2">
           <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl min-w-min">
@@ -263,6 +251,18 @@ export default function Investments() {
         </div>
 
         <TabsContent value="portfolio" className="space-y-4 sm:space-y-6">
+          {/* Portfolio Breakdown & Insights */}
+          {investments.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <PortfolioBreakdown investments={investments} />
+              <PerformanceInsights 
+                investments={investments}
+                totalReturn={totalReturn}
+                returnPercentage={returnPercentage}
+              />
+            </div>
+          )}
+
           {investmentTypes.length > 1 && (
             <div className="flex gap-2 flex-wrap">
               <Button

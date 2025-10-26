@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Expense } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
-import { Trash2, CreditCard, ShoppingBag, Home, Car, Utensils, Coffee, Gift, Plane, Heart, DollarSign } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Trash2, CreditCard, ShoppingBag, Home, Car, Utensils, Coffee, Gift, Plane, Heart, DollarSign, X } from "lucide-react";
 import { format, isToday, isYesterday, startOfDay } from "date-fns";
 import { it } from "date-fns/locale";
 
@@ -43,8 +43,55 @@ const categoryColors: Record<string, string> = {
   "Other": "bg-muted",
 };
 
+// Componente per rendere una singola transazione
+const TransactionItem = ({ 
+  transaction, 
+  getIcon, 
+  getColor, 
+  isHovered, 
+  onMouseEnter, 
+  onMouseLeave, 
+  onDelete 
+}: any) => {
+  const Icon = getIcon(transaction.category);
+  const colorClass = getColor(transaction.category);
+  const isIncome = transaction.type === "Income";
+
+  return (
+    <div
+      className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-muted/30 transition-colors group relative border-0"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      <div className={`w-7 h-7 rounded-lg ${colorClass} flex items-center justify-center flex-shrink-0`}>
+        <Icon className="h-3.5 w-3.5 text-white" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-sm truncate">{transaction.description}</p>
+        <p className="text-xs text-muted-foreground truncate">{transaction.category}</p>
+      </div>
+      <div className="text-right flex-shrink-0">
+        <p className={`font-bold text-sm ${isIncome ? "text-green-600" : "text-foreground"}`}>
+          {isIncome ? "+" : "-"}€{transaction.amount.toFixed(2)}
+        </p>
+      </div>
+      {isHovered && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onDelete(transaction.id)}
+          className="h-7 w-7 opacity-100 transition-opacity"
+        >
+          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+        </Button>
+      )}
+    </div>
+  );
+};
+
 export const GroupedTransactionList = ({ transactions, onDelete }: GroupedTransactionListProps) => {
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(["today"]));
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const groupTransactionsByDate = (): GroupedTransaction[] => {
     const groups: Record<string, Expense[]> = {};
@@ -62,21 +109,17 @@ export const GroupedTransactionList = ({ transactions, onDelete }: GroupedTransa
       .map(([date, trans]) => {
         const dateObj = new Date(date);
         let label = "";
-        let key = date;
 
         if (isToday(dateObj)) {
           label = "Oggi";
-          key = "today";
         } else if (isYesterday(dateObj)) {
           label = "Ieri";
-          key = "yesterday";
         } else {
           label = format(dateObj, "d MMMM", { locale: it });
-          key = date;
         }
 
         return {
-          date: key,
+          date,
           label,
           transactions: trans.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
         };
@@ -84,18 +127,6 @@ export const GroupedTransactionList = ({ transactions, onDelete }: GroupedTransa
   };
 
   const groupedData = groupTransactionsByDate();
-
-  const toggleGroup = (date: string) => {
-    setExpandedGroups((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(date)) {
-        newSet.delete(date);
-      } else {
-        newSet.add(date);
-      }
-      return newSet;
-    });
-  };
 
   const getIcon = (category: string) => {
     const Icon = categoryIcons[category] || categoryIcons["Other"];
@@ -108,99 +139,127 @@ export const GroupedTransactionList = ({ transactions, onDelete }: GroupedTransa
 
   if (transactions.length === 0) {
     return (
-      <div className="modern-card text-center py-12">
+      <div className="text-center py-12">
         <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
         <p className="text-muted-foreground">Nessuna transazione ancora</p>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-4">
-      {groupedData.map((group) => {
-        const isExpanded = expandedGroups.has(group.date);
-        const totalAmount = group.transactions.reduce((sum, t) => sum + (t.type === "Income" ? t.amount : -t.amount), 0);
+  // Mostra solo le prime 7 transazioni
+  const allTransactions = groupedData.flatMap(g => g.transactions);
+  const MAX_ITEMS = 7;
+  const displayTransactions = allTransactions.slice(0, MAX_ITEMS);
+  const hasMore = allTransactions.length > MAX_ITEMS;
 
-        return (
-          <motion.div
-            key={group.date}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="modern-card"
-          >
-            <button
-              onClick={() => toggleGroup(group.date)}
-              className="w-full flex items-center justify-between p-4 hover:bg-muted/50 rounded-lg transition-colors"
+  // Re-group displayed transactions
+  const visibleGroups = displayTransactions.reduce((groups, trans) => {
+    const date = startOfDay(new Date(trans.date)).toISOString();
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(trans);
+    return groups;
+  }, {} as Record<string, Expense[]>);
+
+  return (
+    <>
+      <div className="space-y-6">
+        {Object.entries(visibleGroups).map(([date, trans]) => {
+          const dateObj = new Date(date);
+          let label = "";
+          
+          if (isToday(dateObj)) {
+            label = "Oggi";
+          } else if (isYesterday(dateObj)) {
+            label = "Ieri";
+          } else {
+            label = format(dateObj, "d MMMM", { locale: it });
+          }
+
+          return (
+            <div key={date} className="space-y-3">
+              <div className="px-2 py-1">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{label}</p>
+              </div>
+
+              <div className="space-y-1">
+                {trans.map((transaction) => (
+                  <TransactionItem
+                    key={transaction.id}
+                    transaction={transaction}
+                    getIcon={getIcon}
+                    getColor={getColor}
+                    isHovered={hoveredId === transaction.id}
+                    onMouseEnter={() => setHoveredId(transaction.id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                    onDelete={onDelete}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Mostra tutte button */}
+        {hasMore && (
+          <div className="pt-2">
+            <Button
+              variant="ghost"
+              onClick={() => setDrawerOpen(true)}
+              className="w-full text-primary hover:bg-primary/10"
             >
-              <div className="flex items-center gap-3">
-                <div className="text-left">
-                  <p className="font-semibold text-base">{group.label}</p>
-                  <p className="text-xs text-muted-foreground">{group.transactions.length} transazioni</p>
+              Mostra tutte le {allTransactions.length} transazioni
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Drawer con tutte le transazioni */}
+      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+          <SheetHeader className="pb-4 border-b">
+            <div className="flex items-center justify-between">
+              <SheetTitle className="text-xl">Tutte le Transazioni</SheetTitle>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setDrawerOpen(false)}
+                className="h-8 w-8"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+          </SheetHeader>
+
+          <div className="mt-6 space-y-6">
+            {groupedData.map((group) => (
+              <div key={group.date} className="space-y-3">
+                <div className="px-2 py-1">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    {group.label}
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  {group.transactions.map((transaction) => (
+                    <TransactionItem
+                      key={transaction.id}
+                      transaction={transaction}
+                      getIcon={getIcon}
+                      getColor={getColor}
+                      isHovered={hoveredId === transaction.id}
+                      onMouseEnter={() => setHoveredId(transaction.id)}
+                      onMouseLeave={() => setHoveredId(null)}
+                      onDelete={onDelete}
+                    />
+                  ))}
                 </div>
               </div>
-              <div className="text-right">
-                <p className={`font-bold text-base ${totalAmount >= 0 ? "text-success" : "text-foreground"}`}>
-                  {totalAmount >= 0 ? "+" : ""}€{Math.abs(totalAmount).toFixed(2)}
-                </p>
-              </div>
-            </button>
-
-            <AnimatePresence>
-              {isExpanded && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
-                >
-                  <div className="border-t pt-2 space-y-2">
-                    {group.transactions.map((transaction) => {
-                      const Icon = getIcon(transaction.category);
-                      const colorClass = getColor(transaction.category);
-                      const isIncome = transaction.type === "Income";
-
-                      return (
-                        <motion.div
-                          key={transaction.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="flex items-center justify-between p-3 hover:bg-muted/30 rounded-lg transition-colors group"
-                        >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className={`w-10 h-10 rounded-full ${colorClass} flex items-center justify-center flex-shrink-0`}>
-                              <Icon className="h-5 w-5 text-white" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">{transaction.description}</p>
-                              <p className="text-xs text-muted-foreground">{transaction.category}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 flex-shrink-0">
-                            <p className={`font-bold text-base ${isIncome ? "text-success" : "text-foreground"}`}>
-                              {isIncome ? "+" : "-"}€{transaction.amount.toFixed(2)}
-                            </p>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => onDelete(transaction.id)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        );
-      })}
-    </div>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 };

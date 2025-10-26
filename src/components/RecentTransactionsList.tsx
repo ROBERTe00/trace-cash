@@ -8,10 +8,20 @@ import {
   Utensils, 
   MoreHorizontal,
   ArrowRight,
-  DollarSign
+  DollarSign,
+  ChevronDown,
+  Edit,
+  X
 } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
 import { useApp } from "@/contexts/AppContext";
+import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Transaction {
   id: string;
@@ -26,7 +36,11 @@ interface RecentTransactionsListProps {
   transactions: Transaction[];
   maxItems?: number;
   onViewAll?: () => void;
+  onEdit?: (transaction: Transaction) => void;
+  onDelete?: (id: string) => void;
 }
+
+type SortOption = 'recent' | 'oldest' | 'expensive';
 
 const getCategoryIcon = (category: string) => {
   const iconMap: Record<string, any> = {
@@ -64,10 +78,29 @@ const formatDate = (dateStr: string) => {
 export const RecentTransactionsList = ({ 
   transactions, 
   maxItems = 7,
-  onViewAll 
+  onViewAll,
+  onEdit,
+  onDelete
 }: RecentTransactionsListProps) => {
   const { formatCurrency } = useApp();
-  const displayTransactions = transactions.slice(0, maxItems);
+  const [sortOption, setSortOption] = useState<SortOption>('recent');
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+  // Sort transactions based on selected option
+  const sortedTransactions = [...transactions].sort((a, b) => {
+    switch (sortOption) {
+      case 'recent':
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      case 'oldest':
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      case 'expensive':
+        return Math.abs(b.amount) - Math.abs(a.amount);
+      default:
+        return 0;
+    }
+  });
+
+  const displayTransactions = sortedTransactions.slice(0, maxItems);
 
   if (transactions.length === 0) {
     return (
@@ -96,17 +129,42 @@ export const RecentTransactionsList = ({
     <Card className="border-0 shadow-none bg-transparent p-0">
       <CardHeader className="flex flex-row items-center justify-between pb-3 px-0">
         <CardTitle className="text-lg">Recent Transactions</CardTitle>
-        {onViewAll && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onViewAll}
-            className="text-primary hover:text-primary/80"
-          >
-            View All
-            <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Sort Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
+                {sortOption === 'recent' && 'Più recenti'}
+                {sortOption === 'oldest' && 'Più vecchie'}
+                {sortOption === 'expensive' && 'Più costose'}
+                <ChevronDown className="w-3 h-3 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setSortOption('recent')}>
+                Più recenti
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortOption('oldest')}>
+                Più vecchie
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortOption('expensive')}>
+                Più costose
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          {onViewAll && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onViewAll}
+              className="text-primary hover:text-primary/80"
+            >
+              View All
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-1 px-0">
         {displayTransactions.map((transaction) => {
@@ -117,7 +175,9 @@ export const RecentTransactionsList = ({
           return (
             <div
               key={transaction.id}
-              className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/30 transition-colors group border-0"
+              className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/30 transition-colors group border-0 relative"
+              onMouseEnter={() => setHoveredId(transaction.id)}
+              onMouseLeave={() => setHoveredId(null)}
             >
               <div className={`p-2 rounded-xl flex items-center justify-center ${colorClass}`}>
                 <Icon className="w-4 h-4" />
@@ -137,12 +197,38 @@ export const RecentTransactionsList = ({
                 </div>
               </div>
 
-              <div className="text-right flex-shrink-0">
+              <div className="text-right flex-shrink-0 flex items-center gap-2">
                 <p className={`text-sm font-semibold ${
                   isIncome ? 'text-green-600' : 'text-red-600'
                 }`}>
                   {isIncome ? '+' : '-'}{formatCurrency(transaction.amount)}
                 </p>
+                
+                {/* Action buttons - visible on hover */}
+                {hoveredId === transaction.id && (
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {onEdit && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 hover:bg-primary/10"
+                        onClick={() => onEdit(transaction)}
+                      >
+                        <Edit className="w-3.5 h-3.5 text-primary" />
+                      </Button>
+                    )}
+                    {onDelete && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 hover:bg-red-500/10"
+                        onClick={() => onDelete(transaction.id)}
+                      >
+                        <X className="w-3.5 h-3.5 text-red-600" />
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );

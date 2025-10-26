@@ -161,58 +161,83 @@ export function InvestmentScenarioSimulator() {
 
       {simulation && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-6 border-t">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <p className="text-sm text-muted-foreground font-medium">{t('simulator.projectedValue')}</p>
-                <AIInsightTooltip
-                  title="Projected Portfolio Value"
-                  content="Total portfolio value after X years, including contributions and compound growth. This is the gross value before taxes."
-                />
-              </div>
-              <p className="text-xl md:text-2xl font-bold text-success">
-                {formatCurrency(simulation.projectedValue)}
-              </p>
-            </div>
+          {/* Results Summary Cards - Improved Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6 border-t">
+            {/* Projected Value Card */}
+            <Card className="border-0 bg-green-500/10 border-green-500/20">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground font-medium">{t('simulator.projectedValue')}</p>
+                    <AIInsightTooltip
+                      title="Projected Portfolio Value"
+                      content="Total portfolio value after X years, including contributions and compound growth. This is the gross value before taxes."
+                    />
+                  </div>
+                  <TrendingUp className="w-5 h-5 text-green-600" />
+                </div>
+                <p className="text-3xl font-bold font-mono text-green-600">
+                  {formatCurrency(simulation.projectedValue)}
+                </p>
+              </CardContent>
+            </Card>
 
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <p className="text-sm text-muted-foreground font-medium">{t('simulator.totalContributions')}</p>
-                <AIInsightTooltip
-                  title="Total Invested"
-                  content="Sum of your initial investment plus all monthly contributions. This is your 'own money' put in."
-                />
-              </div>
-              <p className="text-xl md:text-2xl font-bold text-primary">
-                {formatCurrency(simulation.totalContributions)}
-              </p>
-            </div>
+            {/* Total Contributions Card */}
+            <Card className="border-0 bg-purple-500/10 border-purple-500/20">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground font-medium">{t('simulator.totalContributions')}</p>
+                    <AIInsightTooltip
+                      title="Total Invested"
+                      content="Sum of your initial investment plus all monthly contributions. This is your 'own money' put in."
+                    />
+                  </div>
+                  <Calculator className="w-5 h-5 text-purple-600" />
+                </div>
+                <p className="text-3xl font-bold font-mono text-purple-600">
+                  {formatCurrency(simulation.totalContributions)}
+                </p>
+              </CardContent>
+            </Card>
 
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <p className="text-sm text-muted-foreground font-medium">{t('simulator.totalGains')}</p>
-                <AIInsightTooltip
-                  title="Total Investment Gains"
-                  content="Profit from your investments = Projected Value - Initial Value - Total Contributions. This is the 'free money' from market growth."
-                />
-              </div>
-              <p className="text-xl md:text-2xl font-bold text-primary">
-                {formatCurrency(simulation.totalGains)}
-              </p>
-            </div>
+            {/* Total Gains Card */}
+            <Card className="border-0 bg-blue-500/10 border-blue-500/20">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground font-medium">{t('simulator.totalGains')}</p>
+                    <AIInsightTooltip
+                      title="Total Investment Gains"
+                      content="Profit from your investments = Projected Value - Initial Value - Total Contributions. This is the 'free money' from market growth."
+                    />
+                  </div>
+                  <TrendingUp className="w-5 h-5 text-blue-600" />
+                </div>
+                <p className="text-3xl font-bold font-mono text-blue-600">
+                  {formatCurrency(simulation.totalGains)}
+                </p>
+              </CardContent>
+            </Card>
 
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <p className="text-sm text-muted-foreground font-medium">{t('simulator.taxLiability')}</p>
-                <AIInsightTooltip
-                  title="Tax on Gains"
-                  content="Amount you'll pay in capital gains tax when you sell. Calculated as: Total Gains × Tax Rate%. Only gains are taxed, not contributions."
-                />
-              </div>
-              <p className="text-xl md:text-2xl font-bold text-destructive">
-                -{formatCurrency(simulation.taxLiability)}
-              </p>
-            </div>
+            {/* Tax Liability Card */}
+            <Card className="border-0 bg-red-500/10 border-red-500/20">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground font-medium">{t('simulator.taxLiability')}</p>
+                    <AIInsightTooltip
+                      title="Tax on Gains"
+                      content="Amount you'll pay in capital gains tax when you sell. Calculated as: Total Gains × Tax Rate%. Only gains are taxed, not contributions."
+                    />
+                  </div>
+                  <Calculator className="w-5 h-5 text-red-600" />
+                </div>
+                <p className="text-3xl font-bold font-mono text-red-600">
+                  -{formatCurrency(simulation.taxLiability)}
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
           <div className="pt-6">

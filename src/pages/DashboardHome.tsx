@@ -188,7 +188,28 @@ export default function DashboardHome() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
           <h3 className="text-xl font-semibold mb-4">Recent Transactions</h3>
-          <RecentTransactionsList transactions={transactionsData || []} maxItems={5} />
+          <RecentTransactionsList 
+            transactions={transactionsData || []} 
+            maxItems={5}
+            onEdit={(transaction) => {
+              // Open edit modal/dialog with transaction data
+              console.log('Edit transaction:', transaction);
+              // TODO: Implement edit modal
+            }}
+            onDelete={async (id) => {
+              // Delete transaction
+              if (confirm('Sei sicuro di voler eliminare questa transazione?')) {
+                const { error } = await supabase
+                  .from('expenses')
+                  .delete()
+                  .eq('id', id);
+                
+                if (error) {
+                  console.error('Error deleting transaction:', error);
+                }
+              }
+            }}
+          />
         </div>
         
         <div>
