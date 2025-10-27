@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { HorizontalNav } from "@/components/HorizontalNav";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { AccountMenu } from "@/components/AccountMenu";
 import { NotificationBell } from "@/components/NotificationBell";

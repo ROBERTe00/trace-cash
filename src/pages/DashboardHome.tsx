@@ -11,6 +11,9 @@ import { ExpenseDistributionWidget } from "@/components/widgets/ExpenseDistribut
 import { AIInsightsWidget } from "@/components/widgets/AIInsightsWidget";
 import { RecentTransactionsWidget } from "@/components/widgets/RecentTransactionsWidget";
 import { SavingsRateWidget } from "@/components/widgets/SavingsRateWidget";
+import { GoalsWidget } from "@/components/widgets/GoalsWidget";
+import { QuickUploadWidget } from "@/components/widgets/QuickUploadWidget";
+import { AIChartWizard } from "@/components/widgets/AIChartWizard";
 
 // API functions
 import { saveWidgetLayout, loadWidgetLayout } from "@/lib/widgetApi";
@@ -90,6 +93,27 @@ export default function DashboardHome() {
       icon: '💰',
       size: 'single',
       component: SavingsRateWidget
+    },
+    'goals': {
+      name: 'Obiettivi Finanziari',
+      description: 'Traccia i tuoi obiettivi',
+      icon: '🎯',
+      size: 'single',
+      component: GoalsWidget
+    },
+    'quick-upload': {
+      name: 'Carica Documenti',
+      description: 'PDF, CSV, foto estratti',
+      icon: '📄',
+      size: 'single',
+      component: QuickUploadWidget
+    },
+    'ai-chart-builder': {
+      name: 'Crea Grafico Personalizzato',
+      description: 'Con AI assistant',
+      icon: '✨',
+      size: 'double',
+      component: AIChartWizard
     }
   };
 
