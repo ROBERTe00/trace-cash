@@ -506,7 +506,11 @@ All colors MUST be HSL.
 
 @layer utilities {
   .glass-card {
-    @apply backdrop-blur-xl bg-card/80 border-0 shadow-lg rounded-3xl;
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg rounded-3xl transition-all;
+  }
+  
+  .glass-card:hover {
+    border-color: rgba(255, 255, 255, 0.2);
   }
   
   .gradient-primary {
@@ -586,5 +590,17 @@ All colors MUST be HSL.
   to {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

@@ -1,377 +1,391 @@
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Search, Bell, DollarSign, AlertTriangle, Target, TrendingUp, TrendingDown, PieChart, PiggyBank } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { PremiumBalanceCard } from "@/components/dashboard/PremiumBalanceCard";
-import { QuickOverviewCards } from "@/components/dashboard/QuickOverviewCards";
-import { PremiumCashflowChart } from "@/components/dashboard/PremiumCashflowChart";
-import { RecentTransactionsList } from "@/components/RecentTransactionsList";
-import { QuickActionsGrid } from "@/components/QuickActionsGrid";
-import { AIInsightsCard, Insight } from "@/components/AIInsightsCard";
-import { CategoriesDonutChart } from "@/components/dashboard/CategoriesDonutChart";
-import { RecentTransfersAvatars } from "@/components/RecentTransfersAvatars";
-import { useDashboardData } from "@/hooks/useDashboardData";
-import { MetricCard } from "@/components/dashboard/MetricCard";
-import { ChartInsightCard } from "@/components/dashboard/ChartInsightCard";
-import { useApp } from "@/contexts/AppContext";
-import { MetricDetailDrawer } from "@/components/dashboard/MetricDetailDrawer";
-import { IncomeDetailView, getIncomeInsights } from "@/components/dashboard/IncomeDetailView";
-import { ExpensesDetailView, getExpensesInsights } from "@/components/dashboard/ExpensesDetailView";
-import { InvestmentsDetailView, getInvestmentsInsights } from "@/components/dashboard/InvestmentsDetailView";
-import { SavingsDetailView, getSavingsInsights } from "@/components/dashboard/SavingsDetailView";
-import { QuestLog } from "@/components/gamification/QuestLog";
-import { XPProgressWidget } from "@/components/gamification/XPProgressWidget";
-import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
+import { useEffect, useState, useRef } from "react";
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler } from 'chart.js';
+import Sortable from 'sortablejs';
+import { Edit, Settings, X, Plus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Widget Components
+import { FinancialHealthWidget } from "@/components/widgets/FinancialHealthWidget";
+import { WealthTrendWidget } from "@/components/widgets/WealthTrendWidget";
+import { ExpenseDistributionWidget } from "@/components/widgets/ExpenseDistributionWidget";
+import { AIInsightsWidget } from "@/components/widgets/AIInsightsWidget";
+import { RecentTransactionsWidget } from "@/components/widgets/RecentTransactionsWidget";
+import { SavingsRateWidget } from "@/components/widgets/SavingsRateWidget";
+
+// API functions
+import { saveWidgetLayout, loadWidgetLayout } from "@/lib/widgetApi";
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
+
+interface WidgetConfig {
+  [key: string]: {
+    name: string;
+    description: string;
+    icon: string;
+    size: 'single' | 'double';
+    component: React.FC<any>;
+  };
+}
 
 export default function DashboardHome() {
-  const [user, setUser] = useState<any>(null);
-  const { formatCurrency } = useApp();
-  const { metrics, expenses, isLoading } = useDashboardData();
-  const [openDrawer, setOpenDrawer] = useState<'income' | 'expenses' | 'investments' | 'savings' | null>(null);
-  const [showLevelUp, setShowLevelUp] = useState(false);
-  const [newLevel, setNewLevel] = useState(1);
+  const [editMode, setEditMode] = useState(false);
+  const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
+  const [activeWidgets, setActiveWidgets] = useState<string[]>([]);
+  const [showNotification, setShowNotification] = useState<string | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const sortableRef = useRef<Sortable | null>(null);
 
+  // Widget definitions
+  const availableWidgets: WidgetConfig = {
+    'financial-health': {
+      name: 'Saldo Principale',
+      description: 'Il tuo saldo e health score',
+      icon: '💚',
+      size: 'double',
+      component: FinancialHealthWidget
+    },
+    'wealth-trend': {
+      name: 'Andamento Patrimoniale',
+      description: 'Trend del tuo patrimonio',
+      icon: '📈',
+      size: 'single',
+      component: WealthTrendWidget
+    },
+    'expense-distribution': {
+      name: 'Distribuzione Spese',
+      description: 'Come spendi i tuoi soldi',
+      icon: '🥧',
+      size: 'single',
+      component: ExpenseDistributionWidget
+    },
+    'ai-insights': {
+      name: 'Insights AI',
+      description: 'Suggerimenti intelligenti',
+      icon: '🤖',
+      size: 'single',
+      component: AIInsightsWidget
+    },
+    'recent-transactions': {
+      name: 'Transazioni Recenti',
+      description: 'Le tue ultime transazioni',
+      icon: '💸',
+      size: 'single',
+      component: RecentTransactionsWidget
+    },
+    'savings-rate': {
+      name: 'Tasso di Risparmio',
+      description: 'Quanto risparmi mensilmente',
+      icon: '💰',
+      size: 'single',
+      component: SavingsRateWidget
+    }
+  };
+
+  // Load layout from backend
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+    const loadLayout = async () => {
+      try {
+        const saved = await loadWidgetLayout();
+        if (saved && saved.widget_order) {
+          setActiveWidgets(saved.widget_order);
+        } else {
+          setActiveWidgets(['financial-health', 'wealth-trend', 'expense-distribution']);
+        }
+      } catch (error) {
+        console.error('Errore nel caricamento del layout:', error);
+        setActiveWidgets(['financial-health', 'wealth-trend', 'expense-distribution']);
+      }
     };
-    getUser();
+    
+    loadLayout();
   }, []);
 
-  // Fetch recent transactions
-  const { data: transactionsData } = useQuery({
-    queryKey: ['expenses'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-      
-      const { data, error } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false })
-        .limit(10);
-      
-      if (error) throw error;
-      return (data || []).map(item => ({
-        ...item,
-        type: item.type as 'Income' | 'Expense'
-      }));
-    },
-  });
-
-  // Generate AI insights based on real data
-  const insights: Insight[] = metrics ? [
-    {
-      type: 'success',
-      icon: DollarSign,
-      text: `💰 Ottimo lavoro! Hai risparmiato ${formatCurrency(metrics.savings)} questo mese (${metrics.savingsRate.toFixed(1)}% del tuo reddito)`,
-    },
-    ...(metrics.expensesChange > 0 ? [{
-      type: 'warning' as const,
-      icon: AlertTriangle,
-      text: `⚠️ Le tue spese sono aumentate del ${metrics.expensesChange.toFixed(1)}% rispetto al mese scorso.`,
-    }] : []),
-    {
-      type: 'tip' as const,
-      icon: TrendingUp,
-      text: `💡 Hai ${formatCurrency(metrics.savings)} disponibili. Considera di investire per far crescere i tuoi risparmi.`,
+  // Initialize drag and drop
+  useEffect(() => {
+    if (gridRef.current && editMode) {
+      sortableRef.current = Sortable.create(gridRef.current, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        onEnd: (evt) => {
+          const newOrder = Array.from(gridRef.current!.children).map(child => {
+            const widgetElement = child.querySelector('.widget');
+            return widgetElement?.getAttribute('data-widget-id') || '';
+          }).filter(Boolean);
+          setActiveWidgets(newOrder);
+          saveLayout(newOrder);
+        }
+      });
     }
-  ] : [];
+    return () => {
+      if (sortableRef.current) {
+        sortableRef.current.destroy();
+      }
+    };
+  }, [editMode, activeWidgets]);
+
+  const saveLayout = async (widgets?: string[]) => {
+    const widgetsToSave = widgets || activeWidgets;
+    try {
+      await saveWidgetLayout(widgetsToSave);
+    } catch (error) {
+      console.error('Errore nel salvataggio del layout:', error);
+    }
+  };
+
+  const removeWidget = (widgetId: string) => {
+    const newWidgets = activeWidgets.filter(id => id !== widgetId);
+    setActiveWidgets(newWidgets);
+    saveLayout(newWidgets);
+    showNotificationMessage('Widget rimosso');
+  };
+
+  const addWidget = (widgetId: string) => {
+    if (!activeWidgets.includes(widgetId)) {
+      const newWidgets = [...activeWidgets, widgetId];
+      setActiveWidgets(newWidgets);
+      saveLayout(newWidgets);
+      setShowWidgetLibrary(false);
+      showNotificationMessage(`Widget "${availableWidgets[widgetId].name}" aggiunto!`);
+    }
+  };
+
+  const toggleEditMode = () => {
+    setEditMode(!editMode);
+    if (editMode) {
+      showNotificationMessage('Layout salvato!');
+    } else {
+      showNotificationMessage('Modalità modifica attiva');
+    }
+  };
+
+  const showNotificationMessage = (message: string) => {
+    setShowNotification(message);
+    setTimeout(() => setShowNotification(null), 3000);
+  };
+
+  const getAvailableWidgets = () => {
+    return Object.entries(availableWidgets).filter(([id]) => !activeWidgets.includes(id));
+  };
 
   return (
-    <div className="page-container py-8 space-y-6 animate-fade-in">
-      {/* Header Section with Search */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-1">
-            Hello, {user?.email?.split('@')[0] || 'Robert'}! 👋
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            All information about your bank account in the sections below.
-          </p>
-        </div>
+    <div className={`min-h-screen bg-[#0F0F0F] text-white antialiased ${editMode ? 'edit-mode' : ''}`}>
+      <style>{`
+        .edit-mode {
+          position: relative;
+        }
         
-        <div className="flex items-center gap-4">
-          <div className="relative hidden md:block">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search something" 
-              className="pl-10 w-80 rounded-xl bg-muted/50"
-            />
+        .edit-mode::before {
+          content: '';
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(45deg, transparent 95%, rgba(123, 47, 247, 0.1) 100%);
+          background-size: 50px 50px;
+          pointer-events: none;
+          z-index: 10;
+          opacity: 0.3;
+        }
+        
+        .edit-mode .widget {
+          cursor: grab;
+          border: 2px dashed rgba(123, 47, 247, 0.3);
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .edit-mode .widget:hover {
+          border: 2px dashed #7B2FF7;
+          transform: scale(1.02);
+        }
+        
+        .edit-mode .widget:active {
+          cursor: grabbing;
+          transform: scale(1.05) rotate(2deg);
+        }
+        
+        .sortable-ghost {
+          opacity: 0.4;
+          transform: scale(0.95);
+          background: rgba(123, 47, 247, 0.1);
+        }
+        
+        .widget-actions {
+          opacity: 0;
+          transition: all 0.3s ease;
+        }
+        
+        .widget:hover .widget-actions {
+          opacity: 1;
+        }
+      `}</style>
+
+      {/* Navigation - removed (already in App.tsx) */}
+      
+      {/* Main Content */}
+      <main className="p-4 md:p-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Dashboard Header */}
+          <div className="flex justify-between items-center mb-8 animate-[fadeIn_0.5s_ease-in-out]">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold mb-2">La Tua Dashboard</h1>
+              <p className="text-gray-400">Tutto sotto il tuo controllo</p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setShowWidgetLibrary(true)}
+                className="px-4 py-2 glass-card hover:bg-white/10 transition-all flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Aggiungi Widget
+              </button>
+              <button 
+                onClick={toggleEditMode}
+                className={`px-4 py-2 glass-card hover:bg-white/10 transition-all flex items-center gap-2 ${editMode ? 'bg-purple-600' : ''}`}
+              >
+                <Edit className="w-4 h-4" />
+                {editMode ? 'Salva' : 'Personalizza'}
+              </button>
+            </div>
           </div>
-          <button className="relative p-2 hover:bg-muted rounded-full transition-colors">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
-          </button>
-          <Avatar className="w-10 h-10">
-            <AvatarFallback className="bg-primary text-primary-foreground">
-              {user?.email?.[0]?.toUpperCase() || 'R'}
-            </AvatarFallback>
-          </Avatar>
-        </div>
-      </div>
 
-      {/* Balance Card with Quick Actions */}
-      <PremiumBalanceCard 
-        totalBalance={metrics?.totalIncome || 0}
-        availableBalance={metrics?.savings || 0}
-      />
-
-      {/* Quick Overview Cards */}
-      {isLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-32 bg-card rounded-2xl animate-pulse" />
-          ))}
-        </div>
-      ) : metrics ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <MetricCard
-            title="Reddito Mensile"
-            value={formatCurrency(metrics.totalIncome)}
-            change={metrics.incomeChange}
-            icon={TrendingUp}
-            iconColor="text-green-600 dark:text-green-400"
-            bgColor="bg-green-500/10"
-            insight="Il tuo reddito totale per questo mese"
-            trend={metrics.incomeChange > 0 ? 'up' : 'down'}
-            onClick={() => setOpenDrawer('income')}
-          />
-          <MetricCard
-            title="Spese Mensili"
-            value={formatCurrency(metrics.totalExpenses)}
-            change={metrics.expensesChange}
-            icon={TrendingDown}
-            iconColor="text-red-600 dark:text-red-400"
-            bgColor="bg-red-500/10"
-            insight="Totale spese per questo mese"
-            trend={metrics.expensesChange > 0 ? 'down' : 'up'}
-            onClick={() => setOpenDrawer('expenses')}
-          />
-          <MetricCard
-            title="Investimenti"
-            value={formatCurrency(0)}
-            icon={PieChart}
-            iconColor="text-purple-600 dark:text-purple-400"
-            bgColor="bg-purple-500/10"
-            insight="Valore totale del tuo portafoglio"
-            onClick={() => setOpenDrawer('investments')}
-          />
-          <MetricCard
-            title="Risparmi"
-            value={formatCurrency(metrics.savings)}
-            icon={PiggyBank}
-            iconColor="text-primary"
-            bgColor="bg-primary/10"
-            insight={`${metrics.savingsRate.toFixed(1)}% del tuo reddito risparmiato`}
-            onClick={() => setOpenDrawer('savings')}
-          />
-        </div>
-      ) : (
-        <QuickOverviewCards />
-      )}
-
-      {/* Gamification Widgets */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <XPProgressWidget />
-        </div>
-        <div className="lg:col-span-2">
-          <QuestLog />
-        </div>
-      </div>
-
-      {/* Statistics Chart */}
-      <div>
-        <PremiumCashflowChart />
-        {metrics && (
-          <ChartInsightCard
-            title="Cash Flow Overview"
-            description={`Le tue entrate sono ${formatCurrency(metrics.totalIncome)} e le spese ${formatCurrency(metrics.totalExpenses)}. Hai un ${metrics.savings > 0 ? 'surplus' : 'deficit'} di ${formatCurrency(Math.abs(metrics.savings))} questo mese.`}
-            trend={metrics.savings > 0 ? 'up' : 'down'}
-            trendValue={metrics.savingsRate.toFixed(1) + '%'}
-            icon={metrics.savings > 0 ? 'up' : 'down'}
-          />
-        )}
-      </div>
-
-      {/* Transactions and Categories */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
-          <h3 className="text-xl font-semibold mb-4">Recent Transactions</h3>
-          <RecentTransactionsList 
-            transactions={transactionsData || []} 
-            maxItems={5}
-            onEdit={(transaction) => {
-              // Open edit modal/dialog with transaction data
-              console.log('Edit transaction:', transaction);
-              // TODO: Implement edit modal
-            }}
-            onDelete={async (id) => {
-              // Delete transaction
-              if (confirm('Sei sicuro di voler eliminare questa transazione?')) {
-                const { error } = await supabase
-                  .from('expenses')
-                  .delete()
-                  .eq('id', id);
+          {/* Widgets Grid */}
+          <div ref={gridRef} className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            {activeWidgets.length === 0 ? (
+              <div className="col-span-3 text-center py-12">
+                <div className="text-4xl mb-4">📊</div>
+                <h3 className="text-xl font-semibold mb-2">Nessun widget ancora</h3>
+                <p className="text-gray-400 mb-4">Clicca "Aggiungi Widget" per iniziare</p>
+                <button 
+                  onClick={() => setShowWidgetLibrary(true)}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all"
+                >
+                  <Plus className="w-4 h-4 inline mr-2" />
+                  Aggiungi il primo widget
+                </button>
+              </div>
+            ) : (
+              activeWidgets.map(widgetId => {
+                const widgetConfig = availableWidgets[widgetId];
+                if (!widgetConfig) return null;
                 
-                if (error) {
-                  console.error('Error deleting transaction:', error);
-                }
-              }
-            }}
-          />
+                const Component = widgetConfig.component;
+                return (
+                  <div 
+                    key={widgetId}
+                    className={widgetConfig.size === 'double' ? 'lg:col-span-2' : ''}
+                  >
+                    <div className="widget interactive-widget glass-card p-6 relative animate-[fadeIn_0.5s_ease-in-out]" data-widget-id={widgetId}>
+                      {(editMode || true) && (
+                        <div className="widget-actions absolute top-4 right-4 flex gap-2 z-10">
+                          <button 
+                            className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-sm hover:bg-white/20 transition-all" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              showNotificationMessage(`Configurazione per: ${widgetConfig.name}`);
+                            }}
+                          >
+                            <Settings className="w-4 h-4" />
+                          </button>
+                          <button 
+                            className="w-8 h-8 bg-red-500/20 rounded-full flex items-center justify-center text-sm hover:bg-red-500/30 transition-all" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeWidget(widgetId);
+                            }}
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                      <Component />
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
-        
-        <div>
-          <CategoriesDonutChart />
-          {metrics && Object.keys(metrics.categoryBreakdown).length > 0 && (
-            <ChartInsightCard
-              title="Spending Patterns"
-              description={`Le categorie più importanti questo mese rappresentano la maggior parte delle tue spese. Monitora queste aree per ottimizzare il tuo budget.`}
-              icon="info"
-            />
-          )}
-        </div>
-      </div>
+      </main>
 
-      {/* AI Insights */}
-      <AIInsightsCard insights={insights} />
-
-      {/* Metric Detail Drawers */}
-      {metrics && (
-        <>
-          {/* Income Drawer */}
-          <MetricDetailDrawer
-            open={openDrawer === 'income'}
-            onOpenChange={(open) => setOpenDrawer(open ? 'income' : null)}
-            title="Reddito Mensile"
-            subtitle="Analisi dettagliata del tuo reddito"
-            icon={TrendingUp}
-            iconColor="text-green-600"
-            bgColor="bg-green-500/10"
-            insights={getIncomeInsights({
-              totalIncome: metrics.totalIncome,
-              incomeChange: metrics.incomeChange,
-              monthlyTrend: metrics.monthlyIncomeTrend || [],
-              projectedYearly: metrics.totalIncome * 12
-            })}
-            actionButton={{
-              label: "Visualizza Transazioni",
-              onClick: () => window.location.href = '/transactions'
-            }}
+      {/* Widget Library Modal */}
+      <AnimatePresence>
+        {showWidgetLibrary && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-[10px] flex items-center justify-center z-50 p-4"
+            onClick={() => setShowWidgetLibrary(false)}
           >
-            <IncomeDetailView
-              totalIncome={metrics.totalIncome}
-              incomeChange={metrics.incomeChange}
-              monthlyTrend={metrics.monthlyIncomeTrend || []}
-              projectedYearly={metrics.totalIncome * 12}
-            />
-          </MetricDetailDrawer>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-[#1A1A1A] border border-white/10 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 border-b border-gray-800 flex justify-between items-center">
+                <h2 className="text-2xl font-bold">Aggiungi Widget</h2>
+                <button 
+                  onClick={() => setShowWidgetLibrary(false)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {getAvailableWidgets().map(([id, widget]) => (
+                    <button
+                      key={id}
+                      onClick={() => addWidget(id)}
+                      className="glass-card p-4 text-center hover:border-purple-500 transition-all"
+                    >
+                      <div className="text-2xl mb-3 text-purple-400">
+                        {widget.icon}
+                      </div>
+                      <div className="font-semibold mb-2">{widget.name}</div>
+                      <div className="text-xs text-gray-400">{widget.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          {/* Expenses Drawer */}
-          <MetricDetailDrawer
-            open={openDrawer === 'expenses'}
-            onOpenChange={(open) => setOpenDrawer(open ? 'expenses' : null)}
-            title="Spese Mensili"
-            subtitle="Analisi dettagliata delle tue spese"
-            icon={TrendingDown}
-            iconColor="text-red-600"
-            bgColor="bg-red-500/10"
-            insights={getExpensesInsights({
-              totalExpenses: metrics.totalExpenses,
-              budget: 1500, // TODO: Get from user settings
-              expensesChange: metrics.expensesChange,
-              monthlyTrend: metrics.monthlyExpensesTrend || [],
-              topCategories: Object.entries(metrics.categoryBreakdown).map(([name, amount]) => ({
-                name,
-                amount: amount as number,
-                percentage: (amount as number / metrics.totalExpenses) * 100
-              })).slice(0, 4)
-            })}
-            actionButton={{
-              label: "Gestisci Budget",
-              onClick: () => window.location.href = '/budget'
-            }}
+      {/* Notification */}
+      <AnimatePresence>
+        {showNotification && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-4 right-4 glass-card p-4 max-w-sm z-50 border border-purple-500/30"
           >
-            <ExpensesDetailView
-              totalExpenses={metrics.totalExpenses}
-              budget={1500}
-              expensesChange={metrics.expensesChange}
-              monthlyTrend={metrics.monthlyExpensesTrend || []}
-              topCategories={Object.entries(metrics.categoryBreakdown).map(([name, amount]) => ({
-                name,
-                amount: amount as number,
-                percentage: (amount as number / metrics.totalExpenses) * 100
-              })).slice(0, 4)}
-            />
-          </MetricDetailDrawer>
-
-          {/* Investments Drawer */}
-          <MetricDetailDrawer
-            open={openDrawer === 'investments'}
-            onOpenChange={(open) => setOpenDrawer(open ? 'investments' : null)}
-            title="Investimenti"
-            subtitle="Portafoglio e performance"
-            icon={PieChart}
-            iconColor="text-purple-600"
-            bgColor="bg-purple-500/10"
-            insights={getInvestmentsInsights({
-              totalInvestments: 0,
-              idealAllocation: []
-            })}
-            actionButton={{
-              label: "Inizia a Investire",
-              onClick: () => window.location.href = '/investments'
-            }}
-          >
-            <InvestmentsDetailView
-              totalInvestments={0}
-              idealAllocation={[]}
-            />
-          </MetricDetailDrawer>
-
-          {/* Savings Drawer */}
-          <MetricDetailDrawer
-            open={openDrawer === 'savings'}
-            onOpenChange={(open) => setOpenDrawer(open ? 'savings' : null)}
-            title="Risparmi"
-            subtitle={metrics.savings < 0 ? "Attenzione: Deficit rilevato" : "Progresso verso il tuo obiettivo"}
-            icon={PiggyBank}
-            iconColor="text-primary"
-            bgColor="bg-primary/10"
-            insights={getSavingsInsights({
-              currentSavings: metrics.savings,
-              targetSavings: 1900,
-              savingsRate: metrics.savingsRate,
-              monthlyTrend: metrics.monthlySavingsTrend || []
-            })}
-            actionButton={{
-              label: "Ottimizza Risparmi",
-              onClick: () => window.location.href = '/budget',
-              variant: metrics.savings < 0 ? 'destructive' : 'default'
-            }}
-          >
-            <SavingsDetailView
-              currentSavings={metrics.savings}
-              targetSavings={1900}
-              savingsRate={metrics.savingsRate}
-              monthlyTrend={metrics.monthlySavingsTrend || []}
-            />
-          </MetricDetailDrawer>
-        </>
-      )}
-
-      {/* Level Up Celebration */}
-      <LevelUpCelebration 
-        show={showLevelUp} 
-        newLevel={newLevel}
-        onClose={() => setShowLevelUp(false)}
-      />
+            <div className="flex items-center gap-3">
+              <span className="text-purple-400">ℹ️</span>
+              <div className="text-sm">{showNotification}</div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
