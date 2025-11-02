@@ -3,10 +3,15 @@ import { useFinancialGoals } from '@/hooks/useFinancialGoals';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 export function GoalsWidget() {
   const navigate = useNavigate();
   const { goals, isLoading } = useFinancialGoals();
+
+  useEffect(() => {
+    console.log('[GoalsWidget] Render - isLoading:', isLoading, 'goals:', goals?.length || 0);
+  }, [isLoading, goals]);
   
   if (isLoading) {
     return (

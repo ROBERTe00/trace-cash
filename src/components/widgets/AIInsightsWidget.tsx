@@ -1,10 +1,14 @@
 import { Bot, RefreshCw } from "lucide-react";
 import { useAIInsights } from "@/hooks/useAIInsights";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function AIInsightsWidget() {
   const { insights, isLoading, refreshInsights } = useAIInsights();
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    console.log('[AIInsightsWidget] Render - isLoading:', isLoading, 'insights:', insights?.length || 0);
+  }, [isLoading, insights]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -14,7 +18,7 @@ export function AIInsightsWidget() {
 
   if (isLoading || !insights || insights.length === 0) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-semibold flex items-center gap-2">
             <Bot className="w-4 h-4 text-purple-400" />
@@ -28,8 +32,19 @@ export function AIInsightsWidget() {
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </button>
         </div>
-        <div className="text-center py-8 text-gray-400 text-sm">
-          {isLoading ? 'Generando insights...' : 'Nessun insight disponibile'}
+        <div className="text-center py-8 border-2 border-dashed border-gray-700 rounded-xl bg-white/5">
+          <Bot className="w-12 h-12 mx-auto mb-3 text-purple-400 opacity-50" />
+          <p className="text-sm font-medium text-white mb-1">
+            {isLoading ? 'Generando insights...' : 'Nessun insight disponibile'}
+          </p>
+          {!isLoading && (
+            <button
+              onClick={handleRefresh}
+              className="mt-3 text-xs text-purple-400 hover:text-purple-300 hover:underline"
+            >
+              Genera insights
+            </button>
+          )}
         </div>
       </div>
     );

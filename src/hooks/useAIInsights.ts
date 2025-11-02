@@ -1,91 +1,49 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
-interface AIInsight {
-  type: 'success' | 'warning' | 'info' | 'tip';
-  text: string;
-  impact: 'high' | 'medium' | 'low';
-}
+export function useAIInsights() {
+  const [insights, setInsights] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-export function useAIInsights(financialData: any) {
-  const [insights, setInsights] = useState<AIInsight[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const fetchInsights = useCallback(async () => {
+    console.log('[useAIInsights] Fetching insights');
+    setIsLoading(true);
+    try {
+      // Timeout wrapper
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Query timeout after 15s')), 15000)
+      );
 
-  useEffect(() => {
-    const generateInsights = async () => {
-      if (!financialData) return;
+      const dataPromise = supabase.functions.invoke('generate-ai-insights', {
+        body: { scope: 'dashboard' }
+      });
 
-      setIsLoading(true);
-      try {
-        // Simple rule-based insights for now
-        const newInsights: AIInsight[] = [];
-
-        // Savings rate insight
-        if (financialData.savingsRate > 20) {
-          newInsights.push({
-            type: 'success',
-            text: `Ottimo lavoro! Il tuo tasso di risparmio è del ${financialData.savingsRate.toFixed(1)}%, ben sopra la media del 10-15%.`,
-            impact: 'high'
-          });
-        } else if (financialData.savingsRate < 10 && financialData.savingsRate > 0) {
-          newInsights.push({
-            type: 'warning',
-            text: `Il tuo tasso di risparmio è del ${financialData.savingsRate.toFixed(1)}%. Consigliamo di risparmiare almeno il 15% del reddito.`,
-            impact: 'medium'
-          });
-        }
-
-        // Expenses trend insight
-        if (financialData.expensesChange > 10) {
-          newInsights.push({
-            type: 'warning',
-            text: `Le tue spese sono aumentate del ${financialData.expensesChange.toFixed(1)}% rispetto al mese scorso. Considera di rivedere le categorie principali.`,
-            impact: 'high'
-          });
-        } else if (financialData.expensesChange < -5) {
-          newInsights.push({
-            type: 'success',
-            text: `Ottimo miglioramento! Hai ridotto le spese del ${Math.abs(financialData.expensesChange).toFixed(1)}% rispetto al mese scorso.`,
-            impact: 'medium'
-          });
-        }
-
-        // Category insights
-        const categories = Object.entries(financialData.categoryBreakdown || {});
-        if (categories.length > 0) {
-          const [topCategory, topAmount] = categories[0];
-          const totalExpenses = financialData.totalExpenses;
-          const categoryPercentage = totalExpenses > 0 ? (topAmount as number / totalExpenses) * 100 : 0;
-
-          if (categoryPercentage > 40) {
-            newInsights.push({
-              type: 'info',
-              text: `La categoria "${topCategory}" rappresenta il ${categoryPercentage.toFixed(1)}% delle tue spese. Considera di diversificare meglio il budget.`,
-              impact: 'medium'
-            });
-          }
-        }
-
-        // Investment recommendation
-        if (financialData.savings > 0 && financialData.savings < 1000) {
-          newInsights.push({
-            type: 'tip',
-            text: `Hai ${financialData.savings.toFixed(0)}€ disponibili. Consigliamo di creare un fondo di emergenza di almeno 3 mesi di spese prima di investire.`,
-            impact: 'low'
-          });
-        }
-
-        setInsights(newInsights);
-      } catch (error) {
-        console.error('Error generating insights:', error);
-      } finally {
-        setIsLoading(false);
+      const { data, error } = await Promise.race([dataPromise, timeoutPromise]);
+      
+      if (error) {
+        console.error('[useAIInsights] Error fetching insights:', error);
+        setInsights([]);
+      } else if (data) {
+        const insightsData = data.insights || [];
+        console.log(`[useAIInsights] Fetched ${insightsData.length} insights`);
+        setInsights(insightsData);
+      } else {
+        console.log('[useAIInsights] No data returned');
+        setInsights([]);
       }
-    };
+    } catch (error) {
+      console.error('[useAIInsights] Exception:', error);
+      setInsights([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-    generateInsights();
-  }, [financialData]);
-
-  return { insights, isLoading };
+  useEffect(() => { 
+    console.log('[useAIInsights] Component mounted, fetching insights');
+    fetchInsights(); 
+  }, [fetchInsights]);
+  
+  return { insights, isLoading, refetchInsights: fetchInsights };
 }
 

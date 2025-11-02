@@ -1,5 +1,6 @@
 // Market data API integration for live crypto and stock prices
 import { convertCurrency } from "./currencyConverter";
+import { apiService } from "@/services/api-service";
 
 const COINGECKO_API = "https://api.coingecko.com/api/v3";
 const YAHOO_FINANCE_PROXY = "https://query1.finance.yahoo.com/v8/finance/chart";
@@ -159,4 +160,50 @@ export const fetchAllAssetPrices = async (
   );
 
   return results;
+};
+
+// Enhanced fetch function that tries API service first, then falls back
+export const fetchMarketDataViaAPI = async (
+  symbols: string[],
+  type: 'stocks' | 'crypto' | 'etf' = 'stocks'
+): Promise<Record<string, MarketPrice>> => {
+  try {
+    // Try API service first
+    const apiData = await apiService.getMarketData(symbols, type);
+    
+    // If we got data for all symbols, return it
+    const missingSymbols = symbols.filter(
+      s => !apiData[s.toUpperCase()]
+    );
+    
+    if (missingSymbols.length === 0) {
+      return apiData;
+    }
+
+    // Fetch missing symbols using fallback
+    console.log(`[MarketData] Fetching ${missingSymbols.length} missing symbols via fallback`);
+    const fallbackData = await Promise.all(
+      missingSymbols.map(async (symbol) => {
+        const assetType = type === 'crypto' ? 'Crypto' : type === 'etf' ? 'ETF' : 'Stock';
+        const price = await fetchAssetPrice(symbol, assetType);
+        return price ? { [symbol.toUpperCase()]: price } : {};
+      })
+    ).then(results => 
+      results.reduce((acc, curr) => ({ ...acc, ...curr }), {})
+    );
+
+    return { ...apiData, ...fallbackData };
+  } catch (error) {
+    console.error('[MarketData] API service failed, using full fallback:', error);
+    // Full fallback
+    return Promise.all(
+      symbols.map(async (symbol) => {
+        const assetType = type === 'crypto' ? 'Crypto' : type === 'etf' ? 'ETF' : 'Stock';
+        const price = await fetchAssetPrice(symbol, assetType);
+        return price ? { [symbol.toUpperCase()]: price } : {};
+      })
+    ).then(results => 
+      results.reduce((acc, curr) => ({ ...acc, ...curr }), {})
+    );
+  }
 };

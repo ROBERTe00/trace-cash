@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { stateManager } from "@/core/state-manager";
+import { eventBus, Events } from "@/core/event-system";
 
 export interface Expense {
   id: string;
@@ -45,6 +47,9 @@ export const useExpenses = () => {
       console.log(`[useExpenses] Fetched ${data?.length || 0} expenses for user ${user.id}`);
       return (data || []) as Expense[];
     },
+    staleTime: 0, // Always refetch when invalidated (0 = immediately stale)
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   const createExpense = useMutation({
@@ -71,8 +76,25 @@ export const useExpenses = () => {
       console.log('[useExpenses] Expense created successfully for user:', user.id);
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'] });
+    onSuccess: (data) => {
+      console.log('[useExpenses] Expense created, invalidating queries and emitting event');
+      // Invalidare e forzare refetch immediato
+      queryClient.invalidateQueries({ queryKey: ['expenses'], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-expenses'], refetchType: 'active' });
+      
+      // Optimistic update: aggiorna cache immediatamente
+      queryClient.setQueryData(['expenses'], (old: Expense[] | undefined) => {
+        if (!old) return [data];
+        return [data, ...old];
+      });
+      
+      // Sync con StateManager
+      const current = stateManager.getStateKey('transactions');
+      stateManager.setState('transactions', [data, ...current]);
+      
+      // Emit event per real-time updates
+      eventBus.emit(Events.TRANSACTION_CREATED, data);
+      
       toast.success('Transaction added successfully!');
     },
     onError: () => {
@@ -92,8 +114,14 @@ export const useExpenses = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Invalidare tutte le query correlate per sincronizzazione
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-expenses'] });
+      // Sync con StateManager
+      const current = stateManager.getStateKey('transactions');
+      const updated = current.map((t: any) => t.id === data.id ? data : t);
+      stateManager.setState('transactions', updated);
       toast.success('Transaction updated successfully!');
     },
     onError: () => {
@@ -110,8 +138,14 @@ export const useExpenses = () => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, deletedId) => {
+      // Invalidare tutte le query correlate per sincronizzazione
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-expenses'] });
+      // Sync con StateManager
+      const current = stateManager.getStateKey('transactions');
+      const filtered = current.filter((t: any) => t.id !== deletedId);
+      stateManager.setState('transactions', filtered);
       toast.success('Transaction deleted successfully!');
     },
     onError: () => {

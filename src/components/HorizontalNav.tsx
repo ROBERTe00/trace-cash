@@ -7,7 +7,8 @@ import {
   CreditCard, 
   Lightbulb, 
   Settings,
-  BarChart3
+  BarChart3,
+  GraduationCap
 } from 'lucide-react';
 
 export function HorizontalNav() {
@@ -16,6 +17,8 @@ export function HorizontalNav() {
   const navItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/transactions', label: 'Transactions', icon: Wallet },
+    { path: '/analytics', label: 'Analytics', icon: BarChart3 },
+    { path: '/ai-educator', label: 'AI Educator', icon: GraduationCap },
     { path: '/investments', label: 'Investments', icon: TrendingUp },
     { path: '/goals', label: 'Goals', icon: Target },
     { path: '/insights', label: 'Insights', icon: Lightbulb },

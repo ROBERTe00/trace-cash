@@ -1,13 +1,18 @@
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Flame } from "lucide-react";
+import { useEffect } from "react";
 
 interface FinancialHealthWidgetProps {
   onViewDetails?: () => void;
 }
 
 export function FinancialHealthWidget({ onViewDetails }: FinancialHealthWidgetProps) {
-  const { metrics, isLoading } = useDashboardData();
+  const { metrics, isLoading, error } = useDashboardData();
+
+  useEffect(() => {
+    console.log('[FinancialHealthWidget] Render - isLoading:', isLoading, 'metrics:', !!metrics, 'error:', !!error);
+  }, [isLoading, metrics, error]);
 
   if (isLoading) {
     return (
@@ -20,8 +25,30 @@ export function FinancialHealthWidget({ onViewDetails }: FinancialHealthWidgetPr
 
   if (!metrics) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-400">Nessun dato disponibile</p>
+      <div className="space-y-4">
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <div className="text-gray-400 text-sm mb-2">Saldo Totale</div>
+            <div className="text-3xl md:text-4xl font-bold mb-2 text-gray-600">
+              €0,00
+            </div>
+            <div className="flex items-center gap-2 text-gray-500 text-sm">
+              <span>↑</span>
+              <span>+0% vs mese scorso</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-gray-400 text-sm mb-2">Health Score</div>
+            <div className="flex items-center gap-2">
+              <div className="text-2xl md:text-3xl font-bold text-gray-600">0</div>
+              <div className="text-gray-400">/100</div>
+            </div>
+            <div className="text-xs text-gray-400 mt-1">Inizia a tracciare</div>
+          </div>
+        </div>
+        <div className="text-center py-4">
+          <p className="text-sm text-gray-400">Aggiungi transazioni per vedere i tuoi dati</p>
+        </div>
       </div>
     );
   }

@@ -1,18 +1,47 @@
 import { Doughnut } from 'react-chartjs-2';
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Maximize2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChartZoomModal } from "@/components/modals/ChartZoomModal";
 
 export function ExpenseDistributionWidget() {
-  const { metrics, isLoading } = useDashboardData();
+  const [showZoom, setShowZoom] = useState(false);
+  const { metrics, isLoading, error } = useDashboardData();
+
+  useEffect(() => {
+    console.log('[ExpenseDistributionWidget] Render - isLoading:', isLoading, 'metrics:', !!metrics, 'breakdown:', metrics?.categoryBreakdown ? Object.keys(metrics.categoryBreakdown).length : 0, 'error:', !!error);
+  }, [isLoading, metrics, error]);
 
   if (isLoading) {
     return <Skeleton className="h-40 w-full" />;
   }
 
-  if (!metrics?.categoryBreakdown) {
+  if (!metrics?.categoryBreakdown || Object.keys(metrics.categoryBreakdown).length === 0) {
     return (
-      <div className="text-center py-8 text-gray-400">
-        Nessun dato disponibile
+      <div className="space-y-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-semibold">Distribuzione Spese</h3>
+          <button
+            onClick={() => setShowZoom(false)}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors opacity-0 pointer-events-none"
+            title="Espandi grafico"
+          >
+            <Maximize2 className="w-4 h-4 text-purple-400" />
+          </button>
+        </div>
+        <div className="h-40 flex items-center justify-center border-2 border-dashed border-gray-700 rounded-xl bg-white/5 mb-4">
+          <div className="text-center">
+            <div className="text-4xl mb-3">🥧</div>
+            <p className="text-sm font-medium text-white mb-1">Nessuna distribuzione</p>
+            <p className="text-xs text-gray-400">Aggiungi spese per vedere la distribuzione</p>
+          </div>
+        </div>
+        <div className="space-y-2 text-sm">
+          <div className="text-center py-2 text-gray-400 text-xs">
+            Nessuna categoria disponibile
+          </div>
+        </div>
       </div>
     );
   }
@@ -54,8 +83,17 @@ export function ExpenseDistributionWidget() {
   const total = categories.reduce((sum, [, val]) => sum + (val as number), 0);
   
   return (
-    <div>
-      <h3 className="font-semibold mb-4">Distribuzione Spese</h3>
+    <>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="font-semibold">Distribuzione Spese</h3>
+        <button
+          onClick={() => setShowZoom(true)}
+          className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+          title="Espandi grafico"
+        >
+          <Maximize2 className="w-4 h-4 text-purple-400" />
+        </button>
+      </div>
       <div className="h-40 mb-4">
         <Doughnut data={chartData} options={options} />
       </div>
@@ -74,6 +112,15 @@ export function ExpenseDistributionWidget() {
           );
         })}
       </div>
-    </div>
+      
+      <ChartZoomModal
+        isOpen={showZoom}
+        onClose={() => setShowZoom(false)}
+        chartType="doughnut"
+        chartData={chartData}
+        chartOptions={options}
+        title="Distribuzione Spese - Vista Dettagliata"
+      />
+    </>
   );
 }

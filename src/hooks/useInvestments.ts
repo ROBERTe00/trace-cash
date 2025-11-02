@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { stateManager } from "@/core/state-manager";
 
 export interface Investment {
   id: string;
@@ -89,8 +90,11 @@ export const useInvestments = () => {
       console.log('[useInvestments] Investment created successfully for user:', user.id);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['investments'] });
+      // Sync con StateManager
+      const current = stateManager.getStateKey('investments');
+      stateManager.setState('investments', [data, ...current]);
       toast.success('Investment added successfully!');
     },
     onError: () => {
@@ -110,8 +114,12 @@ export const useInvestments = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['investments'] });
+      // Sync con StateManager
+      const current = stateManager.getStateKey('investments');
+      const updated = current.map((inv: any) => inv.id === data.id ? data : inv);
+      stateManager.setState('investments', updated);
       toast.success('Investment updated successfully!');
     },
     onError: () => {
@@ -128,8 +136,12 @@ export const useInvestments = () => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, deletedId) => {
       queryClient.invalidateQueries({ queryKey: ['investments'] });
+      // Sync con StateManager
+      const current = stateManager.getStateKey('investments');
+      const filtered = current.filter((inv: any) => inv.id !== deletedId);
+      stateManager.setState('investments', filtered);
       toast.success('Investment deleted successfully!');
     },
     onError: () => {

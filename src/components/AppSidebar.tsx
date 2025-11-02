@@ -7,6 +7,8 @@ import {
   Settings,
   Target,
   CreditCard,
+  BarChart3,
+  GraduationCap,
 } from "lucide-react";
 import {
   Sidebar,
@@ -41,6 +43,12 @@ export function AppSidebar() {
       tooltip: "Transactions"
     },
     { 
+      title: "Analytics", 
+      url: "/analytics", 
+      icon: BarChart3,
+      tooltip: "Analytics"
+    },
+    { 
       title: "Investments", 
       url: "/investments", 
       icon: TrendingUp,
@@ -63,6 +71,12 @@ export function AppSidebar() {
       url: "/goals", 
       icon: Target,
       tooltip: "Goals"
+    },
+    { 
+      title: "AI Educator", 
+      url: "/ai-educator", 
+      icon: GraduationCap,
+      tooltip: "AI Educator"
     },
     { 
       title: "News", 

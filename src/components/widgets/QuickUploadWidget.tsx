@@ -1,8 +1,10 @@
 import { FileText, Upload, Camera, FileSpreadsheet } from 'lucide-react';
 import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { QuickUploadModal } from '@/components/modals/QuickUploadModal';
 
 export function QuickUploadWidget() {
+  const [showModal, setShowModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   
@@ -51,39 +53,24 @@ export function QuickUploadWidget() {
   });
   
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold flex items-center gap-2">
-          <FileText className="w-4 h-4 text-purple-400" />
-          Carica Documenti
-        </h3>
-      </div>
-      
-      <div 
-        {...getRootProps()} 
-        className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
-          isDragActive 
-            ? 'border-purple-500 bg-purple-500/10' 
-            : 'border-gray-700 hover:border-purple-500/50 bg-white/5'
-        }`}
-      >
-        {uploading ? (
-          <div className="space-y-3">
-            <div className="w-12 h-12 mx-auto border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-sm text-gray-400">Caricamento... {uploadProgress}%</p>
-            <div className="w-full bg-gray-700 rounded-full h-2">
-              <div 
-                className="bg-purple-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${uploadProgress}%` }}
-              ></div>
-            </div>
-          </div>
-        ) : (
+    <>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold flex items-center gap-2">
+            <FileText className="w-4 h-4 text-purple-400" />
+            Carica Documenti
+          </h3>
+        </div>
+        
+        <button 
+          onClick={() => setShowModal(true)}
+          className="w-full border-2 border-dashed border-gray-700 hover:border-purple-500/50 bg-white/5 rounded-xl p-6 text-center cursor-pointer transition-all"
+        >
           <div className="space-y-3">
             <Upload className="w-10 h-10 mx-auto text-purple-400" />
             <div>
-              <p className="text-sm font-medium">Trascina file qui</p>
-              <p className="text-xs text-gray-400 mt-1">o clicca per selezionare</p>
+              <p className="text-sm font-medium">Clicca per caricare</p>
+              <p className="text-xs text-gray-400 mt-1">PDF, CSV, Excel o Foto</p>
             </div>
             <div className="flex gap-4 justify-center text-xs text-gray-500 mt-2">
               <span>📄 PDF</span>
@@ -91,23 +78,19 @@ export function QuickUploadWidget() {
               <span>📷 Foto</span>
             </div>
           </div>
-        )}
+        </button>
+        
+        <div className="text-center">
+          <p className="text-xs text-gray-500">
+            Supporta tutti i formati bancari standard
+          </p>
+        </div>
       </div>
       
-      <div className="grid grid-cols-3 gap-2">
-        <button className="p-3 glass-card hover:bg-white/10 transition-all rounded-lg group">
-          <Camera className="w-4 h-4 mx-auto mb-1 group-hover:text-purple-400" />
-          <p className="text-xs text-gray-400 group-hover:text-white">Scatta</p>
-        </button>
-        <button className="p-3 glass-card hover:bg-white/10 transition-all rounded-lg group">
-          <FileSpreadsheet className="w-4 h-4 mx-auto mb-1 group-hover:text-purple-400" />
-          <p className="text-xs text-gray-400 group-hover:text-white">Scegli</p>
-        </button>
-        <button className="p-3 glass-card hover:bg-white/10 transition-all rounded-lg group">
-          <Upload className="w-4 h-4 mx-auto mb-1 group-hover:text-purple-400" />
-          <p className="text-xs text-gray-400 group-hover:text-white">Importa</p>
-        </button>
-      </div>
-    </div>
+      <QuickUploadModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+      />
+    </>
   );
 }

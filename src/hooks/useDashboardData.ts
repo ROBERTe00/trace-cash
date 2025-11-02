@@ -1,29 +1,70 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 
 export function useDashboardData() {
-  // Fetch all expenses
-  const { data: expensesData, isLoading: expensesLoading } = useQuery({
-    queryKey: ['dashboard-expenses'],
+  // Debug authentication
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user }, error }) => {
+      console.log('[useDashboardData] Auth check - user:', user?.id || 'NO USER', 'error:', !!error);
+    });
+  }, []);
+
+  // Fetch all expenses - usa stessa queryKey di useExpenses per sincronizzazione automatica
+  const { data: expensesData, isLoading: expensesLoading, error: expensesError } = useQuery({
+    queryKey: ['expenses'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-      
-      const { data, error } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false });
-      
-      if (error) throw error;
-      return data || [];
+      console.log('[useDashboardData] Query started');
+      try {
+        // Timeout wrapper
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Query timeout after 10s')), 10000)
+        );
+
+        const dataPromise = (async () => {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            console.log('[useDashboardData] No user, returning empty array');
+            return [];
+          }
+          
+          console.log(`[useDashboardData] Fetching expenses for user: ${user.id}`);
+          const { data, error } = await supabase
+            .from('expenses')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('date', { ascending: false });
+          
+          if (error) {
+            console.error('[useDashboardData] Error fetching expenses:', error);
+            return [];
+          }
+          
+          console.log(`[useDashboardData] Fetched ${data?.length || 0} expenses`);
+          return data || [];
+        })();
+
+        return await Promise.race([dataPromise, timeoutPromise]);
+      } catch (error) {
+        console.error('[useDashboardData] Exception in queryFn:', error);
+        return [];
+      }
     },
+    enabled: true,
+    retry: 1,
+    staleTime: 0, // Always refetch when invalidated (0 = immediately stale)
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   // Calculate dashboard metrics
   const metrics = useMemo(() => {
-    if (!expensesData) return null;
+    if (!expensesData) {
+      console.log('[useDashboardData] No expensesData, returning null metrics');
+      return null;
+    }
+    
+    console.log('[useDashboardData] Calculating metrics from', expensesData.length, 'expenses');
 
     const now = new Date();
     const currentMonth = now.getMonth();
@@ -132,6 +173,7 @@ export function useDashboardData() {
     metrics,
     expenses: expensesData || [],
     isLoading: expensesLoading,
+    error: expensesError,
   };
 }
 

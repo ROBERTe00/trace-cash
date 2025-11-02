@@ -37,25 +37,39 @@ export const AccountMenu = () => {
     try {
       console.log('[Logout] Starting logout process...');
       
-      await AuditLogger.log({
-        action: 'user_logout',
-        resourceType: 'auth',
-      });
+      // Check if in offline mode
+      const isOfflineMode = localStorage.getItem('trace-cash-offline-mode') === 'true';
       
-      // Sign out from Supabase
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('[Logout] Supabase signOut error:', error);
-        toast.error("Errore durante il logout");
-        return;
+      if (isOfflineMode) {
+        // Local auth logout
+        const { localAuth } = await import("@/lib/localAuth");
+        localAuth.signOut();
+        localStorage.removeItem('trace-cash-offline-mode');
+        localStorage.removeItem('trace-cash-local-user');
+        console.log('[Logout] Local auth logout successful');
+      } else {
+        // Try Supabase logout (may fail if network is down)
+        try {
+          await AuditLogger.log({
+            action: 'user_logout',
+            resourceType: 'auth',
+          });
+          
+          const { error } = await supabase.auth.signOut();
+          if (error) {
+            console.warn('[Logout] Supabase signOut error (non-critical):', error);
+          } else {
+            console.log('[Logout] Supabase signOut successful');
+          }
+        } catch (supabaseError) {
+          console.warn('[Logout] Supabase logout failed (network may be down):', supabaseError);
+        }
       }
-      
-      console.log('[Logout] Supabase signOut successful');
       
       // Clear all user data
       clearUser();
-      localStorage.clear();
+      localStorage.removeItem('trace-cash-offline-mode');
+      localStorage.removeItem('trace-cash-local-user');
       sessionStorage.clear();
       
       console.log('[Logout] Storage cleared, calling clearCacheAndReload...');

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +27,27 @@ export default function Auth() {
     confirmPassword: "",
   });
   const navigate = useNavigate();
+
+  // Listen for auth state changes to handle redirect after login
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('[Auth Page] Auth state change:', event, 'hasSession:', !!session);
+        
+        if (event === 'SIGNED_IN' && session) {
+          console.log('[Auth Page] SIGNED_IN detected, redirecting to home');
+          // Small delay to ensure session is fully persisted
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 200);
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // Check for password recovery token in URL
   useState(() => {
@@ -138,26 +159,81 @@ export default function Auth() {
       if (isLogin) {
         console.log("🔐 [Auth] Attempting login for:", formData.email);
         
+        // Try Supabase first
         const { error, data } = await supabase.auth.signInWithPassword({
           email: formData.email.trim(),
           password: formData.password,
         });
 
+        // If network error, try local auth as fallback
+        if (error && (error.message?.includes("Failed to fetch") || 
+            error.message?.includes("ERR_NAME_NOT_RESOLVED") ||
+            error.name === "NetworkError" ||
+            error.message?.includes("Network"))) {
+          
+          console.log("🔐 [Auth] Supabase unavailable, trying local auth...");
+          const { localAuth } = await import("@/lib/localAuth");
+          
+          const localResult = await localAuth.signIn(
+            formData.email.trim(),
+            formData.password
+          );
+
+          if (localResult.error) {
+            toast.error(localResult.error.message || "Login failed");
+            return;
+          }
+
+          if (localResult.user) {
+            // Store local session
+            const session = localAuth.getSession();
+            if (session) {
+              // Store in a way that ProtectedRoutes can find it
+              localStorage.setItem('trace-cash-offline-mode', 'true');
+              localStorage.setItem('trace-cash-local-user', JSON.stringify(localResult.user));
+              console.log("🔐 [Auth] Local login successful:", localResult.user.email);
+              toast.success("Welcome back! (Offline mode)");
+              // Small delay to ensure session is stored
+              setTimeout(() => {
+                console.log("🔐 [Auth] Navigating to home after local login");
+                navigate("/", { replace: true });
+              }, 100);
+              return;
+            }
+          }
+          
+          toast.error("Network error: Cannot reach server. Using offline mode.");
+          return;
+        }
+
         if (error) {
           console.error("🔐 [Auth] Login error:", error);
+          
           if (error.message.includes("Invalid login credentials")) {
             toast.error("Invalid email or password");
           } else if (error.message.includes("Email not confirmed")) {
             toast.error("Please confirm your email address before signing in");
           } else {
-            toast.error(error.message);
+            toast.error(error.message || "Login failed");
           }
           return;
         }
 
         console.log("🔐 [Auth] Login successful:", data.user?.email, "Session:", !!data.session);
-        toast.success("Welcome back!");
-        navigate("/");
+        
+        // Wait a moment for onAuthStateChange to fire and update the session
+        // This ensures ProtectedRoutes has the session when it mounts
+        if (data.session) {
+          toast.success("Welcome back!");
+          // Use window.location for a hard redirect to ensure ProtectedRoutes remounts with fresh session
+          // Small delay to ensure session is persisted
+          setTimeout(() => {
+            console.log("🔐 [Auth] Redirecting to home after login");
+            window.location.href = "/";
+          }, 500);
+        } else {
+          toast.error("Login successful but no session received");
+        }
       } else {
         console.log("🔐 [Auth] Attempting signup for:", formData.email);
         
@@ -176,6 +252,51 @@ export default function Auth() {
             },
           },
         });
+
+        // If network error, try local auth as fallback
+        if (error && (error.message?.includes("Failed to fetch") || 
+            error.message?.includes("ERR_NAME_NOT_RESOLVED") ||
+            error.name === "NetworkError" ||
+            error.message?.includes("Network"))) {
+          
+          console.log("🔐 [Auth] Supabase unavailable, trying local signup...");
+          const { localAuth } = await import("@/lib/localAuth");
+          
+          const localResult = await localAuth.signUp(
+            formData.email.trim(),
+            formData.password,
+            formData.name.trim()
+          );
+
+          if (localResult.error) {
+            if (localResult.error.message.includes("already exists")) {
+              toast.error("Email already registered. Please sign in.");
+            } else {
+              toast.error(localResult.error.message || "Signup failed");
+            }
+            return;
+          }
+
+          if (localResult.user) {
+            // Store local session
+            const session = localAuth.getSession();
+            if (session) {
+              localStorage.setItem('trace-cash-offline-mode', 'true');
+              localStorage.setItem('trace-cash-local-user', JSON.stringify(localResult.user));
+              console.log("🔐 [Auth] Local signup successful:", localResult.user.email);
+              toast.success("Account created successfully! Welcome! (Offline mode)");
+              // Small delay to ensure session is stored
+              setTimeout(() => {
+                console.log("🔐 [Auth] Navigating to home after local signup");
+                navigate("/", { replace: true });
+              }, 100);
+              return;
+            }
+          }
+          
+          toast.error("Network error: Cannot reach server.");
+          return;
+        }
 
         if (error) {
           console.error("🔐 [Auth] Signup error:", error);
@@ -231,6 +352,7 @@ export default function Auth() {
                 <Input
                   id="newPassword"
                   type="password"
+                  autoComplete="new-password"
                   value={formData.newPassword}
                   onChange={(e) =>
                     setFormData({ ...formData, newPassword: e.target.value })
@@ -245,6 +367,7 @@ export default function Auth() {
                 <Input
                   id="confirmPassword"
                   type="password"
+                  autoComplete="new-password"
                   value={formData.confirmPassword}
                   onChange={(e) =>
                     setFormData({ ...formData, confirmPassword: e.target.value })
@@ -278,6 +401,7 @@ export default function Auth() {
             <Input
               id="email"
               type="email"
+              autoComplete={isLogin ? "email" : "email"}
               value={formData.email}
               onChange={(e) =>
                 setFormData({ ...formData, email: e.target.value })
@@ -293,6 +417,7 @@ export default function Auth() {
               <Input
                 id="password"
                 type="password"
+                autoComplete={isLogin ? "current-password" : "new-password"}
                 value={formData.password}
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })

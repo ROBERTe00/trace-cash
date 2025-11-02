@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v3.0.0'; // MAJOR UPDATE: Force clean cache + never cache index.html
+const CACHE_VERSION = 'v3.0.1'; // Fix: Response clone error - clone before using
 const CACHE_NAME = `trace-cash-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `trace-cash-runtime-${CACHE_VERSION}`;
 
@@ -68,35 +68,52 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/assets/')
   ) {
     event.respondWith(
-      Promise.race([
-        // Try network first
-        fetch(request, {
-          cache: 'no-cache',
-          headers: { 'Cache-Control': 'no-cache' }
-        }).then(networkResponse => {
-          if (networkResponse.status === 200) {
+      (async () => {
+        try {
+          // Try network first with timeout
+          const networkPromise = fetch(request, {
+            cache: 'no-cache',
+            headers: { 'Cache-Control': 'no-cache' }
+          });
+          
+          const timeoutPromise = new Promise((resolve, reject) => {
+            setTimeout(() => {
+              caches.match(request).then(cachedResponse => {
+                if (cachedResponse) {
+                  // Suppress verbose logging - only log errors or critical info
+                  // In production, these logs are noise. Network slowness is handled gracefully.
+                  resolve(cachedResponse);
+                } else {
+                  reject(new Error('No cache available'));
+                }
+              });
+            }, 2000);
+          });
+
+          const response = await Promise.race([networkPromise, timeoutPromise]);
+          
+          // If we got a network response, clone it BEFORE using it and cache it
+          if (response instanceof Response && response.status === 200 && !response.bodyUsed) {
+            const responseClone = response.clone();
             caches.open(CACHE_NAME).then(cache => {
-              cache.put(request, networkResponse.clone());
+              cache.put(request, responseClone).catch(err => {
+                console.error('[SW] Error caching response:', err);
+              });
+            }).catch(err => {
+              console.error('[SW] Error opening cache:', err);
             });
           }
-          return networkResponse;
-        }),
-        // Fallback to cache after 2s
-        new Promise((resolve, reject) => {
-          setTimeout(() => {
-            caches.match(request).then(cachedResponse => {
-              if (cachedResponse) {
-                console.log('[SW] Network slow, using cache for:', request.url);
-                resolve(cachedResponse);
-              } else {
-                reject(new Error('No cache available'));
-              }
-            });
-          }, 2000);
-        })
-      ]).catch(() => {
-        return caches.match(request);
-      })
+          
+          return response;
+        } catch (error) {
+          // Fallback to cache if network fails
+          const cachedResponse = await caches.match(request);
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          throw error;
+        }
+      })()
     );
     return;
   }
@@ -104,8 +121,10 @@ self.addEventListener('fetch', (event) => {
   // Network-first for API calls (Supabase)
   if (url.hostname.includes('supabase.co')) {
     event.respondWith(
-      fetch(request)
-        .then(response => {
+      (async () => {
+        try {
+          const response = await fetch(request);
+          
           // Don't cache authentication or sensitive data
           if (
             request.url.includes('/auth/') || 
@@ -115,19 +134,28 @@ self.addEventListener('fetch', (event) => {
             return response;
           }
           
-          // Cache successful API responses
-          if (response.status === 200) {
+          // Cache successful API responses - clone BEFORE using
+          if (response.status === 200 && !response.bodyUsed) {
             const responseClone = response.clone();
             caches.open(RUNTIME_CACHE).then(cache => {
-              cache.put(request, responseClone);
+              cache.put(request, responseClone).catch(err => {
+                console.error('[SW] Error caching API response:', err);
+              });
+            }).catch(err => {
+              console.error('[SW] Error opening cache:', err);
             });
           }
+          
           return response;
-        })
-        .catch(() => {
+        } catch (error) {
           // Fallback to cache if offline
-          return caches.match(request);
-        })
+          const cachedResponse = await caches.match(request);
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          throw error;
+        }
+      })()
     );
     return;
   }
@@ -143,23 +171,31 @@ self.addEventListener('fetch', (event) => {
     request.url.includes('.woff2')
   ) {
     event.respondWith(
-      caches.match(request)
-        .then(cachedResponse => {
-          if (cachedResponse) {
-            // Return cached version immediately
-            return cachedResponse;
-          }
+      (async () => {
+        const cachedResponse = await caches.match(request);
+        if (cachedResponse) {
+          // Return cached version immediately
+          return cachedResponse;
+        }
 
-          return fetch(request).then(response => {
-            if (response.status === 200) {
-              const responseClone = response.clone();
-              caches.open(CACHE_NAME).then(cache => {
-                cache.put(request, responseClone);
+        try {
+          const response = await fetch(request);
+          if (response.status === 200 && !response.bodyUsed) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(request, responseClone).catch(err => {
+                console.error('[SW] Error caching static asset:', err);
               });
-            }
-            return response;
-          });
-        })
+            }).catch(err => {
+              console.error('[SW] Error opening cache:', err);
+            });
+          }
+          return response;
+        } catch (error) {
+          console.error('[SW] Error fetching static asset:', error);
+          throw error;
+        }
+      })()
     );
     return;
   }

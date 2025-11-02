@@ -5,13 +5,90 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+// Custom storage adapter that handles network errors gracefully
+const customStorage = {
+  getItem: (key: string) => {
+    try {
+      return localStorage.getItem(key);
+    } catch (e) {
+      return null;
+    }
+  },
+  setItem: (key: string, value: string) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      // Ignore storage errors
+    }
+  },
+  removeItem: (key: string) => {
+    try {
+      localStorage.removeItem(key);
+    } catch (e) {
+      // Ignore storage errors
+    }
+  },
+};
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: localStorage,
+    storage: customStorage,
     persistSession: true,
     autoRefreshToken: true,
-  }
+    detectSessionInUrl: false,
+    // Disable auto-refresh se non c'è connessione
+    flowType: 'pkce',
+  },
+  global: {
+    fetch: async (url, options = {}) => {
+      try {
+        // Check if online before making request
+        if (!navigator.onLine) {
+          throw new Error('Network offline');
+        }
+        
+        // Timeout di 5 secondi per evitare che rimanga bloccato
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        try {
+          const response = await fetch(url, {
+            ...options,
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          return response;
+        } catch (error: any) {
+          clearTimeout(timeoutId);
+          // Gestisci errori di rete silenziosamente
+          if (error.name === 'AbortError' || 
+              error.message?.includes('Failed to fetch') ||
+              error.message?.includes('ERR_NAME_NOT_RESOLVED')) {
+            // Return a mock response to prevent app crash
+            return new Response(
+              JSON.stringify({ error: { message: 'Network error', status: 0 } }),
+              { status: 0, statusText: 'Network Error' }
+            );
+          }
+          throw error;
+        }
+      } catch (error: any) {
+        // Gestisci tutti gli errori di rete
+        if (error?.message?.includes('Failed to fetch') ||
+            error?.message?.includes('ERR_NAME_NOT_RESOLVED') ||
+            error?.message?.includes('Network offline') ||
+            error?.name === 'NetworkError') {
+          // Return mock response instead of throwing
+          return new Response(
+            JSON.stringify({ error: { message: 'Network error', status: 0 } }),
+            { status: 0, statusText: 'Network Error' }
+          );
+        }
+        throw error;
+      }
+    },
+  },
 });

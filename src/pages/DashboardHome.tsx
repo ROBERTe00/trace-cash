@@ -8,12 +8,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FinancialHealthWidget } from "@/components/widgets/FinancialHealthWidget";
 import { WealthTrendWidget } from "@/components/widgets/WealthTrendWidget";
 import { ExpenseDistributionWidget } from "@/components/widgets/ExpenseDistributionWidget";
+import { EnhancedWealthTrendWidget } from "@/components/widgets/EnhancedWealthTrendWidget";
+import { EnhancedExpenseDistributionWidget } from "@/components/widgets/EnhancedExpenseDistributionWidget";
 import { AIInsightsWidget } from "@/components/widgets/AIInsightsWidget";
+import { EnhancedAIInsightsWidget } from "@/components/widgets/EnhancedAIInsightsWidget";
+import { IncomeExpensesChartWidget } from "@/components/widgets/IncomeExpensesChartWidget";
 import { RecentTransactionsWidget } from "@/components/widgets/RecentTransactionsWidget";
+import { EnhancedRecentTransactionsWidget } from "@/components/widgets/EnhancedRecentTransactionsWidget";
 import { SavingsRateWidget } from "@/components/widgets/SavingsRateWidget";
 import { GoalsWidget } from "@/components/widgets/GoalsWidget";
 import { QuickUploadWidget } from "@/components/widgets/QuickUploadWidget";
 import { AIChartWizard } from "@/components/widgets/AIChartWizard";
+import { MarketOverviewWidget } from "@/components/widgets/MarketOverviewWidget";
+import { MarketNewsWidget } from "@/components/widgets/MarketNewsWidget";
+import { ForexRatesWidget } from "@/components/widgets/ForexRatesWidget";
 
 // API functions
 import { saveWidgetLayout, loadWidgetLayout } from "@/lib/widgetApi";
@@ -45,7 +53,9 @@ interface WidgetConfig {
 export default function DashboardHome() {
   const [editMode, setEditMode] = useState(false);
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false);
-  const [activeWidgets, setActiveWidgets] = useState<string[]>([]);
+  // Initialize with default widgets to ensure they show immediately
+  const [activeWidgets, setActiveWidgets] = useState<string[]>(['financial-health', 'wealth-trend', 'expense-distribution']);
+  const [isLoadingLayout, setIsLoadingLayout] = useState(true);
   const [showNotification, setShowNotification] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const sortableRef = useRef<Sortable | null>(null);
@@ -64,28 +74,35 @@ export default function DashboardHome() {
       description: 'Trend del tuo patrimonio',
       icon: '📈',
       size: 'single',
-      component: WealthTrendWidget
+      component: EnhancedWealthTrendWidget // Using enhanced version with real data and export
     },
     'expense-distribution': {
       name: 'Distribuzione Spese',
       description: 'Come spendi i tuoi soldi',
       icon: '🥧',
       size: 'single',
-      component: ExpenseDistributionWidget
+      component: EnhancedExpenseDistributionWidget // Using enhanced version with real data and export
     },
     'ai-insights': {
       name: 'Insights AI',
       description: 'Suggerimenti intelligenti',
       icon: '🤖',
       size: 'single',
-      component: AIInsightsWidget
+      component: EnhancedAIInsightsWidget // Using enhanced version with real-time updates
+    },
+    'income-expenses-chart': {
+      name: 'Entrate vs Spese',
+      description: 'Confronto mensile entrate e spese',
+      icon: '📊',
+      size: 'single',
+      component: IncomeExpensesChartWidget
     },
     'recent-transactions': {
       name: 'Transazioni Recenti',
       description: 'Le tue ultime transazioni',
       icon: '💸',
       size: 'single',
-      component: RecentTransactionsWidget
+      component: EnhancedRecentTransactionsWidget // Using enhanced version with real-time updates
     },
     'savings-rate': {
       name: 'Tasso di Risparmio',
@@ -114,26 +131,80 @@ export default function DashboardHome() {
       icon: '✨',
       size: 'double',
       component: AIChartWizard
+    },
+    'market-overview': {
+      name: 'Market Overview',
+      description: 'Prezzi stocks e crypto in tempo reale',
+      icon: '📊',
+      size: 'single',
+      component: MarketOverviewWidget
+    },
+    'market-news': {
+      name: 'Financial News',
+      description: 'Ultime news finanziarie ad alto impatto',
+      icon: '📰',
+      size: 'single',
+      component: MarketNewsWidget
+    },
+    'forex-rates': {
+      name: 'Forex Rates',
+      description: 'Tassi di cambio principali',
+      icon: '💱',
+      size: 'single',
+      component: ForexRatesWidget
     }
   };
 
   // Load layout from backend
   useEffect(() => {
+    let isMounted = true;
+    
     const loadLayout = async () => {
       try {
-        const saved = await loadWidgetLayout();
-        if (saved && saved.widget_order) {
-          setActiveWidgets(saved.widget_order);
-        } else {
-          setActiveWidgets(['financial-health', 'wealth-trend', 'expense-distribution']);
+        setIsLoadingLayout(true);
+        
+        // Use Promise.race to timeout the operation (3 seconds max)
+        const saved = await Promise.race([
+          loadWidgetLayout(),
+          new Promise<null>((resolve) => 
+            setTimeout(() => {
+              console.warn('[DashboardHome] Layout loading timeout, using default widgets');
+              resolve(null);
+            }, 3000)
+          )
+        ]);
+
+        if (!isMounted) return;
+
+        if (saved && saved.widget_order && Array.isArray(saved.widget_order) && saved.widget_order.length > 0) {
+          // Filter out invalid widget IDs
+          const widgetKeys = Object.keys(availableWidgets);
+          const validWidgets = saved.widget_order.filter((id: string) => {
+            return widgetKeys.includes(id);
+          });
+          if (validWidgets.length > 0) {
+            setActiveWidgets(validWidgets);
+          }
+          // If no valid widgets, keep defaults (already set in useState)
         }
+        // If no saved layout, defaults are already set in useState
       } catch (error) {
-        console.error('Errore nel caricamento del layout:', error);
-        setActiveWidgets(['financial-health', 'wealth-trend', 'expense-distribution']);
+        if (!isMounted) return;
+        console.error('[DashboardHome] Errore nel caricamento del layout:', error);
+        // Keep defaults on error (already set in useState)
+      } finally {
+        if (isMounted) {
+          setIsLoadingLayout(false);
+        }
       }
     };
     
     loadLayout();
+    
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Initialize drag and drop
@@ -288,7 +359,12 @@ export default function DashboardHome() {
 
           {/* Widgets Grid */}
           <div ref={gridRef} className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            {activeWidgets.length === 0 ? (
+            {isLoadingLayout ? (
+              <div className="col-span-3 text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
+                <p className="text-gray-400 mt-4">Caricamento dashboard...</p>
+              </div>
+            ) : activeWidgets.length === 0 ? (
               <div className="col-span-3 text-center py-12">
                 <div className="text-4xl mb-4">📊</div>
                 <h3 className="text-xl font-semibold mb-2">Nessun widget ancora</h3>
@@ -304,15 +380,20 @@ export default function DashboardHome() {
             ) : (
               activeWidgets.map(widgetId => {
                 const widgetConfig = availableWidgets[widgetId];
-                if (!widgetConfig) return null;
+                if (!widgetConfig) {
+                  console.warn(`[DashboardHome] Widget config not found for: ${widgetId}`);
+                  return null;
+                }
                 
                 const Component = widgetConfig.component;
+                
+                // Render widget with error handling
                 return (
                   <div 
                     key={widgetId}
                     className={widgetConfig.size === 'double' ? 'lg:col-span-2' : ''}
                   >
-                    <div className="widget interactive-widget glass-card p-6 relative animate-[fadeIn_0.5s_ease-in-out]" data-widget-id={widgetId}>
+                    <div className="widget interactive-widget glass-card p-6 relative animate-[fadeIn_0.5s_ease-in-out] min-h-[200px]" data-widget-id={widgetId}>
                       {(editMode || true) && (
                         <div className="widget-actions absolute top-4 right-4 flex gap-2 z-10">
                           <button 
@@ -335,7 +416,20 @@ export default function DashboardHome() {
                           </button>
                         </div>
                       )}
-                      <Component />
+                      {(() => {
+                        try {
+                          console.log(`[DashboardHome] Rendering widget: ${widgetId}`);
+                          return <Component />;
+                        } catch (error) {
+                          console.error(`[DashboardHome] Error rendering widget ${widgetId}:`, error);
+                          return (
+                            <div className="text-center py-8 text-muted-foreground">
+                              <p className="text-sm">Errore nel widget: {widgetConfig.name}</p>
+                              <p className="text-xs mt-2">{String(error)}</p>
+                            </div>
+                          );
+                        }
+                      })()}
                     </div>
                   </div>
                 );

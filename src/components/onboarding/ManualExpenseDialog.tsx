@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useExpenses } from "@/hooks/useExpenses";
 
 interface ManualExpenseDialogProps {
   open: boolean;
@@ -25,6 +24,7 @@ const EXPENSE_CATEGORIES = [
 ];
 
 export function ManualExpenseDialog({ open, onOpenChange, onExpenseAdded }: ManualExpenseDialogProps) {
+  const { createExpense } = useExpenses();
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
@@ -33,17 +33,12 @@ export function ManualExpenseDialog({ open, onOpenChange, onExpenseAdded }: Manu
 
   const handleSubmit = async () => {
     if (!description || !amount || !category) {
-      toast.error("Please fill all required fields");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const { error } = await supabase.from('expenses').insert({
-        user_id: user.id,
+      await createExpense({
         description,
         amount: parseFloat(amount),
         category,
@@ -51,10 +46,7 @@ export function ManualExpenseDialog({ open, onOpenChange, onExpenseAdded }: Manu
         type: 'Expense',
         recurring: false
       });
-
-      if (error) throw error;
-
-      toast.success("Expense added successfully!");
+      
       onExpenseAdded?.();
       onOpenChange(false);
       
@@ -65,7 +57,7 @@ export function ManualExpenseDialog({ open, onOpenChange, onExpenseAdded }: Manu
       setDate(new Date().toISOString().split('T')[0]);
     } catch (error) {
       console.error("Error adding expense:", error);
-      toast.error("Failed to add expense");
+      // Toast viene già gestito da useExpenses
     } finally {
       setIsSubmitting(false);
     }

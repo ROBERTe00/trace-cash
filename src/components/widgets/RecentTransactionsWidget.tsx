@@ -1,11 +1,17 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState, useEffect } from "react";
 
 export function RecentTransactionsWidget() {
+  const [showAll, setShowAll] = useState(false);
   const navigate = useNavigate();
-  const { expenses, isLoading } = useDashboardData();
+  const { expenses, isLoading, error } = useDashboardData();
+
+  useEffect(() => {
+    console.log('[RecentTransactionsWidget] Render - isLoading:', isLoading, 'expenses:', expenses?.length || 0, 'error:', !!error);
+  }, [isLoading, expenses, error]);
 
   const handleViewAll = () => {
     navigate('/transactions');
@@ -17,13 +23,28 @@ export function RecentTransactionsWidget() {
 
   if (!expenses || expenses.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-400 text-sm">
-        Nessuna transazione recente
+      <div className="space-y-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-semibold">Transazioni Recenti</h3>
+          <button 
+            onClick={handleViewAll}
+            className="text-sm text-gray-400 hover:text-white flex items-center"
+          >
+            Vedi sezione
+            <ArrowRight className="w-3 h-3 ml-1" />
+          </button>
+        </div>
+        <div className="text-center py-8 border-2 border-dashed border-gray-700 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer" onClick={handleViewAll}>
+          <div className="text-4xl mb-3">💸</div>
+          <p className="text-sm font-medium mb-1 text-white">Nessuna transazione recente</p>
+          <p className="text-xs text-gray-400">Clicca per aggiungere la prima transazione</p>
+        </div>
       </div>
     );
   }
 
-  const recent = expenses.slice(0, 2);
+  const displayCount = showAll ? expenses.length : 7;
+  const recent = expenses.slice(0, displayCount);
 
   const getIcon = (category: string, type: string) => {
     if (type === 'Income') return '💰';
@@ -46,15 +67,35 @@ export function RecentTransactionsWidget() {
     <div>
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-semibold">Transazioni Recenti</h3>
-        <button 
-          onClick={handleViewAll}
-          className="text-sm text-gray-400 hover:text-white flex items-center"
-        >
-          Vedi tutte
-          <ArrowRight className="w-3 h-3 ml-1" />
-        </button>
+        <div className="flex items-center gap-2">
+          {expenses.length > 7 && (
+            <button 
+              onClick={() => setShowAll(!showAll)}
+              className="text-sm text-purple-400 hover:text-purple-300 flex items-center gap-1"
+            >
+              {showAll ? (
+                <>
+                  <ChevronUp className="w-3 h-3" />
+                  Comprimi
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-3 h-3" />
+                  Mostra tutte ({expenses.length})
+                </>
+              )}
+            </button>
+          )}
+          <button 
+            onClick={handleViewAll}
+            className="text-sm text-gray-400 hover:text-white flex items-center"
+          >
+            Vedi sezione
+            <ArrowRight className="w-3 h-3 ml-1" />
+          </button>
+        </div>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-3 max-h-[400px] overflow-y-auto">
         {recent.map((transaction: any) => {
           const icon = getIcon(transaction.category, transaction.type);
           const color = transaction.type === 'Income' 

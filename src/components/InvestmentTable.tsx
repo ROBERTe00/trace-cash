@@ -13,7 +13,6 @@ import { Trash2, TrendingUp, TrendingDown, Zap } from "lucide-react";
 import { Investment } from "@/lib/storage";
 import { useApp } from "@/contexts/AppContext";
 import { useState, useEffect } from "react";
-import { fetchAllAssetPrices } from "@/lib/marketData";
 import { toast } from "sonner";
 import { MobileInvestmentCard } from "@/components/MobileInvestmentCard";
 
@@ -51,21 +50,44 @@ export const InvestmentTable = ({
       return;
     }
 
-    const prices = await fetchAllAssetPrices(
-      liveInvestments.map((inv) => ({ symbol: inv.symbol!, type: inv.type }))
-    );
+    try {
+      // Group investments by type for batch API calls
+      const stocks = liveInvestments.filter(inv => inv.type === 'Stock').map(inv => inv.symbol!);
+      const cryptos = liveInvestments.filter(inv => inv.type === 'Crypto').map(inv => inv.symbol!);
+      const etfs = liveInvestments.filter(inv => inv.type === 'ETF').map(inv => inv.symbol!);
 
-    let updated = 0;
-    for (const inv of liveInvestments) {
-      if (inv.symbol && prices[inv.symbol.toUpperCase()] && onUpdatePrice) {
-        onUpdatePrice(inv.id, prices[inv.symbol.toUpperCase()].price);
-        updated++;
+      // Use API service for batch fetching
+      const { fetchMarketDataViaAPI, fetchAllAssetPrices } = await import('@/lib/marketData');
+      
+      const [stockPrices, cryptoPrices, etfPrices, fallbackPrices] = await Promise.all([
+        stocks.length > 0 ? fetchMarketDataViaAPI(stocks, 'stocks') : {},
+        cryptos.length > 0 ? fetchMarketDataViaAPI(cryptos, 'crypto') : {},
+        etfs.length > 0 ? fetchMarketDataViaAPI(etfs, 'etf') : {},
+        // Fallback for any assets not covered by API
+        fetchAllAssetPrices(
+          liveInvestments.map((inv) => ({ symbol: inv.symbol!, type: inv.type }))
+        ),
+      ]);
+
+      // Merge all prices (API data takes precedence, then fallback)
+      const prices = { ...fallbackPrices, ...stockPrices, ...cryptoPrices, ...etfPrices };
+
+      let updated = 0;
+      for (const inv of liveInvestments) {
+        if (inv.symbol && prices[inv.symbol.toUpperCase()] && onUpdatePrice) {
+          onUpdatePrice(inv.id, prices[inv.symbol.toUpperCase()].price);
+          updated++;
+        }
       }
-    }
-    
-    setUpdating(false);
-    if (updated > 0) {
-      toast.success(t("pricesUpdated").replace("{count}", updated.toString()));
+      
+      if (updated > 0) {
+        toast.success(t("pricesUpdated").replace("{count}", updated.toString()));
+      }
+    } catch (error) {
+      console.error('[InvestmentTable] Error updating prices:', error);
+      toast.error('Errore nell\'aggiornamento dei prezzi');
+    } finally {
+      setUpdating(false);
     }
   };
 
