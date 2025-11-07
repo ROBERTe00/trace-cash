@@ -8,7 +8,9 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy:get-benchmark": "npx supabase functions deploy get-benchmark",
+    "deploy:get-price": "npx supabase functions deploy get-price"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

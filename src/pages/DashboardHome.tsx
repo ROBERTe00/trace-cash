@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from "react";
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import Sortable from 'sortablejs';
 import { Edit, Settings, X, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { registerChartJS } from "@/lib/chartRegistry";
 
 // Widget Components
 import { FinancialHealthWidget } from "@/components/widgets/FinancialHealthWidget";
@@ -26,19 +26,8 @@ import { ForexRatesWidget } from "@/components/widgets/ForexRatesWidget";
 // API functions
 import { saveWidgetLayout, loadWidgetLayout } from "@/lib/widgetApi";
 
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
+// Register Chart.js components (centralized)
+registerChartJS();
 
 interface WidgetConfig {
   [key: string]: {
@@ -164,11 +153,15 @@ export default function DashboardHome() {
         setIsLoadingLayout(true);
         
         // Use Promise.race to timeout the operation (3 seconds max)
+        // Il timeout è normale se il backend è lento o non disponibile
         const saved = await Promise.race([
           loadWidgetLayout(),
           new Promise<null>((resolve) => 
             setTimeout(() => {
-              console.warn('[DashboardHome] Layout loading timeout, using default widgets');
+              // Solo log in dev mode, non è un errore critico
+              if (import.meta.env.DEV) {
+                console.debug('[DashboardHome] Layout loading timeout, using default widgets');
+              }
               resolve(null);
             }, 3000)
           )

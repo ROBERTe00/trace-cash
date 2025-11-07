@@ -27,8 +27,8 @@ export interface TimeSeriesData {
  * Hook for Net Worth Chart - Calculates from expenses and investments
  */
 export function useNetWorthChart(timeframe: '1M' | '3M' | '6M' | '1Y' | 'ALL' = '1M') {
-  const { data: expenses } = useExpenses();
-  const { data: investments } = useInvestments();
+  const { expenses } = useExpenses();
+  const { investments } = useInvestments();
   const [chartData, setChartData] = useState<TimeSeriesData | null>(null);
 
   // Calculate net worth over time
@@ -117,7 +117,7 @@ export function useNetWorthChart(timeframe: '1M' | '3M' | '6M' | '1Y' | 'ALL' = 
  * Hook for Spending Chart - Aggregates expenses by category
  */
 export function useSpendingChart() {
-  const { data: expenses } = useExpenses();
+  const { expenses } = useExpenses();
 
   const chartData = useMemo<TimeSeriesData | null>(() => {
     if (!expenses || expenses.length === 0) return null;
@@ -163,7 +163,7 @@ export function useSpendingChart() {
  * Hook for Income vs Expenses Chart
  */
 export function useIncomeExpensesChart(timeframe: '1M' | '3M' | '6M' | '1Y' = '1M') {
-  const { data: expenses } = useExpenses();
+  const { expenses } = useExpenses();
 
   const chartData = useMemo<TimeSeriesData | null>(() => {
     if (!expenses || expenses.length === 0) return null;
@@ -231,7 +231,7 @@ export function useIncomeExpensesChart(timeframe: '1M' | '3M' | '6M' | '1Y' = '1
  * Hook for Portfolio Allocation Chart
  */
 export function usePortfolioAllocationChart() {
-  const { data: investments } = useInvestments();
+  const { investments } = useInvestments();
 
   const chartData = useMemo<TimeSeriesData | null>(() => {
     if (!investments || investments.length === 0) return null;

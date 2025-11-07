@@ -47,6 +47,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Bypass Service Worker for external hosts (avoid CORS issues with third-party APIs like Yahoo)
+  const sameOrigin = url.origin === self.location.origin;
+  const isSupabase = url.hostname.includes('supabase.co');
+  if (!sameOrigin && !isSupabase) {
+    // Do not intercept, let the browser handle the request directly
+    return;
+  }
+
   // NEVER cache index.html or app shell - always fetch fresh from network
   if (url.pathname === '/' || url.pathname === '/index.html' || request.destination === 'document') {
     event.respondWith(
@@ -120,10 +128,23 @@ self.addEventListener('fetch', (event) => {
 
   // Network-first for API calls (Supabase)
   if (url.hostname.includes('supabase.co')) {
+    const isInsertCall = request.method === 'POST' && request.url.includes('/rest/v1/expenses');
+    
+    if (isInsertCall) {
+      console.log('[Service Worker] 🔄 INSERT CALL intercepted:', request.url, request.method);
+    }
+    
     event.respondWith(
       (async () => {
         try {
+          if (isInsertCall) {
+            console.log('[Service Worker] 📡 Fetching INSERT request...');
+          }
           const response = await fetch(request);
+          
+          if (isInsertCall) {
+            console.log('[Service Worker] ✅ INSERT response:', response.status, response.statusText);
+          }
           
           // Don't cache authentication or sensitive data
           if (
@@ -131,6 +152,14 @@ self.addEventListener('fetch', (event) => {
             request.url.includes('/storage/') ||
             request.url.includes('/realtime/')
           ) {
+            return response;
+          }
+          
+          // NON CACHARE INSERT/UPDATE/DELETE - CRITICO!
+          if (request.method === 'POST' || request.method === 'PUT' || request.method === 'PATCH' || request.method === 'DELETE') {
+            if (isInsertCall) {
+              console.log('[Service Worker] 🚫 Not caching INSERT request');
+            }
             return response;
           }
           
@@ -148,7 +177,14 @@ self.addEventListener('fetch', (event) => {
           
           return response;
         } catch (error) {
-          // Fallback to cache if offline
+          if (isInsertCall) {
+            console.error('[Service Worker] ❌ INSERT fetch error:', error);
+          }
+          // NON usare cache per INSERT/UPDATE/DELETE anche in caso di errore!
+          if (request.method === 'POST' || request.method === 'PUT' || request.method === 'PATCH' || request.method === 'DELETE') {
+            throw error;
+          }
+          // Fallback to cache if offline solo per GET
           const cachedResponse = await caches.match(request);
           if (cachedResponse) {
             return cachedResponse;

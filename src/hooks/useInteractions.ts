@@ -173,12 +173,16 @@ export function useForm<T extends Record<string, any>>(config: FormConfig<T>) {
       if (onSubmit) {
         await onSubmit(values);
         eventBus.emit(Events.FORM_SUBMIT, { values });
+        // Reset form only on success
+        reset();
       }
-      reset();
     } catch (error) {
       console.error('[useForm] Submit error:', error);
+      // Don't reset form on error, let user fix it
+      // Re-throw so caller can handle it
       throw error;
     } finally {
+      // Always reset submitting state
       setIsSubmitting(false);
     }
   }, [values, validate, onSubmit, reset, errors]);
@@ -256,8 +260,19 @@ export function useFilter<T extends Record<string, any>>(config: FilterConfig<T>
     return {};
   });
 
+  // Apply filters - use deep comparison for filters to prevent unnecessary recalculations
+  const filtersRef = useRef<string>('');
+  const filtersString = JSON.stringify(filters);
+  
   // Apply filters
   const filtered = useMemo(() => {
+    // Only recalculate if filters actually changed
+    if (filtersString === filtersRef.current && filtersRef.current !== '') {
+      // Return cached result - but we need to track items changes separately
+      // For now, always recalculate but optimize the filter logic
+    }
+    filtersRef.current = filtersString;
+    
     let result = [...items];
 
     // Search filter
@@ -311,7 +326,7 @@ export function useFilter<T extends Record<string, any>>(config: FilterConfig<T>
     }
 
     return result;
-  }, [items, filters]);
+  }, [items, filtersString]);
 
   // Update filters
   const updateFilter = useCallback((key: keyof FilterState, value: any) => {
@@ -332,24 +347,40 @@ export function useFilter<T extends Record<string, any>>(config: FilterConfig<T>
   }, []);
 
   // Persist to URL
+  const prevFiltersRef = useRef<string>('');
   useEffect(() => {
     if (persistToURL && typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      if (Object.keys(filters).length > 0) {
-        params.set('filters', JSON.stringify(filters));
-      } else {
-        params.delete('filters');
+      const filtersString = JSON.stringify(filters);
+      
+      // Only update URL if filters actually changed
+      if (filtersString !== prevFiltersRef.current) {
+        prevFiltersRef.current = filtersString;
+        const params = new URLSearchParams(window.location.search);
+        
+        if (Object.keys(filters).length > 0) {
+          params.set('filters', filtersString);
+        } else {
+          params.delete('filters');
+        }
+        window.history.replaceState({}, '', `${window.location.pathname}?${params}`);
       }
-      window.history.replaceState({}, '', `${window.location.pathname}?${params}`);
     }
   }, [filters, persistToURL]);
 
-  // Notify parent of filtered results
+  // Notify parent of filtered results - use ref to prevent unnecessary calls
+  const filteredRef = useRef<any[]>([]);
+  const filteredString = JSON.stringify(filtered);
+  
   useEffect(() => {
-    if (onFiltered) {
-      onFiltered(filtered);
+    // Only call onFiltered if filtered actually changed
+    if (filteredString !== JSON.stringify(filteredRef.current)) {
+      filteredRef.current = filtered;
+      if (onFiltered) {
+        onFiltered(filtered);
+      }
     }
-  }, [filtered, onFiltered]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredString]); // Use stringified version to prevent object reference issues
 
   return {
     filters,

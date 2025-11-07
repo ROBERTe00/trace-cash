@@ -190,3 +190,5 @@ financialDataIntegration.setProvider('crypto', 'API');
 - Tutte le chiamate API sono asincrone e non bloccanti
 - I simboli vengono sempre convertiti in uppercase per consistenza
 
+
+

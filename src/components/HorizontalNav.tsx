@@ -4,8 +4,6 @@ import {
   Wallet, 
   TrendingUp, 
   Target, 
-  CreditCard, 
-  Lightbulb, 
   Settings,
   BarChart3,
   GraduationCap
@@ -21,8 +19,6 @@ export function HorizontalNav() {
     { path: '/ai-educator', label: 'AI Educator', icon: GraduationCap },
     { path: '/investments', label: 'Investments', icon: TrendingUp },
     { path: '/goals', label: 'Goals', icon: Target },
-    { path: '/insights', label: 'Insights', icon: Lightbulb },
-    { path: '/credit-cards', label: 'Cards', icon: CreditCard },
     { path: '/settings', label: 'Settings', icon: Settings },
   ];
   

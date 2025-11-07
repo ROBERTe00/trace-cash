@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { X, Receipt, TrendingUp, FileUp, Receipt as Banknote } from "lucide-react";
 import { toast } from "sonner";
+import { useExpenses } from "@/hooks/useExpenses";
+import { format } from "date-fns";
 
 interface QuickActionModalsProps {
   activeModal: 'add_expense' | 'add_income' | 'import_file' | 'bank_statement' | null;
@@ -13,15 +15,77 @@ interface QuickActionModalsProps {
 
 export const QuickActionModals = ({ activeModal, onClose }: QuickActionModalsProps) => {
   const [amount, setAmount] = useState("");
-  const [recipient, setRecipient] = useState("");
+  const [description, setDescription] = useState("");
+  const { createExpense } = useExpenses();
 
-  const handleSubmit = (action: string) => {
-    toast.success(`${action} action completed`, {
-      description: `Amount: $${amount}`,
-    });
-    setAmount("");
-    setRecipient("");
-    onClose();
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!activeModal) {
+      setAmount("");
+      setDescription("");
+    }
+  }, [activeModal]);
+
+  const handleSubmitExpense = async () => {
+    if (!description.trim()) {
+      toast.error("Inserisci una descrizione");
+      return;
+    }
+    if (!amount || parseFloat(amount) <= 0) {
+      toast.error("Inserisci un importo valido");
+      return;
+    }
+
+    try {
+      const expenseData = {
+        date: format(new Date(), 'yyyy-MM-dd'),
+        description: description.trim(),
+        amount: parseFloat(amount),
+        category: 'Other',
+        type: 'Expense' as const,
+        recurring: false,
+      };
+
+      await createExpense(expenseData);
+      setAmount("");
+      setDescription("");
+      onClose();
+      // Toast viene emesso automaticamente da useExpenses.onSuccess
+    } catch (error: any) {
+      console.error('[QuickActionModals] Error adding expense:', error);
+      toast.error(`Errore: ${error?.message || 'Errore sconosciuto'}`);
+    }
+  };
+
+  const handleSubmitIncome = async () => {
+    if (!description.trim()) {
+      toast.error("Inserisci una descrizione");
+      return;
+    }
+    if (!amount || parseFloat(amount) <= 0) {
+      toast.error("Inserisci un importo valido");
+      return;
+    }
+
+    try {
+      const expenseData = {
+        date: format(new Date(), 'yyyy-MM-dd'),
+        description: description.trim(),
+        amount: parseFloat(amount),
+        category: 'Other',
+        type: 'Income' as const,
+        recurring: false,
+      };
+
+      await createExpense(expenseData);
+      setAmount("");
+      setDescription("");
+      onClose();
+      // Toast viene emesso automaticamente da useExpenses.onSuccess
+    } catch (error: any) {
+      console.error('[QuickActionModals] Error adding income:', error);
+      toast.error(`Errore: ${error?.message || 'Errore sconosciuto'}`);
+    }
   };
 
   return (
@@ -46,9 +110,10 @@ export const QuickActionModals = ({ activeModal, onClose }: QuickActionModalsPro
               <Input
                 id="expense-description"
                 placeholder="Es. Pranzo al ristorante"
-                value={recipient}
-                onChange={(e) => setRecipient(e.target.value)}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 className="mt-2"
+                required
               />
             </div>
             <div>
@@ -56,15 +121,18 @@ export const QuickActionModals = ({ activeModal, onClose }: QuickActionModalsPro
               <Input
                 id="expense-amount"
                 type="number"
+                step="0.01"
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="mt-2 text-2xl font-mono"
+                required
               />
             </div>
             <Button 
               className="w-full bg-red-500 hover:bg-red-600 hover:shadow-[0_0_20px_rgba(239,68,68,0.4)] transition-all"
-              onClick={() => handleSubmit("Aggiungi Spesa")}
+              onClick={handleSubmitExpense}
+              disabled={!description.trim() || !amount || parseFloat(amount) <= 0}
             >
               Registra €{amount || "0.00"}
             </Button>
@@ -92,9 +160,10 @@ export const QuickActionModals = ({ activeModal, onClose }: QuickActionModalsPro
               <Input
                 id="income-description"
                 placeholder="Es. Stipendio mensile"
-                value={recipient}
-                onChange={(e) => setRecipient(e.target.value)}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 className="mt-2"
+                required
               />
             </div>
             <div>
@@ -102,15 +171,18 @@ export const QuickActionModals = ({ activeModal, onClose }: QuickActionModalsPro
               <Input
                 id="income-amount"
                 type="number"
+                step="0.01"
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="mt-2 text-2xl font-mono"
+                required
               />
             </div>
             <Button 
               className="w-full bg-green-500 hover:bg-green-600 hover:shadow-[0_0_20px_rgba(34,197,94,0.4)] transition-all"
-              onClick={() => handleSubmit("Aggiungi Entrata")}
+              onClick={handleSubmitIncome}
+              disabled={!description.trim() || !amount || parseFloat(amount) <= 0}
             >
               Registra €{amount || "0.00"}
             </Button>
@@ -138,7 +210,10 @@ export const QuickActionModals = ({ activeModal, onClose }: QuickActionModalsPro
             </p>
             <Button 
               className="w-full hover:shadow-[0_0_20px_rgba(139,0,255,0.4)] transition-all"
-              onClick={() => handleSubmit("Importa File")}
+              onClick={() => {
+                toast.info("Funzionalità di import in sviluppo");
+                onClose();
+              }}
             >
               Scegli File da Importare
             </Button>
@@ -166,9 +241,12 @@ export const QuickActionModals = ({ activeModal, onClose }: QuickActionModalsPro
             </p>
             <Button 
               className="w-full bg-primary hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(139,0,255,0.4)] transition-all"
-              onClick={() => handleSubmit("Estratto Conto")}
+              onClick={() => {
+                toast.info("Funzionalità di import estratto conto in sviluppo");
+                onClose();
+              }}
             >
-              Carica PDF Estrado Conto
+              Carica PDF Estratto Conto
             </Button>
           </div>
         </DialogContent>

@@ -1,10 +1,10 @@
 // Enhanced Expense Distribution Widget - Uses real data
 import { Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { useSpendingChart } from '@/hooks/useChartData';
+import { registerChartJS } from '@/lib/chartRegistry';
 
-// Register Chart.js components
-ChartJS.register(ArcElement, Tooltip, Legend);
+// Register Chart.js components (centralized)
+registerChartJS();
 import { Skeleton } from '@/components/ui/skeleton';
 import { Maximize2, Download, FileDown } from 'lucide-react';
 import { useState, useRef } from 'react';

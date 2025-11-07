@@ -307,3 +307,5 @@ const stats = auditLogger.getViolationStats();
 - I log sono **persistenti** su `localStorage` (ultimi 100)
 - **TODO**: Integrazione Supabase per audit completo in produzione
 
+
+

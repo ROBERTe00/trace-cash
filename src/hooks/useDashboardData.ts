@@ -11,50 +11,44 @@ export function useDashboardData() {
   }, []);
 
   // Fetch all expenses - usa stessa queryKey di useExpenses per sincronizzazione automatica
+  // Rimuoviamo il timeout perché React Query ha già il suo sistema di timeout e retry
   const { data: expensesData, isLoading: expensesLoading, error: expensesError } = useQuery({
-    queryKey: ['expenses'],
+    queryKey: ['dashboard-expenses'],
     queryFn: async () => {
       console.log('[useDashboardData] Query started');
       try {
-        // Timeout wrapper
-        const timeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Query timeout after 10s')), 10000)
-        );
-
-        const dataPromise = (async () => {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) {
-            console.log('[useDashboardData] No user, returning empty array');
-            return [];
-          }
-          
-          console.log(`[useDashboardData] Fetching expenses for user: ${user.id}`);
-          const { data, error } = await supabase
-            .from('expenses')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('date', { ascending: false });
-          
-          if (error) {
-            console.error('[useDashboardData] Error fetching expenses:', error);
-            return [];
-          }
-          
-          console.log(`[useDashboardData] Fetched ${data?.length || 0} expenses`);
-          return data || [];
-        })();
-
-        return await Promise.race([dataPromise, timeoutPromise]);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          console.log('[useDashboardData] No user, returning empty array');
+          return [];
+        }
+        
+        console.log(`[useDashboardData] Fetching expenses for user: ${user.id}`);
+        const { data, error } = await supabase
+          .from('expenses')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false })
+          .limit(1000); // Limite ragionevole per performance
+        
+        if (error) {
+          console.error('[useDashboardData] Error fetching expenses:', error);
+          throw error; // Lascia che React Query gestisca l'errore
+        }
+        
+        console.log(`[useDashboardData] Fetched ${data?.length || 0} expenses`);
+        return data || [];
       } catch (error) {
         console.error('[useDashboardData] Exception in queryFn:', error);
-        return [];
+        throw error; // Re-throw per permettere a React Query di gestire retry
       }
     },
     enabled: true,
-    retry: 1,
-    staleTime: 0, // Always refetch when invalidated (0 = immediately stale)
-    refetchOnWindowFocus: true,
+    retry: 2, // Retry fino a 2 volte
+    staleTime: 30 * 1000, // Considera i dati freschi per 30 secondi
+    refetchOnWindowFocus: false, // Evita refetch automatico per migliorare UX
     refetchOnMount: true,
+    gcTime: 5 * 60 * 1000, // Mantieni in cache per 5 minuti
   });
 
   // Calculate dashboard metrics

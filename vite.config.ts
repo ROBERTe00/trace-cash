@@ -27,13 +27,64 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    // Code splitting ottimizzato
     rollupOptions: {
       output: {
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]'
-      }
-    }
+        assetFileNames: 'assets/[name]-[hash].[ext]',
+        // Manual chunks per ottimizzare il bundling
+        manualChunks: (id) => {
+          // Vendor chunks
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'vendor-react';
+            }
+            if (id.includes('chart.js') || id.includes('react-chartjs-2')) {
+              return 'vendor-charts';
+            }
+            if (id.includes('framer-motion') || id.includes('lucide-react')) {
+              return 'vendor-ui';
+            }
+            if (id.includes('@tanstack/react-query')) {
+              return 'vendor-query';
+            }
+            if (id.includes('@supabase')) {
+              return 'vendor-supabase';
+            }
+            // Altri vendor
+            return 'vendor';
+          }
+        },
+      },
+    },
+    // Target modern browsers per bundle più piccolo
+    target: 'es2020',
+    // Minificazione avanzata
+    minify: mode === 'production' ? 'terser' : false,
+    terserOptions: mode === 'production' ? {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info'],
+      },
+    } : undefined,
+    // Chunk size warning limit
+    chunkSizeWarningLimit: 1000,
+    // Source maps solo in dev
+    sourcemap: mode === 'development',
+  },
+  // CSS optimization
+  css: {
+    devSourcemap: false,
+    modules: {
+      localsConvention: 'camelCase',
+    },
+  },
+  // Preload optimization
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom'],
+    exclude: mode === 'production' ? ['chart.js'] : [], // Lazy load charts in production
   },
   test: {
     globals: true,

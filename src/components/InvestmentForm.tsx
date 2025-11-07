@@ -12,11 +12,11 @@ import { useApp } from "@/contexts/AppContext";
 import { Command, CommandInput, CommandList, CommandItem, CommandEmpty, CommandGroup } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { searchAssets } from "@/constants/investmentAssets";
+import { searchAssets, classifyAsset } from "@/constants/investmentAssets";
 import { useLivePrice } from "@/hooks/useLivePrice";
 
 interface InvestmentFormProps {
-  onAdd: (investment: Omit<Investment, "id">) => void;
+  onAdd: (investment: Omit<Investment, "id">) => Promise<void> | void;
 }
 
 export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
@@ -41,8 +41,9 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [suggestions, setSuggestions] = useState(searchAssets("", 10));
+  const [suggestions, setSuggestions] = useState(searchAssets("", 20));
   const [manualEntry, setManualEntry] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { price, loading } = useLivePrice(
     formData.symbol || undefined,
@@ -61,24 +62,36 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
-    const results = searchAssets(value, 10);
-    setSuggestions(results);
+    setShowSuggestions(true);
   };
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      const filtered = searchAssets(
+        searchQuery,
+        50,
+        formData.type || undefined
+      );
+      setSuggestions(filtered);
+    }, 150);
+    return () => clearTimeout(id);
+  }, [searchQuery, formData.type]);
 
   const handleAssetSelect = (asset: any) => {
     setFormData({
       ...formData,
       name: asset.name,
       symbol: asset.symbol,
-      type: asset.type as Investment["type"],
+      type: (asset.type === 'Cash' ? 'Cash' : asset.type) as Investment["type"],
       liveTracking: true
     });
     setSearchQuery(asset.name);
     setShowSuggestions(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!formData.name || !formData.currentPrice || !formData.profitPercentage || !formData.quantity) {
       toast.error(t("investment.enterName"));
       return;
@@ -89,27 +102,63 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
     const quantity = parseFloat(formData.quantity);
     const purchasePrice = currentPrice / (1 + profitPercentage / 100);
 
-    onAdd({
-      type: formData.type,
-      name: formData.name,
-      currentPrice,
-      purchasePrice,
-      quantity,
-      symbol: formData.symbol || undefined,
-      liveTracking: formData.liveTracking,
-    });
+    // Basic numeric validation
+    if (!isFinite(currentPrice) || currentPrice <= 0 || !isFinite(quantity) || quantity <= 0 || !isFinite(purchasePrice) || purchasePrice <= 0) {
+      toast.error(t("common.invalidData") || "Dati non validi");
+      return;
+    }
 
-    setFormData({
-      type: "" as Investment["type"],
-      name: "",
-      currentPrice: "",
-      profitPercentage: "",
-      quantity: "",
-      symbol: "",
-      liveTracking: false,
-    });
-    setSearchQuery("");
-    setManualEntry(false);
+    // Classification and consistency rules
+    const detected = classifyAsset(formData.symbol, formData.name);
+    // Cash non deve avere symbol/liveTracking
+    if (formData.type === 'Cash' && (formData.symbol || formData.liveTracking)) {
+      toast.error("Cash non può avere simbolo o live tracking");
+      return;
+    }
+    // Se è presente una classificazione affidabile, usa quella (auto-correct)
+    let finalType = formData.type;
+    if (detected && finalType && detected !== finalType) {
+      finalType = detected;
+      toast.info(`Tipo corretto automaticamente a ${detected} sulla base dell'asset selezionato`);
+    }
+    if (!finalType && detected) {
+      finalType = detected;
+    }
+    if (!finalType) {
+      toast.error("Seleziona un tipo valido (Stock/ETF/Crypto/Cash)");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await onAdd({
+        type: finalType,
+        name: formData.name,
+        currentPrice,
+        purchasePrice,
+        quantity,
+        symbol: formData.symbol || undefined,
+        liveTracking: formData.liveTracking,
+      });
+
+      // Reset form only after successful add
+      setFormData({
+        type: "" as Investment["type"],
+        name: "",
+        currentPrice: "",
+        profitPercentage: "",
+        quantity: "",
+        symbol: "",
+        liveTracking: false,
+      });
+      setSearchQuery("");
+      setManualEntry(false);
+    } catch (error) {
+      console.error('Error adding investment:', error);
+      // Error toast is handled by parent component
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -143,13 +192,15 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
                   <Button
                     variant="outline"
                     role="combobox"
-                    className="w-full justify-between"
+                    className="w-full justify-between min-w-0"
                     type="button"
                   >
-                    {searchQuery || formData.name || t("investment.searchAsset")}
+                    <span className="flex-1 min-w-0 text-left truncate">
+                      {searchQuery || formData.name || t("investment.searchAsset")}
+                    </span>
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-full p-0" align="start">
+                <PopoverContent className="w-full p-0 max-h-72 overflow-auto" align="start">
                   <Command>
                     <CommandInput
                       placeholder={t("investment.searchAsset")}
@@ -163,10 +214,12 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
                           <CommandItem
                             key={asset.symbol}
                             onSelect={() => handleAssetSelect(asset)}
-                            className="flex items-center justify-between cursor-pointer"
+                            className="flex items-center justify-between cursor-pointer gap-3"
+                            title={`${asset.name} (${asset.symbol})`}
                           >
-                            <div>
-                              <strong>{asset.symbol}</strong> - {asset.name}
+                            <div className="min-w-0">
+                              <div className="font-medium truncate">{asset.name}</div>
+                              <div className="text-xs text-gray-400 truncate">{asset.symbol} · {asset.type}</div>
                             </div>
                             {price && asset.symbol === formData.symbol && (
                               <Badge variant="outline" className="ml-2">
@@ -286,9 +339,9 @@ export const InvestmentForm = ({ onAdd }: InvestmentFormProps) => {
             <Label htmlFor="live" className="text-sm cursor-pointer">{t('investment.liveTracking')}</Label>
           </div>
 
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
             <Plus className="h-4 w-4 mr-2" />
-            {t('investment.addButton')}
+            {isSubmitting ? 'Salvataggio…' : t('investment.addButton')}
           </Button>
         </form>
       </CardContent>

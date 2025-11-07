@@ -1,4 +1,4 @@
-project_id = "bexsbrlwjelfgmcvnmrf"
+project_id = "xhidguwfmakncpgicjzg"
 
 [functions.process-bank-statement]
 verify_jwt = true
@@ -26,6 +26,12 @@ verify_jwt = true
 
 [functions.update-live-prices]
 verify_jwt = true
+
+[functions.get-benchmark]
+verify_jwt = false
+
+[functions.get-price]
+verify_jwt = false
 
 [functions.analyze-expense-investment-correlation]
 verify_jwt = true

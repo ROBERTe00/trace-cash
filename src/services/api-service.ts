@@ -18,12 +18,18 @@ interface MarketDataResponse {
 }
 
 class ApiService {
-  private baseURL: string;
+  private baseURL: string | null;
+  private disableRemote: boolean;
   private cache: Map<string, { data: MarketDataResponse; timestamp: number }>;
   private cacheTTL: number = 60000; // 1 minute cache
 
   constructor() {
-    this.baseURL = import.meta.env.VITE_MYMONEY_API_URL || 'https://api.mymoney.ai';
+    const envUrl = import.meta.env.VITE_MYMONEY_API_URL || '';
+    this.baseURL = envUrl.length ? envUrl : null;
+    this.disableRemote =
+      import.meta.env.VITE_DISABLE_REMOTE_MARKET_API === '1' ||
+      !this.baseURL ||
+      this.baseURL.includes('api.mymoney.ai'); // endpoint dimostrativo spesso non risolve
     this.cache = new Map();
   }
 
@@ -78,12 +84,19 @@ class ApiService {
       }, {} as Record<string, MarketPrice>);
     }
 
+    if (this.disableRemote) {
+      return this.getFallbackData(symbols, type);
+    }
+
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1500);
       const response = await fetch(`${this.baseURL}/market-data`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symbols, type })
-      });
+        body: JSON.stringify({ symbols, type }),
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timeoutId));
 
       if (!response.ok) {
         throw new Error(`API returned ${response.status}: ${response.statusText}`);
@@ -111,7 +124,7 @@ class ApiService {
       }, {} as Record<string, MarketPrice>);
 
     } catch (error) {
-      console.error('[ApiService] Market data fetch failed:', error);
+      console.error('[ApiService] Remote market data fetch failed (fallback used):', error);
       const fallbackData = await this.getFallbackData(symbols, type);
       
       // Cache fallback data too (shorter TTL)
@@ -148,4 +161,6 @@ class ApiService {
 
 // Export singleton instance
 export const apiService = new ApiService();
+
+
 

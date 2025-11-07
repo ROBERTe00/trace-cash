@@ -1,9 +1,10 @@
 // Market data API integration for live crypto and stock prices
 import { convertCurrency } from "./currencyConverter";
 import { apiService } from "@/services/api-service";
+import { supabase } from "@/integrations/supabase/client";
 
 const COINGECKO_API = "https://api.coingecko.com/api/v3";
-const YAHOO_FINANCE_PROXY = "https://query1.finance.yahoo.com/v8/finance/chart";
+const YAHOO_FINANCE_PROXY = "https://query1.finance.yahoo.com/v8/finance/chart"; // fallback only
 
 export interface MarketPrice {
   symbol: string;
@@ -33,7 +34,8 @@ const cryptoIdMap: Record<string, string> = {
 
 export const fetchCryptoPrice = async (symbol: string, targetCurrency: string = 'EUR'): Promise<MarketPrice | null> => {
   try {
-    const cryptoId = cryptoIdMap[symbol.toUpperCase()] || symbol.toLowerCase();
+    const upperSymbol = symbol.toUpperCase();
+    const cryptoId = cryptoIdMap[upperSymbol] || symbol.toLowerCase();
     const response = await fetch(
       `${COINGECKO_API}/simple/price?ids=${cryptoId}&vs_currencies=eur,usd&include_24hr_change=true`
     );
@@ -60,7 +62,7 @@ export const fetchCryptoPrice = async (symbol: string, targetCurrency: string = 
     }
 
     return {
-      symbol: symbol.toUpperCase(),
+      symbol: upperSymbol,
       price,
       change24h,
       lastUpdate: new Date().toISOString(),
@@ -89,26 +91,42 @@ export const fetchMultipleCryptoPrices = async (
   return results;
 };
 
-// Check if a symbol is likely a crypto
+// Check if a symbol is a known crypto
 export const isCryptoSymbol = (symbol: string): boolean => {
   const upperSymbol = symbol.toUpperCase();
-  return upperSymbol in cryptoIdMap || symbol.length <= 5;
+  return upperSymbol in cryptoIdMap;
 };
 
 // Fetch stock/ETF price from Yahoo Finance
+// Prefer Edge Function to avoid CORS, fallback to direct Yahoo
 export const fetchStockPrice = async (symbol: string, targetCurrency: string = 'EUR'): Promise<MarketPrice | null> => {
   try {
-    const response = await fetch(
-      `${YAHOO_FINANCE_PROXY}/${symbol}?interval=1d&range=1d`
-    );
+    // Edge function
+    const { data: edge } = await supabase.functions.invoke('get-price', {
+      body: { symbols: [symbol] }
+    });
+    const info = edge?.data?.[symbol.toUpperCase()];
+    if (info) {
+      let price = Number(info.price) || 0;
+      const stockCurrency = String(info.currency || 'USD');
+      const change24h = Number(info.change24h || 0);
+      if (stockCurrency !== targetCurrency) {
+        price = await convertCurrency(price, stockCurrency, targetCurrency);
+      }
+      return {
+        symbol: symbol.toUpperCase(),
+        price,
+        change24h,
+        lastUpdate: info.lastUpdate || new Date().toISOString(),
+      };
+    }
 
+    // Fallback to direct Yahoo
+    const response = await fetch(`${YAHOO_FINANCE_PROXY}/${symbol}?interval=1d&range=1d`);
     if (!response.ok) return null;
-
     const data = await response.json();
     const result = data.chart?.result?.[0];
-
     if (!result) return null;
-
     let price = result.meta?.regularMarketPrice || 0;
     const previousClose = result.meta?.chartPreviousClose;
     const change24h = previousClose ? ((price - previousClose) / previousClose) * 100 : 0;
@@ -136,10 +154,8 @@ export const fetchStockPrice = async (symbol: string, targetCurrency: string = '
 export const fetchAssetPrice = async (symbol: string, type: string): Promise<MarketPrice | null> => {
   if (type === "Crypto" || isCryptoSymbol(symbol)) {
     return fetchCryptoPrice(symbol);
-  } else if (type === "ETF" || type === "Stock") {
-    return fetchStockPrice(symbol);
   }
-  return null;
+  return fetchStockPrice(symbol);
 };
 
 // Fetch all asset prices

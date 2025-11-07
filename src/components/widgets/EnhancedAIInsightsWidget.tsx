@@ -41,3 +41,5 @@ export function EnhancedAIInsightsWidget() {
   return <AIInsightsWidget key={refreshTrigger} />;
 }
 
+
+

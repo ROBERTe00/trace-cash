@@ -3,10 +3,8 @@ import {
   LayoutDashboard,
   TrendingUp,
   Wallet,
-  Lightbulb,
   Settings,
   Target,
-  CreditCard,
   BarChart3,
   GraduationCap,
 } from "lucide-react";
@@ -53,18 +51,6 @@ export function AppSidebar() {
       url: "/investments", 
       icon: TrendingUp,
       tooltip: "Investments"
-    },
-    { 
-      title: "Credit Cards", 
-      url: "/credit-cards", 
-      icon: CreditCard,
-      tooltip: "Credit Card Integration"
-    },
-    { 
-      title: "Insights", 
-      url: "/insights", 
-      icon: Lightbulb,
-      tooltip: "Insights"
     },
     { 
       title: "Goals", 

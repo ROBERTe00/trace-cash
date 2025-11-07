@@ -49,3 +49,5 @@ Aggiungi una transazione e verifica:
 - ✅ Aggiorna tutti i grafici del dashboard
 - ✅ Console mostra i log di sincronizzazione
 
+
+

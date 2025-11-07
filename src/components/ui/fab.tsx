@@ -13,7 +13,7 @@ export const FAB = () => {
       icon: Receipt,
       label: "Nuova Spesa",
       onClick: () => {
-        navigate("/expenses?action=add");
+        navigate("/transactions?action=add-expense");
         setIsOpen(false);
       },
       color: "bg-red-500 hover:bg-red-600",
@@ -31,7 +31,7 @@ export const FAB = () => {
       icon: Target,
       label: "Nuovo Obiettivo",
       onClick: () => {
-        navigate("/progress?action=create");
+        navigate("/goals?action=create");
         setIsOpen(false);
       },
       color: "bg-blue-500 hover:bg-blue-600",

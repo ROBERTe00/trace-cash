@@ -96,8 +96,15 @@ export function EnhancedExpenseForm({ onAdd, onCancel, initialValues }: Enhanced
         recurrence_type: values.recurring ? values.recurrenceType : undefined,
       };
       
-      await onAdd(expenseData);
-      eventBus.emit(Events.TRANSACTION_CREATED, expenseData);
+      try {
+        await onAdd(expenseData);
+        // Event viene emesso automaticamente da useExpenses.onSuccess
+        // Non serve emetterlo qui per evitare duplicati
+      } catch (error) {
+        console.error('[EnhancedExpenseForm] Error adding expense:', error);
+        // Re-throw per permettere al form di gestire l'errore
+        throw error;
+      }
     },
     autoSave: false,
   });
@@ -106,7 +113,12 @@ export function EnhancedExpenseForm({ onAdd, onCancel, initialValues }: Enhanced
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await form.submit();
+    try {
+      await form.submit();
+    } catch (error) {
+      console.error('[EnhancedExpenseForm] Submit failed:', error);
+      // Error is already handled by form hook and parent component
+    }
   };
 
   return (
@@ -289,4 +301,6 @@ export function EnhancedExpenseForm({ onAdd, onCancel, initialValues }: Enhanced
     </Card>
   );
 }
+
+
 

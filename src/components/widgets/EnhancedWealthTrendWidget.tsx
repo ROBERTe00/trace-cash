@@ -1,10 +1,10 @@
 // Enhanced Wealth Trend Widget - Uses real data from useChartData hook
 import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import { useNetWorthChart } from '@/hooks/useChartData';
+import { registerChartJS } from '@/lib/chartRegistry';
 
-// Register Chart.js components
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
+// Register Chart.js components (centralized)
+registerChartJS();
 import { Skeleton } from '@/components/ui/skeleton';
 import { Maximize2, Download, FileDown } from 'lucide-react';
 import { useState, useRef } from 'react';

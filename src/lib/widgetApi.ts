@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { saveCache, loadCache } from "@/lib/offlineCache";
 
 /**
  * Salva il layout dei widget nel backend
@@ -10,11 +11,7 @@ export async function saveWidgetLayout(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     // Fallback a localStorage se non autenticato
-    localStorage.setItem('mymoney-dashboard-layout', JSON.stringify({
-      widgets,
-      positions,
-      timestamp: new Date().toISOString()
-    }));
+    saveCache('widget-layout', { widgets, positions, timestamp: new Date().toISOString() });
     return;
   }
 
@@ -32,54 +29,51 @@ export async function saveWidgetLayout(
   if (error) {
     console.error('Errore nel salvataggio del layout:', error);
     // Fallback a localStorage
-    localStorage.setItem('mymoney-dashboard-layout', JSON.stringify({
-      widgets,
-      positions,
-      timestamp: new Date().toISOString()
-    }));
+    saveCache('widget-layout', { widgets, positions, timestamp: new Date().toISOString() });
   }
 }
 
 /**
  * Carica il layout dei widget dal backend
+ * Con timeout automatico se il backend è lento
  */
 export async function loadWidgetLayout() {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    // Fallback a localStorage
-    const saved = localStorage.getItem('mymoney-dashboard-layout');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return null;
-      }
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      // Fallback a localStorage
+      const cached = loadCache<any>('widget-layout');
+      if (cached) return cached;
+      return null;
     }
+
+    const { data, error } = await supabase
+      .from('user_dashboard_layouts')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    if (error) {
+      // Non loggare errori non critici (es. tabella non esiste)
+      if (error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.debug('Errore nel caricamento del layout:', error.message);
+      }
+      // Fallback a localStorage
+      const cached = loadCache<any>('widget-layout');
+      if (cached) return cached;
+      return null;
+    }
+
+    saveCache('widget-layout', data);
+    return data;
+  } catch (error) {
+    // Gestione errori generici
+    console.debug('[loadWidgetLayout] Error:', error);
+    const cached = loadCache<any>('widget-layout');
+    if (cached) return cached;
     return null;
   }
-
-  const { data, error } = await supabase
-    .from('user_dashboard_layouts')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
-
-  if (error) {
-    console.error('Errore nel caricamento del layout:', error);
-    // Fallback a localStorage
-    const saved = localStorage.getItem('mymoney-dashboard-layout');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  }
-
-  return data;
 }
 
 /**

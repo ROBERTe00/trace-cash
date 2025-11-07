@@ -44,49 +44,94 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   },
   global: {
     fetch: async (url, options = {}) => {
+      // LOG CRITICO: Se questo non appare, Supabase non sta usando global.fetch!
+      const urlString = typeof url === 'string' ? url : String(url);
+      console.log('[Supabase Global Fetch] 🚨🚨🚨 CALLED! URL:', urlString.substring(0, 150));
+      
       try {
         // Check if online before making request
         if (!navigator.onLine) {
+          console.error('[Supabase Global Fetch] ❌ Network offline');
           throw new Error('Network offline');
         }
         
-        // Timeout di 5 secondi per evitare che rimanga bloccato
+        // Timeout aumentato per operazioni più lunghe
+        // Le chiamate auth potrebbero essere lente, quindi timeout più lungo
+        // urlString già definito sopra
+        const isAuthCall = urlString.includes('/auth/v1/') || 
+                          urlString.includes('/auth/v1/user') ||
+                          urlString.includes('token') ||
+                          (options?.method === 'POST' && urlString.includes('/auth/'));
+        const timeout = isAuthCall ? 30000 : 20000; // 30s per auth, 20s per altre operazioni
+        
+        // Log dettagliato per vedere tutte le chiamate
+        const isInsertCall = urlString.includes('/rest/v1/expenses') && options?.method === 'POST';
+        if (isInsertCall) {
+          console.log('[Supabase] 🔄 INSERT CALL detected!');
+          console.log('[Supabase] URL:', urlString);
+          console.log('[Supabase] Method:', options?.method);
+          console.log('[Supabase] Headers:', options?.headers);
+          console.log('[Supabase] Body preview:', typeof options?.body === 'string' ? options.body.substring(0, 200) : options?.body);
+        }
+        console.log('[Supabase] Fetch call - URL:', urlString.substring(0, 150), 'Method:', options?.method || 'GET', 'isAuth:', isAuthCall, 'timeout:', timeout);
+        
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const fetchStartTime = Date.now();
+        const timeoutId = setTimeout(() => {
+          const elapsed = Date.now() - fetchStartTime;
+          console.error(`[Supabase] ⏱️ Request timeout after ${elapsed}ms (limit: ${timeout}ms) - URL:`, urlString.substring(0, 150));
+          controller.abort();
+        }, timeout);
         
         try {
+          if (isInsertCall) {
+            console.log('[Supabase] 📡 Starting fetch request for INSERT...');
+            console.log('[Supabase] 📡 Full URL:', urlString);
+            console.log('[Supabase] 📡 Request options:', {
+              method: options?.method,
+              headers: options?.headers,
+              body: typeof options?.body === 'string' ? options.body.substring(0, 300) : 'Not a string'
+            });
+          }
+          
+          // Usa fetch nativo - il Service Worker lo intercetterà se necessario
           const response = await fetch(url, {
             ...options,
             signal: controller.signal,
           });
+          
+          const fetchDuration = Date.now() - fetchStartTime;
+          if (isInsertCall) {
+            console.log(`[Supabase] ✅ Fetch completed in ${fetchDuration}ms - Status:`, response.status, response.statusText);
+            console.log('[Supabase] Response ok:', response.ok);
+            console.log('[Supabase] Response type:', response.type);
+            console.log('[Supabase] Response headers:', Object.fromEntries(response.headers.entries()));
+          }
           clearTimeout(timeoutId);
           return response;
         } catch (error: any) {
           clearTimeout(timeoutId);
+          const fetchDuration = Date.now() - fetchStartTime;
+          if (isInsertCall) {
+            console.error(`[Supabase] ❌ Fetch failed after ${fetchDuration}ms for INSERT`);
+            console.error('[Supabase] Error name:', error?.name);
+            console.error('[Supabase] Error message:', error?.message);
+            console.error('[Supabase] Error type:', typeof error);
+          }
           // Gestisci errori di rete silenziosamente
           if (error.name === 'AbortError' || 
               error.message?.includes('Failed to fetch') ||
               error.message?.includes('ERR_NAME_NOT_RESOLVED')) {
-            // Return a mock response to prevent app crash
-            return new Response(
-              JSON.stringify({ error: { message: 'Network error', status: 0 } }),
-              { status: 0, statusText: 'Network Error' }
-            );
+            // NON ritornare mock response per nessuna chiamata - lascia che gli errori vengano gestiti
+            // Return mock solo in casi estremi e solo per chiamate non critiche
+            console.error('[Supabase] Network error detected:', error.message, 'URL:', urlString.substring(0, 100));
+            throw error;
           }
           throw error;
         }
       } catch (error: any) {
-        // Gestisci tutti gli errori di rete
-        if (error?.message?.includes('Failed to fetch') ||
-            error?.message?.includes('ERR_NAME_NOT_RESOLVED') ||
-            error?.message?.includes('Network offline') ||
-            error?.name === 'NetworkError') {
-          // Return mock response instead of throwing
-          return new Response(
-            JSON.stringify({ error: { message: 'Network error', status: 0 } }),
-            { status: 0, statusText: 'Network Error' }
-          );
-        }
+        // Log errori di rete ma rilanciamoli - non nasconderli
+        console.error('[Supabase] Fetch error:', error?.message || error);
         throw error;
       }
     },

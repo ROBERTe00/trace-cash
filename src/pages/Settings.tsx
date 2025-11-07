@@ -10,6 +10,7 @@ import { PushNotificationToggle } from "@/components/PushNotificationToggle";
 import { GamificationPanel } from "@/components/GamificationPanel";
 import { AchievementsList } from "@/components/AchievementsList";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { clearUser, exportToCSV } from "@/lib/storage";
@@ -18,10 +19,14 @@ import { Download, LogOut, Palette, Shield, Database, WifiOff, Settings as Setti
 import { toast } from "sonner";
 import { AuditLogger } from "@/lib/auditLogger";
 import { useApp } from "@/contexts/AppContext";
+import { useState } from "react";
 import { clearCacheAndReload } from "@/lib/pwaUtils";
 
 export default function Settings() {
   const { t } = useApp();
+  const [strictRealData, setStrictRealData] = useState<boolean>(() => {
+    try { return localStorage.getItem('trace:strictRealData') === 'true'; } catch { return false; }
+  });
   
   const handleExport = async () => {
     exportToCSV();
@@ -59,6 +64,17 @@ export default function Settings() {
     } catch (error) {
       console.error("Clear cache error:", error);
       toast.error("Failed to clear cache. Try manually refreshing the page.");
+    }
+  };
+
+  const handleToggleStrictData = (value: boolean) => {
+    try {
+      localStorage.setItem('trace:strictRealData', value ? 'true' : 'false');
+      setStrictRealData(value);
+      toast.success(value ? 'Solo dati reali abilitato' : 'Defaults demo abilitati in dev');
+    } catch (e) {
+      console.error('Strict data toggle error:', e);
+      toast.error('Impossibile salvare la preferenza');
     }
   };
 
@@ -242,6 +258,17 @@ export default function Settings() {
             <CardContent className="space-y-6">
               <CategoryManager />
               <NotificationSettings />
+
+              {/* Strict Real Data Toggle */}
+              <div className="pt-6 border-t">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold">Solo dati reali (no demo)</h4>
+                    <p className="text-sm text-muted-foreground">Disabilita qualsiasi dato di esempio predefinito, anche in sviluppo</p>
+                  </div>
+                  <Switch checked={strictRealData} onCheckedChange={handleToggleStrictData} />
+                </div>
+              </div>
               
               {/* Data Management Actions */}
               <div className="pt-6 border-t space-y-4">

@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useFinancialGoals } from "@/hooks/useFinancialGoals";
 import { useInvestments } from "@/hooks/useInvestments";
+import { useGamification } from "@/hooks/useGamification";
 
 interface Message {
   id: string;
@@ -14,6 +15,7 @@ export default function AIEducator() {
   const { expenses } = useExpenses();
   const { goals } = useFinancialGoals();
   const { investments } = useInvestments();
+  const { userLevel, totalPoints } = useGamification();
   
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -54,10 +56,107 @@ Esaminiamo i pattern dei tuoi dati storici
     const totalIncome = expenses.filter(e => e.type === 'Income').reduce((sum, e) => sum + e.amount, 0);
     const totalExpenses = expenses.filter(e => e.type === 'Expense').reduce((sum, e) => sum + e.amount, 0);
     const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome * 100) : 0;
-    const totalValue = investments.reduce((sum, inv) => sum + (inv.quantity * inv.currentPrice), 0);
+    const totalValue = (investments || []).reduce((sum, inv) => sum + (inv.quantity * inv.current_price), 0);
     
     return { totalIncome, totalExpenses, savingsRate, totalValue };
   };
+
+  // Calculate learning progress based on real user data
+  const learningProgress = useMemo(() => {
+    const transactionCount = expenses.length;
+    const investmentCount = investments.length;
+    const goalsCount = goals.filter(g => g.status === 'active').length;
+    const completedGoals = goals.filter(g => g.status === 'completed').length;
+    const messagesExchanged = messages.filter(m => m.sender === 'user').length;
+    
+    // Calculate total portfolio value
+    const portfolioTotalValue = (investments || []).reduce((sum, inv) => sum + (inv.quantity * inv.current_price), 0);
+    
+    // Calculate progress for each curriculum section
+    const fundamentalsProgress = Math.min(100, (
+      (transactionCount > 0 ? 30 : 0) +
+      (messagesExchanged > 0 ? 20 : 0) +
+      (goalsCount > 0 ? 30 : 0) +
+      (totalPoints > 100 ? 20 : (totalPoints / 100 * 20))
+    ));
+    
+    const investmentsProgress = Math.min(100, (
+      (investmentCount > 0 ? 40 : 0) +
+      (messagesExchanged > 3 ? 30 : 0) +
+      (portfolioTotalValue > 1000 ? 30 : (portfolioTotalValue / 1000 * 30))
+    ));
+    
+    const planningProgress = fundamentalsProgress > 50 && investmentsProgress > 25 
+      ? Math.min(100, (
+        (completedGoals > 0 ? 40 : 0) +
+        (goalsCount > 1 ? 30 : 0) +
+        (messagesExchanged > 5 ? 30 : 0)
+      ))
+      : 0;
+    
+    const protectionProgress = fundamentalsProgress > 70 && planningProgress > 30
+      ? Math.min(100, (
+        (goals.filter(g => g.goal_type === 'emergency_fund').length > 0 ? 50 : 0) +
+        (messagesExchanged > 10 ? 50 : 0)
+      ))
+      : 0;
+    
+    return {
+      fundamentals: {
+        completed: Math.floor(fundamentalsProgress / 100 * 15),
+        total: 15,
+        percentage: fundamentalsProgress
+      },
+      investments: {
+        completed: Math.floor(investmentsProgress / 100 * 20),
+        total: 20,
+        percentage: investmentsProgress
+      },
+      planning: {
+        completed: Math.floor(planningProgress / 100 * 15),
+        total: 15,
+        percentage: planningProgress
+      },
+      protection: {
+        completed: Math.floor(protectionProgress / 100 * 10),
+        total: 10,
+        percentage: protectionProgress
+      }
+    };
+  }, [expenses.length, investments.length, goals, messages.length, totalPoints, investments]);
+
+  // Calculate risk profile based on real data
+  const riskProfile = useMemo(() => {
+    const totalValue = (investments || []).reduce((sum, inv) => sum + (inv.quantity * inv.current_price), 0);
+    const totalIncome = expenses.filter(e => e.type === 'Income').reduce((sum, e) => sum + e.amount, 0);
+    const savingsRate = totalIncome > 0 
+      ? ((expenses.filter(e => e.type === 'Income').reduce((sum, e) => sum + e.amount, 0) - 
+          expenses.filter(e => e.type === 'Expense').reduce((sum, e) => sum + e.amount, 0)) / totalIncome * 100)
+      : 0;
+    
+    let riskScore = 50; // Base score
+    
+    // Adjust based on savings rate
+    if (savingsRate > 30) riskScore += 20;
+    else if (savingsRate > 20) riskScore += 10;
+    else if (savingsRate < 10) riskScore -= 20;
+    
+    // Adjust based on investment diversification
+    const investmentTypes = new Set(investments.map(inv => inv.type)).size;
+    if (investmentTypes >= 3) riskScore += 15;
+    else if (investmentTypes >= 2) riskScore += 5;
+    
+    // Adjust based on portfolio size relative to income
+    if (totalIncome > 0) {
+      const portfolioRatio = totalValue / totalIncome;
+      if (portfolioRatio > 2) riskScore += 15;
+      else if (portfolioRatio > 1) riskScore += 5;
+    }
+    
+    if (riskScore >= 70) return { label: 'Dinamico', percentage: 80, color: 'yellow-400' };
+    if (riskScore >= 50) return { label: 'Moderato', percentage: 60, color: 'secondary' };
+    return { label: 'Conservativo', percentage: 30, color: 'accent' };
+  }, [investments, expenses]);
 
   const generateAIResponse = (userMessage: string): string => {
     const message = userMessage.toLowerCase();
@@ -333,31 +432,62 @@ Cosa vuoi approfondire oggi?${complianceNotice}`;
                 <div className="p-4 bg-white/5 rounded-xl border-l-4 border-secondary">
                   <div className="flex justify-between items-start mb-2">
                     <span className="text-sm font-semibold">Fondamenti Finanziari</span>
-                    <i className="fas fa-check-circle text-secondary" />
+                    {learningProgress.fundamentals.percentage >= 100 ? (
+                      <i className="fas fa-check-circle text-secondary" />
+                    ) : (
+                      <i className="fas fa-play-circle text-secondary" />
+                    )}
                   </div>
-                  <p className="text-xs text-gray-400">Completato: 12/15 lezioni</p>
+                  <p className="text-xs text-gray-400">
+                    Completato: {learningProgress.fundamentals.completed}/{learningProgress.fundamentals.total} lezioni
+                  </p>
                   <div className="w-full bg-gray-700 rounded-full h-2 mt-2">
-                    <div className="bg-secondary h-2 rounded-full" style={{ width: '80%' }} />
+                    <div className="bg-secondary h-2 rounded-full transition-all" style={{ width: `${learningProgress.fundamentals.percentage}%` }} />
                   </div>
                 </div>
                 
                 <div className="p-4 bg-white/5 rounded-xl border-l-4 border-primary">
                   <div className="flex justify-between items-start mb-2">
                     <span className="text-sm font-semibold">Investimenti Base</span>
-                    <i className="fas fa-play-circle text-primary" />
+                    {learningProgress.investments.percentage >= 100 ? (
+                      <i className="fas fa-check-circle text-primary" />
+                    ) : learningProgress.investments.percentage > 0 ? (
+                      <i className="fas fa-play-circle text-primary" />
+                    ) : (
+                      <i className="fas fa-lock text-gray-500" />
+                    )}
                   </div>
-                  <p className="text-xs text-gray-400">In corso: 5/20 lezioni</p>
+                  <p className="text-xs text-gray-400">
+                    {learningProgress.investments.percentage > 0 
+                      ? `In corso: ${learningProgress.investments.completed}/${learningProgress.investments.total} lezioni`
+                      : 'Sblocca completando almeno 50% Fondamenti'}
+                  </p>
                   <div className="w-full bg-gray-700 rounded-full h-2 mt-2">
-                    <div className="bg-primary h-2 rounded-full" style={{ width: '25%' }} />
+                    <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${learningProgress.investments.percentage}%` }} />
                   </div>
                 </div>
                 
                 <div className="p-4 bg-white/5 rounded-xl border-l-4 border-accent">
                   <div className="flex justify-between items-start mb-2">
                     <span className="text-sm font-semibold">Pianificazione</span>
-                    <i className="fas fa-lock text-accent" />
+                    {learningProgress.planning.percentage > 0 ? (
+                      learningProgress.planning.percentage >= 100 ? (
+                        <i className="fas fa-check-circle text-accent" />
+                      ) : (
+                        <i className="fas fa-play-circle text-accent" />
+                      )
+                    ) : (
+                      <i className="fas fa-lock text-gray-500" />
+                    )}
                   </div>
-                  <p className="text-xs text-gray-400">Sblocca completando Investimenti Base</p>
+                  <p className="text-xs text-gray-400">
+                    {learningProgress.planning.percentage > 0
+                      ? `In corso: ${learningProgress.planning.completed}/${learningProgress.planning.total} lezioni`
+                      : 'Sblocca completando Fondamenti e Investimenti'}
+                  </p>
+                  <div className="w-full bg-gray-700 rounded-full h-2 mt-2">
+                    <div className="bg-accent h-2 rounded-full transition-all" style={{ width: `${learningProgress.planning.percentage}%` }} />
+                  </div>
                 </div>
               </div>
             </div>
@@ -415,10 +545,14 @@ Cosa vuoi approfondire oggi?${complianceNotice}`;
                 <div>
                   <div className="flex justify-between text-xs mb-2">
                     <span className="text-gray-400">Profilo Rischio Stimato</span>
-                    <span className="text-secondary">Moderato</span>
+                    <span className={
+                      riskProfile.color === 'yellow-400' ? 'text-yellow-400' :
+                      riskProfile.color === 'secondary' ? 'text-secondary' :
+                      'text-accent'
+                    }>{riskProfile.label}</span>
                   </div>
                   <div className="risk-meter">
-                    <div className="risk-indicator" style={{ marginLeft: '60%' }} />
+                    <div className="risk-indicator" style={{ marginLeft: `${riskProfile.percentage}%` }} />
                   </div>
                   <div className="flex justify-between text-xs mt-1">
                     <span className="text-accent">Conservativo</span>
@@ -446,20 +580,56 @@ Cosa vuoi approfondire oggi?${complianceNotice}`;
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[
-              { icon: '📊', title: 'Fondamenti', desc: 'Basi della gestione finanziaria', status: 'Completato 80%', color: 'secondary' },
-              { icon: '💼', title: 'Investimenti', desc: 'Mercati e strumenti', status: 'In Corso 25%', color: 'primary' },
-              { icon: '🏠', title: 'Pianificazione', desc: 'Obiettivi a medio-lungo termine', status: 'Bloccato', color: 'gray' },
-              { icon: '🛡️', title: 'Protezione', desc: 'Gestione rischi e assicurazioni', status: 'Bloccato', color: 'gray' }
-            ].map((item, idx) => (
+              { 
+                icon: '📊', 
+                title: 'Fondamenti', 
+                desc: 'Basi della gestione finanziaria', 
+                progress: learningProgress.fundamentals,
+                color: 'secondary' 
+              },
+              { 
+                icon: '💼', 
+                title: 'Investimenti', 
+                desc: 'Mercati e strumenti', 
+                progress: learningProgress.investments,
+                color: 'primary' 
+              },
+              { 
+                icon: '🏠', 
+                title: 'Pianificazione', 
+                desc: 'Obiettivi a medio-lungo termine', 
+                progress: learningProgress.planning,
+                color: learningProgress.planning.percentage > 0 ? 'accent' : 'gray' 
+              },
+              { 
+                icon: '🛡️', 
+                title: 'Protezione', 
+                desc: 'Gestione rischi e assicurazioni', 
+                progress: learningProgress.protection,
+                color: learningProgress.protection.percentage > 0 ? 'accent' : 'gray' 
+              }
+            ].map((item, idx) => {
+              const status = item.progress.percentage >= 100 
+                ? `Completato ${Math.round(item.progress.percentage)}%`
+                : item.progress.percentage > 0 
+                  ? `In Corso ${Math.round(item.progress.percentage)}%`
+                  : 'Bloccato';
+              return (
               <div key={idx} className="p-6 bg-white/5 rounded-2xl border border-gray-800 hover:border-primary transition-all cursor-pointer text-center">
                 <div className="text-3xl mb-4">{item.icon}</div>
                 <h3 className="font-semibold mb-2">{item.title}</h3>
                 <p className="text-sm text-gray-400 mb-4">{item.desc}</p>
-                <div className={`text-xs ${item.color === 'secondary' ? 'bg-secondary/20 text-secondary' : item.color === 'primary' ? 'bg-primary/20 text-primary' : 'bg-gray-500/20 text-gray-400'} px-2 py-1 rounded-full`}>
-                  {item.status}
+                <div className={`text-xs ${
+                  item.color === 'secondary' ? 'bg-secondary/20 text-secondary' : 
+                  item.color === 'primary' ? 'bg-primary/20 text-primary' : 
+                  item.color === 'accent' ? 'bg-accent/20 text-accent' :
+                  'bg-gray-500/20 text-gray-400'
+                } px-2 py-1 rounded-full`}>
+                  {status}
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
 

@@ -131,13 +131,83 @@ export const POPULAR_STOCKS: AssetSuggestion[] = [
 
 export const ALL_ASSETS = [...POPULAR_CRYPTOS, ...POPULAR_ETFS, ...POPULAR_STOCKS];
 
-export function searchAssets(query: string, limit = 10): AssetSuggestion[] {
-  const lowerQuery = query.toLowerCase().trim();
-  if (!lowerQuery) return [];
+const norm = (s: string) =>
+  (s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
 
-  return ALL_ASSETS.filter(
-    (asset) =>
-      asset.symbol.toLowerCase().includes(lowerQuery) ||
-      asset.name.toLowerCase().includes(lowerQuery)
-  ).slice(0, limit);
+export function searchAssets(
+  query: string,
+  limit = 20,
+  filterType?: 'ETF' | 'Crypto' | 'Stock' | 'Cash'
+): AssetSuggestion[] {
+  const q = norm(query);
+  const pool = filterType
+    ? ALL_ASSETS.filter(a => a.type === filterType)
+    : ALL_ASSETS;
+
+  if (!q || q.length < 2) {
+    if (filterType === 'ETF') return POPULAR_ETFS.slice(0, limit);
+    if (filterType === 'Crypto') return POPULAR_CRYPTOS.slice(0, limit);
+    if (filterType === 'Stock') return POPULAR_STOCKS.slice(0, limit);
+    const mix = [
+      ...POPULAR_ETFS.slice(0, Math.ceil(limit/3)),
+      ...POPULAR_CRYPTOS.slice(0, Math.ceil(limit/3)),
+      ...POPULAR_STOCKS.slice(0, Math.ceil(limit/3)),
+    ];
+    const seen = new Set<string>();
+    return mix.filter(a => (seen.has(a.symbol) ? false : (seen.add(a.symbol), true))).slice(0, limit);
+  }
+
+  type Scored = AssetSuggestion & { _score: number };
+  const scored: Scored[] = pool.map(a => {
+    const sym = norm(a.symbol);
+    const nm = norm(a.name);
+    let s = 0;
+    if (sym === q || nm === q) s += 100;
+    if (sym.startsWith(q)) s += 60;
+    if (nm.startsWith(q)) s += 40;
+    if (sym.includes(q)) s += 25;
+    if (nm.includes(q)) s += 15;
+    if (filterType && a.type === filterType) s += 5;
+    return { ...a, _score: s };
+  }).filter(a => a._score > 0);
+
+  scored.sort((a, b) => b._score - a._score);
+  const seen = new Set<string>();
+  const result: AssetSuggestion[] = [];
+  for (const a of scored) {
+    if (!seen.has(a.symbol)) {
+      seen.add(a.symbol);
+      result.push({ symbol: a.symbol, name: a.name, type: a.type, exchange: a.exchange });
+      if (result.length >= limit) break;
+    }
+  }
+  return result;
+}
+
+// Basic classification logic for symbol/name -> type
+export function classifyAsset(symbol?: string, name?: string): 'ETF' | 'Crypto' | 'Stock' | null {
+  const sym = (symbol || '').toUpperCase();
+  const nm = (name || '').toLowerCase();
+  if (!sym && !nm) return null;
+  // Exact lists
+  if (POPULAR_CRYPTOS.some(a => a.symbol.toUpperCase() === sym) || nm.includes('coin') || nm.includes('token') || nm.includes('crypto')) {
+    return 'Crypto';
+  }
+  if (
+    POPULAR_ETFS.some(a => a.symbol.toUpperCase() === sym) ||
+    nm.includes('ucits etf') || nm.endsWith('etf') || nm.includes('ucits') ||
+    (sym.includes('.') && nm.includes('etf'))
+  ) {
+    return 'ETF';
+  }
+  if (POPULAR_STOCKS.some(a => a.symbol.toUpperCase() === sym)) {
+    return 'Stock';
+  }
+  // Heuristics: exchange suffix (e.g., .L, .DE) spesso è equity/etf; se nome non parla di etf -> Stock
+  if (sym.includes('.') && !nm.includes('etf')) return 'Stock';
+  return null;
 }

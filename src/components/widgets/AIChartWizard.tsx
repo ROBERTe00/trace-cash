@@ -1,34 +1,14 @@
 import { useState, useRef } from 'react';
 import { Bot, BarChart3, PieChart, LineChart, TrendingUp, Sparkles, AlertCircle, Lightbulb, Download, Save } from 'lucide-react';
 import { Chart } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js';
 import { aiChartGenerator, exportChartAsImage, exportChartAsPDF, type Timeframe, type ChartType } from '@/lib/ai-chart-generator';
 import { saveChartToDashboard } from '@/lib/widgetApi';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { registerChartJS } from '@/lib/chartRegistry';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Tooltip,
-  Legend,
-  Filler,
-);
+// Register Chart.js components (centralized)
+registerChartJS();
 
 interface ChartConfig {
   type: ChartType;

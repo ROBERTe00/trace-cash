@@ -38,9 +38,12 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Transactions() {
   const { expenses, createExpense, updateExpense, deleteExpense } = useExpenses();
@@ -48,11 +51,18 @@ export default function Transactions() {
   const addModal = useModal();
   const editModal = useModal<{ expense: any }>();
   const [filteredExpenses, setFilteredExpenses] = useState(expenses || []);
+  
+  // Memoize the onFiltered callback to prevent infinite loops
+  const handleFiltered = useCallback((filtered: any[]) => {
+    setFilteredExpenses(filtered);
+  }, []);
   const [selectedFilter, setSelectedFilter] = useState<"all" | "income" | "expense">("all");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showAllTransactions, setShowAllTransactions] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [selectedImportType, setSelectedImportType] = useState<"pdf" | "csv" | "voice" | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   // Listen to transaction events for real-time updates
   useEffect(() => {
@@ -62,9 +72,32 @@ export default function Transactions() {
     return unsubscribe;
   }, []);
 
-  // Update filtered expenses when expenses change
+  // Open modal if action parameter is present
   useEffect(() => {
-    setFilteredExpenses(expenses || []);
+    const action = searchParams.get('action');
+    if (action === 'add-expense' || action === 'add-income') {
+      addModal.open();
+      // Remove the action parameter from URL
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, addModal, setSearchParams]);
+
+  // Update filtered expenses when expenses change - use ref to prevent infinite loops
+  const expensesRef = useRef<any[]>([]);
+  useEffect(() => {
+    // Deep comparison to prevent unnecessary updates
+    const expensesString = JSON.stringify(expenses || []);
+    const expensesRefString = JSON.stringify(expensesRef.current);
+    
+    if (expensesString !== expensesRefString) {
+      expensesRef.current = expenses || [];
+      // Only update if AdvancedFilterSystem hasn't filtered yet
+      // The AdvancedFilterSystem will call handleFiltered when ready
+      if (filteredExpenses.length === 0 || (expenses || []).length !== filteredExpenses.length) {
+        setFilteredExpenses(expenses || []);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expenses]);
 
   // Get category icon helper
@@ -85,13 +118,30 @@ export default function Transactions() {
   const handleAddExpense = async (expense: any) => {
     try {
       console.log('[Transactions] Adding expense:', expense);
-      // createExpense è async ma non ritorna una promise, emettiamo event dopo
-      createExpense(expense);
+      console.log('[Transactions] createExpense function:', typeof createExpense);
+      
+      // Valida i dati prima di inviare
+      if (!expense.description || !expense.amount || expense.amount <= 0) {
+        toast.error("Inserisci descrizione e importo validi");
+        return;
+      }
+      
+      console.log('[Transactions] Calling createExpense...');
+      const result = await createExpense(expense);
+      console.log('[Transactions] Expense created successfully:', result);
       addModal.close();
-      // Event viene emesso automaticamente da useExpenses.onSuccess
-      // Non serve emetterlo qui per evitare duplicati
-    } catch (error) {
-      console.error('Error adding expense:', error);
+      // Toast viene emesso automaticamente da useExpenses.onSuccess
+    } catch (error: any) {
+      console.error('[Transactions] Error adding expense:', error);
+      console.error('[Transactions] Error stack:', error?.stack);
+      console.error('[Transactions] Error details:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint
+      });
+      toast.error(`Errore nell'aggiunta della transazione: ${error?.message || 'Errore sconosciuto'}`);
+      throw error; // Re-throw per permettere al form di gestire
     }
   };
 
@@ -99,11 +149,13 @@ export default function Transactions() {
   const handleEditExpense = async (expense: any) => {
     if (editModal.data?.expense && updateExpense) {
       try {
-        updateExpense({ id: editModal.data.expense.id, ...expense });
+        await updateExpense({ id: editModal.data.expense.id, ...expense });
         editModal.close();
+        toast.success("Transazione aggiornata con successo!");
         eventBus.emit(Events.TRANSACTION_UPDATED, { id: editModal.data.expense.id, ...expense });
       } catch (error) {
         console.error('Error editing expense:', error);
+        toast.error("Errore nell'aggiornamento della transazione");
       }
     }
   };
@@ -271,7 +323,7 @@ export default function Transactions() {
               {/* Advanced Filter System Component */}
               <AdvancedFilterSystem
                 items={expenses || []}
-                onFiltered={setFilteredExpenses}
+                onFiltered={handleFiltered}
                 showCategories={true}
                 showDateRange={true}
                 showAmountRange={true}

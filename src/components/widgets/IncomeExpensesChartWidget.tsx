@@ -1,9 +1,9 @@
 // Income vs Expenses Chart Widget - Uses real data
 import { Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { registerChartJS } from '@/lib/chartRegistry';
 
-// Register Chart.js components
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+// Register Chart.js components (centralized)
+registerChartJS();
 import { useIncomeExpensesChart } from '@/hooks/useChartData';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Maximize2, Download, FileDown } from 'lucide-react';

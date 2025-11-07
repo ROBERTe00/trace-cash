@@ -16,29 +16,29 @@ import { UploadProgressBar } from "@/components/UploadProgressBar";
 import { AppProvider } from "./contexts/AppContext";
 import { UploadProvider } from "./contexts/UploadContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { registerServiceWorker, captureInstallPrompt } from "@/lib/pwaUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealTimeSync } from "@/hooks/useRealTimeSync";
 import { Session } from "@supabase/supabase-js";
 import { LoadingDashboard } from "@/components/LoadingDashboard";
+import { usePerformanceMonitor } from "@/hooks/usePerformanceMonitor";
 import Index from "./pages/Index";
-import DashboardHome from "./pages/DashboardHome";
-import Goals from "./pages/Goals";
-import Transactions from "./pages/Transactions";
-import Analytics from "./pages/Analytics";
-import Investments from "./pages/Investments";
-import Insights from "./pages/Insights";
-import FuturePlanner from "./pages/FuturePlanner";
-import News from "./pages/News";
-import Settings from "./pages/Settings";
-import CreditCardIntegration from "./pages/CreditCardIntegration";
-import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
-import AIEducator from "./pages/AIEducator";
 import { SecurityAlerts } from "./components/SecurityAlerts";
 import { OnboardingWrapper } from "./components/OnboardingWrapper";
 import { StateProvider } from "./providers/StateProvider";
+
+// Lazy load delle route per code splitting
+const DashboardHome = lazy(() => import("./pages/DashboardHome"));
+const Goals = lazy(() => import("./pages/Goals"));
+const Transactions = lazy(() => import("./pages/Transactions"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const Investments = lazy(() => import("./pages/Investments"));
+const AIEducator = lazy(() => import("./pages/AIEducator"));
+const News = lazy(() => import("./pages/News"));
+const Settings = lazy(() => import("./pages/Settings"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,8 +58,23 @@ const queryClient = new QueryClient({
   },
 });
 
+// Route loader component ottimizzato
+const RouteLoader = () => (
+  <div className="flex items-center justify-center min-h-screen bg-background">
+    <div className="flex flex-col items-center gap-4">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+      <p className="text-sm text-muted-foreground">Loading...</p>
+    </div>
+  </div>
+);
+
 function ProtectedRoutes() {
   const [session, setSession] = useState<Session | null>(null);
+  
+  // Performance monitoring
+  usePerformanceMonitor((metrics) => {
+    console.log('[App] Performance metrics:', metrics);
+  });
   const [loading, setLoading] = useState(true);
   
   console.log('[ProtectedRoutes] Rendering, loading:', loading, 'session:', !!session);
@@ -298,29 +313,29 @@ function ProtectedRoutes() {
               </div>
             </header>
             <main className="flex-1 p-6 overflow-auto">
-              {(() => {
-                try {
-                  console.log('[ProtectedRoutes] Rendering Routes');
-                  return (
-                    <Routes>
-                      <Route path="/" element={<DashboardHome />} />
-                      <Route path="/transactions" element={<Transactions />} />
-                      <Route path="/analytics" element={<Analytics />} />
-                      <Route path="/goals" element={<Goals />} />
-                      <Route path="/investments" element={<Investments />} />
-                      <Route path="/insights" element={<Insights />} />
-                      <Route path="/ai-educator" element={<AIEducator />} />
-                      <Route path="/news" element={<News />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/credit-cards" element={<CreditCardIntegration />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  );
-                } catch (error) {
-                  console.error('[ProtectedRoutes] Error rendering Routes:', error);
-                  return <div className="p-4 text-destructive">Error loading routes</div>;
-                }
-              })()}
+              <Suspense fallback={<RouteLoader />}>
+                {(() => {
+                  try {
+                    console.log('[ProtectedRoutes] Rendering Routes');
+                    return (
+                      <Routes>
+                        <Route path="/" element={<DashboardHome />} />
+                        <Route path="/transactions" element={<Transactions />} />
+                        <Route path="/analytics" element={<Analytics />} />
+                        <Route path="/goals" element={<Goals />} />
+                        <Route path="/investments" element={<Investments />} />
+                        <Route path="/ai-educator" element={<AIEducator />} />
+                        <Route path="/news" element={<News />} />
+                        <Route path="/settings" element={<Settings />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    );
+                  } catch (error) {
+                    console.error('[ProtectedRoutes] Error rendering Routes:', error);
+                    return <div className="p-4 text-destructive">Error loading routes</div>;
+                  }
+                })()}
+              </Suspense>
             </main>
           </div>
         </div>

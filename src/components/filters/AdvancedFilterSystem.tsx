@@ -134,7 +134,7 @@ export function AdvancedFilterSystem<T extends Record<string, any>>({
       <div className="flex flex-wrap gap-2 items-center">
         {/* Category Filter */}
         {showCategories && availableCategories.length > 0 && (
-          <Popover>
+          <Popover modal={true}>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
                 <Filter className="h-4 w-4" />
@@ -173,7 +173,7 @@ export function AdvancedFilterSystem<T extends Record<string, any>>({
 
         {/* Type Filter */}
         {showType && availableTypes.length > 0 && (
-          <Popover>
+          <Popover modal={true}>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
                 Tipo
@@ -209,7 +209,7 @@ export function AdvancedFilterSystem<T extends Record<string, any>>({
 
         {/* Date Range Filter */}
         {showDateRange && (
-          <Popover>
+          <Popover modal={true}>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
                 <CalendarIcon className="h-4 w-4" />
@@ -245,7 +245,7 @@ export function AdvancedFilterSystem<T extends Record<string, any>>({
 
         {/* Amount Range Filter */}
         {showAmountRange && (
-          <Popover>
+          <Popover modal={true}>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
                 <DollarSign className="h-4 w-4" />
@@ -306,7 +306,7 @@ export function AdvancedFilterSystem<T extends Record<string, any>>({
 
         {/* Tags Filter */}
         {showTags && availableTags.length > 0 && (
-          <Popover>
+          <Popover modal={true}>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
                 <Tag className="h-4 w-4" />

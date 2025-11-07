@@ -61,6 +61,15 @@ const STORAGE_KEYS = {
   GOALS: "myfinance_goals",
 };
 
+// Global flag to force real data only (no demo defaults), even in dev
+const isStrictRealData = (): boolean => {
+  try {
+    return localStorage.getItem('trace:strictRealData') === 'true';
+  } catch {
+    return false;
+  }
+};
+
 // User management
 // ⚠️ DEPRECATED: Use Supabase Auth instead (supabase.auth.getUser())
 // These functions are kept for backwards compatibility with data migration only
@@ -88,9 +97,13 @@ export const saveExpenses = (expenses: Expense[]) => {
 export const getExpenses = (): Expense[] => {
   const expenses = localStorage.getItem(STORAGE_KEYS.EXPENSES);
   if (!expenses) {
-    const defaults = getDefaultExpenses();
-    saveExpenses(defaults);
-    return defaults;
+    // In produzione non pre-popolare con dati demo; in dev solo se non attivo strictRealData
+    if (import.meta.env.DEV && !isStrictRealData()) {
+      const defaults = getDefaultExpenses();
+      saveExpenses(defaults);
+      return defaults;
+    }
+    return [];
   }
   return JSON.parse(expenses);
 };
@@ -113,9 +126,12 @@ export const saveInvestments = (investments: Investment[]) => {
 export const getInvestments = (): Investment[] => {
   const investments = localStorage.getItem(STORAGE_KEYS.INVESTMENTS);
   if (!investments) {
-    const defaults = getDefaultInvestments();
-    saveInvestments(defaults);
-    return defaults;
+    if (import.meta.env.DEV && !isStrictRealData()) {
+      const defaults = getDefaultInvestments();
+      saveInvestments(defaults);
+      return defaults;
+    }
+    return [];
   }
   return JSON.parse(investments);
 };
@@ -138,9 +154,12 @@ export const saveGoals = (goals: FinancialGoal[]) => {
 export const getGoals = (): FinancialGoal[] => {
   const goals = localStorage.getItem(STORAGE_KEYS.GOALS);
   if (!goals) {
-    const defaults = getDefaultGoals();
-    saveGoals(defaults);
-    return defaults;
+    if (import.meta.env.DEV && !isStrictRealData()) {
+      const defaults = getDefaultGoals();
+      saveGoals(defaults);
+      return defaults;
+    }
+    return [];
   }
   return JSON.parse(goals);
 };

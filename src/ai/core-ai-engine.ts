@@ -58,6 +58,11 @@ class ComplianceEngine {
   
   constructor() {
     this.apiKey = import.meta.env.VITE_LOVABLE_API_KEY || '';
+    // Only log warning in development and if actually needed
+    if (import.meta.env.DEV && !this.apiKey) {
+      // Warning solo in dev mode, non bloccante
+      console.debug('[AI] LOVABLE_API_KEY not configured. AI features will be limited.');
+    }
     this.advancedEngine = new AdvancedComplianceEngine();
   }
 

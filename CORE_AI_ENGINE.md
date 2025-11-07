@@ -300,3 +300,5 @@ Tutte le richieste vengono loggate con:
 - [ ] Batch processing per richieste multiple
 - [ ] Webhook per notifiche asincrone
 
+
+

@@ -114,3 +114,5 @@ Il dashboard ora ha:
 - ✅ UI professionale
 - ✅ Gestione errori robusta
 
+
+

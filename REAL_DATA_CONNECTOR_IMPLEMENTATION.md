@@ -255,3 +255,5 @@ result.data.filter(item => item !== null);
 - `src/ai/data-sources/` - Data sources per AI chart generator
 - `src/lib/marketData.ts` - Market data utilities
 
+
+
