@@ -3,7 +3,7 @@ import { useAIInsights } from "@/hooks/useAIInsights";
 import { useState, useEffect } from "react";
 
 export function AIInsightsWidget() {
-  const { insights, isLoading, refreshInsights } = useAIInsights();
+  const { insights, isLoading, refetchInsights } = useAIInsights();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
@@ -12,7 +12,7 @@ export function AIInsightsWidget() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await refreshInsights();
+    await refetchInsights();
     setIsRefreshing(false);
   };
 

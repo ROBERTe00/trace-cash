@@ -404,7 +404,6 @@ export class ComplianceEngine {
     // Pattern matching per tipo di violazione
     if (this.containsFinancialAdviceKeywords(originalData)) {
       return {
-        original: text.substring(0, 100),
         message: "Posso mostrarti come analizzare i fondamentali di un'azienda e i principi di valutazione degli investimenti invece di suggerimenti specifici",
         type: 'educational_alternative'
       };
@@ -412,7 +411,6 @@ export class ComplianceEngine {
 
     if (this.containsMarketTimingSuggestions(originalData)) {
       return {
-        original: text.substring(0, 100),
         message: "Posso spiegarti i diversi approcci temporali negli investimenti e mostrarti dati storici sui settori invece di suggerire timing specifici",
         type: 'educational_alternative'
       };
@@ -420,7 +418,6 @@ export class ComplianceEngine {
 
     if (this.containsSpecificProductMentions(originalData)) {
       return {
-        original: text.substring(0, 100),
         message: "Posso insegnarti come valutare un fondo di investimento analizzando costi, diversificazione e strategia invece di raccomandare prodotti specifici",
         type: 'educational_alternative'
       };

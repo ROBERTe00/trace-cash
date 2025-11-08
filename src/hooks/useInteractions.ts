@@ -101,7 +101,7 @@ export function useForm<T extends Record<string, any>>(config: FormConfig<T>) {
 
   // Validate single field
   const validateField = useCallback((field: keyof T, value: any): string | null => {
-    const validator = validation[field];
+    const validator = validation[field as string];
     if (validator) {
       return validator(value);
     }
@@ -134,12 +134,13 @@ export function useForm<T extends Record<string, any>>(config: FormConfig<T>) {
     // Real-time validation
     const error = validateField(field, value);
     setErrors(prev => {
+      const newErrors = { ...prev };
       if (error) {
-        return { ...prev, [field]: error };
+        newErrors[field] = error;
       } else {
-        const { [field]: _, ...rest } = prev;
-        return rest;
+        delete newErrors[field];
       }
+      return newErrors;
     });
 
     // Emit form change event

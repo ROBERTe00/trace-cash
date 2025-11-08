@@ -64,7 +64,10 @@ export const RevolutBalanceCard = () => {
         ))}
       </div>
       
-      <QuickActionModals activeModal={activeModal} onClose={() => setActiveModal(null)} />
+      <QuickActionModals 
+        activeModal={activeModal as "add_expense" | "add_income" | "bank_statement" | "import_file" | null} 
+        onClose={() => setActiveModal(null)} 
+      />
     </div>
   );
 };

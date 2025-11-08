@@ -32,7 +32,7 @@ export function BentoGrid({ children, className = "" }: BentoGridProps) {
       opacity: 1, 
       scale: 1,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 200,
         damping: 20
       }

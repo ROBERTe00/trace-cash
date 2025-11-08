@@ -231,8 +231,10 @@ export class ReportDataProcessor {
       // Custom timeframe format: "custom-YYYY-MM-DD:YYYY-MM-DD"
       const dates = timeframe.replace('custom-', '').split(':');
       if (dates.length === 2) {
-        startDate = new Date(dates[0]);
-        endDate = new Date(dates[1]);
+        const customStartDate = new Date(dates[0]);
+        const customEndDate = new Date(dates[1]);
+        startDate = customStartDate;
+        endDate = customEndDate;
       }
     } else {
       // Default: last month

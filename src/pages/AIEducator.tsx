@@ -15,7 +15,8 @@ export default function AIEducator() {
   const { expenses } = useExpenses();
   const { goals } = useFinancialGoals();
   const { investments } = useInvestments();
-  const { userLevel, totalPoints } = useGamification();
+  const { userLevel } = useGamification();
+  const totalPoints = userLevel?.total_points || 0;
   
   const [messages, setMessages] = useState<Message[]>([
     {

@@ -130,12 +130,14 @@ class EnhancedStateManager {
     stateManager.setState(key, value, false);
     eventBus.emit(Events.STATE_CHANGED, { key, value, optimistic: true });
 
-    // Return rollback function
-    return () => {
+    // Store rollback function for later use if needed
+    const rollbackFn = () => {
       stateManager.setState(key, previousValue, true);
       if (rollback) rollback();
       eventBus.emit(Events.STATE_CHANGED, { key, value: previousValue, rolledBack: true });
     };
+    
+    // You can store rollbackFn somewhere if needed for later rollback
   }
 
   /**

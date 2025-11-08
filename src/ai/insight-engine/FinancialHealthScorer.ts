@@ -77,10 +77,10 @@ export class FinancialHealthScorer {
       ? 100 
       : Math.max(0, 100 - (spending.anomalies.length * 10));
     
-    // Score basato su trend (trend stabile o miglioramento = score alto)
+    // Score basato su trend (trend stabile o decrescente = score alto)
     const trendScore = spending.trends.length > 0
       ? spending.trends.reduce((sum, t) => {
-          if (t.direction === 'stable' || t.direction === 'improving') return sum + 100;
+          if (t.direction === 'stable' || t.direction === 'decreasing') return sum + 100;
           return sum + 50;
         }, 0) / spending.trends.length
       : 70;
@@ -136,8 +136,8 @@ export class FinancialHealthScorer {
     // Analizza trend dai dati (semplificato)
     const savingsTrend = analysis.savings.rate > 20 ? 1 : analysis.savings.rate > 10 ? 0 : -1;
     const spendingTrend = analysis.spending.trends.length > 0
-      ? analysis.spending.trends[0].direction === 'improving' ? 1 
-        : analysis.spending.trends[0].direction === 'declining' ? -1 : 0
+      ? analysis.spending.trends[0].direction === 'decreasing' ? 1 
+        : analysis.spending.trends[0].direction === 'increasing' ? -1 : 0
       : 0;
     
     const overallTrend = savingsTrend + spendingTrend;

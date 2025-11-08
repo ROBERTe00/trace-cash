@@ -3,6 +3,8 @@ import { saveCache, loadCache } from "@/lib/offlineCache";
 
 /**
  * Salva il layout dei widget nel backend
+ * NOTA: La tabella user_dashboard_layouts non esiste ancora nel database
+ * Questa funzionalità è attualmente disabilitata
  */
 export async function saveWidgetLayout(
   widgets: string[], 
@@ -15,65 +17,29 @@ export async function saveWidgetLayout(
     return;
   }
 
-  const { error } = await supabase
-    .from('user_dashboard_layouts')
-    .upsert({
-      user_id: user.id,
-      widget_order: widgets,
-      widget_positions: positions || {},
-      updated_at: new Date().toISOString()
-    }, {
-      onConflict: 'user_id'
-    });
+  // TODO: Abilitare quando la tabella user_dashboard_layouts sarà creata
+  // const { error } = await supabase
+  //   .from('user_dashboard_layouts')
+  //   .upsert({
+  //     user_id: user.id,
+  //     widget_order: widgets,
+  //     widget_positions: positions || {},
+  //     updated_at: new Date().toISOString()
+  //   }, {
+  //     onConflict: 'user_id'
+  //   });
 
-  if (error) {
-    console.error('Errore nel salvataggio del layout:', error);
-    // Fallback a localStorage
-    saveCache('widget-layout', { widgets, positions, timestamp: new Date().toISOString() });
-  }
+  // Per ora salva solo in localStorage
+  saveCache('widget-layout', { widgets, positions, timestamp: new Date().toISOString() });
 }
 
 /**
  * Carica il layout dei widget dal backend
- * Con timeout automatico se il backend è lento
+ * NOTA: La tabella user_dashboard_layouts non esiste ancora nel database
  */
 export async function loadWidgetLayout() {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      // Fallback a localStorage
-      const cached = loadCache<any>('widget-layout');
-      if (cached) return cached;
-      return null;
-    }
-
-    const { data, error } = await supabase
-      .from('user_dashboard_layouts')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-
-    if (error) {
-      // Non loggare errori non critici (es. tabella non esiste)
-      if (error.code !== 'PGRST116') { // PGRST116 = no rows returned
-        console.debug('Errore nel caricamento del layout:', error.message);
-      }
-      // Fallback a localStorage
-      const cached = loadCache<any>('widget-layout');
-      if (cached) return cached;
-      return null;
-    }
-
-    saveCache('widget-layout', data);
-    return data;
-  } catch (error) {
-    // Gestione errori generici
-    console.debug('[loadWidgetLayout] Error:', error);
-    const cached = loadCache<any>('widget-layout');
-    if (cached) return cached;
-    return null;
-  }
+  // Per ora usa solo localStorage
+  return loadCache('widget-layout');
 }
 
 /**

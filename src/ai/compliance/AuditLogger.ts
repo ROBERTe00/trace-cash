@@ -158,12 +158,16 @@ export class AuditLogger {
       const { error } = await supabase
         .from('audit_logs')
         .insert({
-          request_type: request.type,
+          action: request.type,
+          resource_type: 'ai_request',
           user_id: request.userId,
-          timestamp: request.timestamp,
-          approved: request.approved,
-          risk_level: request.riskLevel,
-          metadata: request.metadata
+          success: request.approved,
+          details: {
+            approved: request.approved,
+            risk_level: request.riskLevel,
+            timestamp: request.timestamp,
+            ...request.metadata
+          }
         });
 
       if (error) {
@@ -179,16 +183,20 @@ export class AuditLogger {
    */
   private async saveViolationToSupabase(violation: ComplianceViolation): Promise<void> {
     try {
+      // Log as security alert instead since compliance_violations table doesn't exist
       const { error } = await supabase
-        .from('compliance_violations')
+        .from('security_alerts')
         .insert({
-          violation_type: violation.type,
+          alert_type: 'compliance_violation',
           severity: violation.severity,
-          description: violation.description,
-          location: violation.location,
+          message: violation.description,
           user_id: violation.userId,
-          timestamp: violation.timestamp,
-          details: violation.details
+          details: {
+            violation_type: violation.type,
+            location: violation.location,
+            timestamp: violation.timestamp,
+            ...violation.details
+          }
         });
 
       if (error) {

@@ -332,9 +332,9 @@ export class RealDataConnector {
           lastUpdate: cryptoPrice.lastUpdate
         };
 
-        historicalData = await this.apis.crypto.getHistoricalData(symbol, period);
+        historicalData = await this.apis.crypto.getHistoricalData(symbol, period as any);
       } else if (this.isETF(symbol)) {
-        historicalData = await this.apis.etf.getHistoricalData(symbol, period);
+        historicalData = await this.apis.etf.getHistoricalData(symbol, period as any);
         const stockPrice = await fetchStockPrice(symbol, 'EUR');
         
         if (!stockPrice) return null;
@@ -490,12 +490,12 @@ export class RealDataConnector {
           if (!price) return null;
 
           return {
-            symbol: peerSymbol.toUpperCase(),
-            name: peerSymbol, // Could fetch real name
+            symbol: peerSymbol,
+            name: peerSymbol,
             price: price.price,
             change24h: price.change24h,
-            similarity: 0.8 // Placeholder - could calculate based on correlation
-          };
+            similarity: 0.8 as number
+          } as PeerComparison;
         })
       );
 

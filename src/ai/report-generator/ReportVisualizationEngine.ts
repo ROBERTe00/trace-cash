@@ -109,10 +109,8 @@ export class ReportVisualizationEngine {
           label: 'Spese Totali',
           data: trends.map(t => t.total),
           borderColor: '#7B2FF7',
-          backgroundColor: 'rgba(123, 47, 247, 0.1)',
-          fill: true,
-          tension: 0.4
-        }]
+          backgroundColor: 'rgba(123, 47, 247, 0.1)'
+        } as any]
       },
       data: trends
     };
@@ -143,10 +141,8 @@ export class ReportVisualizationEngine {
           label: 'Tasso di Risparmio %',
           data: monthlyRates.map(r => r.rate),
           borderColor: '#00D4AA',
-          backgroundColor: 'rgba(0, 212, 170, 0.2)',
-          fill: true,
-          tension: 0.4
-        }]
+          backgroundColor: 'rgba(0, 212, 170, 0.2)'
+        } as any]
       },
       data: monthlyRates
     };
@@ -208,10 +204,8 @@ export class ReportVisualizationEngine {
             if (score >= 80) return '#00D4AA';
             if (score >= 60) return '#FFD166';
             return '#FF6B35';
-          }),
-          borderColor: '#7B2FF7',
-          borderWidth: 2
-        }]
+          })
+        } as any]
       },
       data: scores
     };

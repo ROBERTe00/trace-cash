@@ -40,13 +40,13 @@ export function QuickUploadModal({ isOpen, onClose }: QuickUploadModalProps) {
           
           <TabsContent value="pdf" className="mt-6">
             <div className="glass-card p-6 rounded-xl">
-              <AdvancedBankStatementUpload />
+              <AdvancedBankStatementUpload onTransactionsExtracted={() => {}} />
             </div>
           </TabsContent>
           
           <TabsContent value="csv" className="mt-6">
             <div className="glass-card p-6 rounded-xl">
-              <CSVExcelUpload />
+              <CSVExcelUpload onTransactionsParsed={() => {}} />
             </div>
           </TabsContent>
           

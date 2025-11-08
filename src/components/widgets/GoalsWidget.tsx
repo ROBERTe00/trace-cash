@@ -22,7 +22,7 @@ export function GoalsWidget() {
     );
   }
   
-  const activeGoals = goals?.filter(g => !g.completed).slice(0, 3) || [];
+  const activeGoals = goals?.filter(g => g.status === 'active').slice(0, 3) || [];
   
   return (
     <div className="space-y-4">
@@ -61,7 +61,7 @@ export function GoalsWidget() {
               <div key={goal.id} className="space-y-2">
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="text-sm font-medium">{goal.name}</div>
+                    <div className="text-sm font-medium">{goal.title}</div>
                     <div className="text-xs text-gray-400">{goal.description || 'Nessuna descrizione'}</div>
                   </div>
                   <div className="text-right">

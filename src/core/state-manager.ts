@@ -136,8 +136,8 @@ class StateManager {
         return;
       }
 
-      // Setup auth listener
-      const { data: { subscription }, error: listenerError } = supabase.auth.onAuthStateChange(
+      // Setup auth listener  
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
         async (event, session) => {
           try {
             if (event === 'SIGNED_IN' && session) {
@@ -342,27 +342,8 @@ class StateManager {
         }
       }
 
-      // Carica user preferences se esiste la tabella (non critico)
+      // User preferences are stored in user_profiles table
       let preferences = this.state.user.preferences;
-      try {
-        const { data: prefsData, error: prefsError } = await supabase
-          .from('user_preferences')
-          .select('preferences')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (!prefsError && prefsData?.preferences) {
-          preferences = { ...preferences, ...prefsData.preferences };
-        }
-      } catch (e: any) {
-        // Table might not exist, ignore - non critico
-        // Only log if it's not a network error
-        if (!e?.message?.includes('Failed to fetch') && 
-            !e?.message?.includes('ERR_NAME_NOT_RESOLVED') &&
-            e?.name !== 'NetworkError') {
-          // Ignore table not found errors silently
-        }
-      }
 
       // Aggiorna preferences
       this.setState('user', {
@@ -421,34 +402,9 @@ class StateManager {
       if (!user) return;
 
       try {
-        // Sync preferences se esiste la tabella
-        try {
-          const { error: upsertError } = await supabase
-            .from('user_preferences')
-            .upsert({
-              user_id: user.id,
-              preferences: this.state.user.preferences,
-              updated_at: new Date().toISOString()
-            }, {
-              onConflict: 'user_id'
-            });
-          
-          if (upsertError) {
-            // Only log if it's not a network error
-            if (!upsertError.message?.includes('Failed to fetch') && 
-                !upsertError.message?.includes('ERR_NAME_NOT_RESOLVED')) {
-              console.log('[StateManager] Cannot sync preferences:', upsertError.message);
-            }
-          }
-        } catch (e: any) {
-          // Table might not exist or network error, ignore silently
-          if (!e?.message?.includes('Failed to fetch') && 
-              !e?.message?.includes('ERR_NAME_NOT_RESOLVED') &&
-              e?.name !== 'NetworkError') {
-            console.log('[StateManager] Cannot sync preferences, table might not exist');
-          }
-        }
-
+        // Preferences are now stored in user_profiles, no separate sync needed
+        // Nothing to do here
+        
         // Aggiorna cache
         this.setState('cache', { 
           ...this.state.cache, 
@@ -456,17 +412,17 @@ class StateManager {
         }, true);
 
         console.log('[StateManager] ✅ Preferences synced to Supabase');
-      } catch (error: any) {
-        // Only log non-network errors
-        if (!error?.message?.includes('Failed to fetch') && 
-            !error?.message?.includes('ERR_NAME_NOT_RESOLVED') &&
-            error?.name !== 'NetworkError') {
-          console.error('[StateManager] ❌ Sync to Supabase error:', error);
+      } catch (e: any) {
+        // Table might not exist or network error, ignore silently
+        if (!e?.message?.includes('Failed to fetch') && 
+            !e?.message?.includes('ERR_NAME_NOT_RESOLVED') &&
+            e?.name !== 'NetworkError') {
+          console.log('[StateManager] Cannot sync preferences, table might not exist');
         }
       }
     } catch (error: any) {
       // Handle outer catch for getUser errors
-      if (!error?.message?.includes('Failed to fetch') && 
+      if (!error?.message?.includes('Failed to fetch') &&
           !error?.message?.includes('ERR_NAME_NOT_RESOLVED') &&
           error?.name !== 'NetworkError') {
         console.error('[StateManager] ❌ Sync to Supabase error:', error);

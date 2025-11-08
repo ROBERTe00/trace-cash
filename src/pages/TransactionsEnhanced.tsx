@@ -32,13 +32,13 @@ export default function TransactionsEnhanced() {
   }, [expenses]);
 
   const handleAddExpense = async (expense: any) => {
-    await createExpense.mutateAsync(expense);
+    await createExpense(expense);
     addModal.close();
   };
 
   const handleEditExpense = async (expense: any) => {
     if (editModal.data?.expense) {
-      await updateExpense.mutateAsync({
+      await updateExpense({
         id: editModal.data.expense.id,
         ...expense
       });
@@ -48,7 +48,7 @@ export default function TransactionsEnhanced() {
 
   const handleDeleteExpense = async (id: string) => {
     if (confirm('Are you sure you want to delete this transaction?')) {
-      await deleteExpense.mutateAsync(id);
+      await deleteExpense(id);
     }
   };
 
@@ -57,7 +57,14 @@ export default function TransactionsEnhanced() {
       alert('No transactions to export');
       return;
     }
-    exportToCSV(filteredExpenses, 'transactions');
+    const csvData = filteredExpenses.map(e => ({
+      date: e.date,
+      description: e.description,
+      category: e.category,
+      amount: e.amount,
+      type: e.type
+    }));
+    exportToCSV({ expenses: csvData, summary: { total: filteredExpenses.length } });
   };
 
   // Calculate totals from filtered expenses
