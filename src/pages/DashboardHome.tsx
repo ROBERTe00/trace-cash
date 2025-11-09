@@ -179,10 +179,10 @@ export default function DashboardHome() {
 
         if (!isMounted) return;
 
-        if (saved && saved.widget_order && Array.isArray(saved.widget_order) && saved.widget_order.length > 0) {
+        if (saved && typeof saved === 'object' && 'widget_order' in saved && Array.isArray(saved.widget_order) && saved.widget_order.length > 0) {
           // Filter out invalid widget IDs
           const widgetKeys = Object.keys(availableWidgets);
-          const validWidgets = saved.widget_order.filter((id: string) => {
+          const validWidgets = saved.widget_order.filter((id: any) => {
             return widgetKeys.includes(id);
           });
           if (validWidgets.length > 0) {

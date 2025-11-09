@@ -58,13 +58,24 @@ export default function TransactionsEnhanced() {
       return;
     }
     const csvData = filteredExpenses.map(e => ({
+      id: e.id,
       date: e.date,
       description: e.description,
       category: e.category,
       amount: e.amount,
       type: e.type
     }));
-    exportToCSV({ expenses: csvData, summary: { total: filteredExpenses.length } });
+    exportToCSV({
+      expenses: csvData as any,
+      investments: [],
+      goals: [],
+      summary: {
+        totalIncome,
+        totalExpenses,
+        netBalance: totalIncome - totalExpenses,
+        portfolioValue: 0
+      }
+    });
   };
 
   // Calculate totals from filtered expenses

@@ -33,10 +33,11 @@ export interface InvestmentRecord {
 export interface GoalRecord {
   id: string;
   user_id: string;
-  name: string | null;
-  title?: string | null;
-  target_amount?: number | null;
-  current_amount?: number | null;
+  title: string;
+  target_amount: number;
+  current_amount: number;
+  deadline?: string | null;
+  goal_type?: string | null;
   created_at?: string | null;
   [key: string]: unknown;
 }
@@ -94,7 +95,7 @@ export class ReportDataProcessor {
     
     // Fetch expenses
     const { data: expenses, error: expensesError } = await supabase
-      .from<ExpenseRecord>('expenses')
+      .from('expenses')
       .select('*')
       .eq('user_id', userId)
       .gte('date', startDate)
@@ -107,7 +108,7 @@ export class ReportDataProcessor {
 
     // Fetch investments
     const { data: investments, error: investmentsError } = await supabase
-      .from<InvestmentRecord>('investments')
+      .from('investments')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
@@ -118,7 +119,7 @@ export class ReportDataProcessor {
 
     // Fetch goals
     const { data: goals, error: goalsError } = await supabase
-      .from<GoalRecord>('financial_goals')
+      .from('financial_goals')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
@@ -129,20 +130,20 @@ export class ReportDataProcessor {
 
     // Calculate summary
     const totalIncome = (expenses || [])
-      .filter(e => e.type === 'Income')
-      .reduce((sum, e) => sum + e.amount, 0);
+      .filter((e: any) => e.type === 'Income')
+      .reduce((sum: number, e: any) => sum + Number(e.amount), 0);
     
     const totalExpenses = (expenses || [])
-      .filter(e => e.type === 'Expense')
-      .reduce((sum, e) => sum + e.amount, 0);
+      .filter((e: any) => e.type === 'Expense')
+      .reduce((sum: number, e: any) => sum + Number(e.amount), 0);
 
     const portfolioValue = (investments || [])
-      .reduce((sum, inv) => sum + (inv.current_price * inv.quantity), 0);
+      .reduce((sum: number, inv: any) => sum + (Number(inv.current_price) * Number(inv.quantity)), 0);
 
     return {
-      expenses: expenses ?? [],
-      investments: investments ?? [],
-      goals: goals ?? [],
+      expenses: (expenses ?? []) as ExpenseRecord[],
+      investments: (investments ?? []) as InvestmentRecord[],
+      goals: (goals ?? []) as GoalRecord[],
       summary: {
         totalIncome,
         totalExpenses,
@@ -184,7 +185,7 @@ export class ReportDataProcessor {
     // Goal progress
     const goalProgress = (rawData.goals || []).map(goal => ({
       id: goal.id,
-      name: goal.name || goal.title || 'Obiettivo',
+      name: goal.title || 'Obiettivo',
       progress: goal.target_amount > 0
         ? ((goal.current_amount || 0) / goal.target_amount) * 100
         : 0,
@@ -263,7 +264,7 @@ export class ReportDataProcessor {
    * Converte timeframe string in date
    */
   private parseTimeframe(timeframe: string): { startDate: string; endDate: string } {
-    const endDate = new Date();
+    let endDate = new Date();
     let startDate = new Date();
 
     if (timeframe === 'monthly' || timeframe === '1M') {

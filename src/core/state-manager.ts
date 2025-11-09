@@ -198,11 +198,6 @@ class StateManager {
         }
       );
 
-      if (listenerError) {
-        console.error('[StateManager] Error setting up auth listener:', listenerError);
-        return;
-      }
-
       // Sync iniziale se già loggato
       try {
         const { data: { user }, error: userError } = await supabase.auth.getUser();

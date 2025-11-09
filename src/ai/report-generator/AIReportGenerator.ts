@@ -692,9 +692,9 @@ export class AIReportGenerator {
   ): Promise<void> {
     // Usa exportToPDF esistente
     const exportData: ExportData = {
-      expenses: data.expenses,
-      investments: data.investments,
-      goals: data.goals,
+      expenses: data.expenses as any,
+      investments: data.investments as any,
+      goals: data.goals as any,
       summary: data.summary
     };
 
@@ -706,9 +706,9 @@ export class AIReportGenerator {
    */
   private exportReportCSV(data: ReportData): void {
     const exportData: ExportData = {
-      expenses: data.expenses,
-      investments: data.investments,
-      goals: data.goals,
+      expenses: data.expenses as any,
+      investments: data.investments as any,
+      goals: data.goals as any,
       summary: data.summary
     };
 
