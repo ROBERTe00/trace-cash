@@ -7,8 +7,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create investments table
-CREATE TABLE public.investments (
+CREATE TABLE IF NOT EXISTS public.investments (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   type TEXT NOT NULL CHECK (type IN ('ETF', 'Crypto', 'Stock', 'Cash')),

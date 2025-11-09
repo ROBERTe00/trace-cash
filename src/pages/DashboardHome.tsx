@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import type { ComponentType } from "react";
 import Sortable from 'sortablejs';
 import { Edit, Settings, X, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -29,15 +30,15 @@ import { saveWidgetLayout, loadWidgetLayout } from "@/lib/widgetApi";
 // Register Chart.js components (centralized)
 registerChartJS();
 
-interface WidgetConfig {
-  [key: string]: {
-    name: string;
-    description: string;
-    icon: string;
-    size: 'single' | 'double';
-    component: React.FC<any>;
-  };
+interface WidgetConfigEntry {
+  name: string;
+  description: string;
+  icon: string;
+  size: 'single' | 'double';
+  component: ComponentType<Record<string, unknown>>;
 }
+
+type WidgetConfig = Record<string, WidgetConfigEntry>;
 
 export default function DashboardHome() {
   const [editMode, setEditMode] = useState(false);
@@ -48,6 +49,15 @@ export default function DashboardHome() {
   const [showNotification, setShowNotification] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const sortableRef = useRef<Sortable | null>(null);
+
+  const saveLayout = useCallback(async (widgets?: string[]) => {
+    const widgetsToSave = widgets ?? activeWidgets;
+    try {
+      await saveWidgetLayout(widgetsToSave);
+    } catch (error) {
+      console.error('Errore nel salvataggio del layout:', error);
+    }
+  }, [activeWidgets]);
 
   // Widget definitions
   const availableWidgets: WidgetConfig = {
@@ -221,16 +231,7 @@ export default function DashboardHome() {
         sortableRef.current.destroy();
       }
     };
-  }, [editMode, activeWidgets]);
-
-  const saveLayout = async (widgets?: string[]) => {
-    const widgetsToSave = widgets || activeWidgets;
-    try {
-      await saveWidgetLayout(widgetsToSave);
-    } catch (error) {
-      console.error('Errore nel salvataggio del layout:', error);
-    }
-  };
+  }, [editMode, activeWidgets, saveLayout]);
 
   const removeWidget = (widgetId: string) => {
     const newWidgets = activeWidgets.filter(id => id !== widgetId);
@@ -387,7 +388,7 @@ export default function DashboardHome() {
                     className={widgetConfig.size === 'double' ? 'lg:col-span-2' : ''}
                   >
                     <div className="widget interactive-widget glass-card p-6 relative animate-[fadeIn_0.5s_ease-in-out] min-h-[200px]" data-widget-id={widgetId}>
-                      {(editMode || true) && (
+                      {editMode && (
                         <div className="widget-actions absolute top-4 right-4 flex gap-2 z-10">
                           <button 
                             className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-sm hover:bg-white/20 transition-all" 

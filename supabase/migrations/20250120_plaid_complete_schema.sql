@@ -1,5 +1,35 @@
--- Plaid Integration Complete Schema
 -- Tables for storing Plaid items, accounts, and transaction mappings
+
+-- Ensure core finance tables exist when running on a fresh project
+CREATE TABLE IF NOT EXISTS public.investments (
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL CHECK (type IN ('ETF', 'Crypto', 'Stock', 'Cash')),
+  name TEXT NOT NULL,
+  quantity DECIMAL(20, 8) NOT NULL,
+  purchase_price DECIMAL(20, 2) NOT NULL,
+  current_price DECIMAL(20, 2) NOT NULL,
+  symbol TEXT,
+  live_tracking BOOLEAN DEFAULT false,
+  purchase_date DATE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.expenses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  category TEXT NOT NULL,
+  description TEXT NOT NULL,
+  amount DECIMAL(12, 2) NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('Income', 'Expense')),
+  recurring BOOLEAN DEFAULT false,
+  recurrence_type TEXT CHECK (recurrence_type IN ('weekly', 'monthly', 'yearly')),
+  linked_investment_id UUID REFERENCES public.investments(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 
 -- Table: plaid_items (stores Plaid item connections)
 CREATE TABLE IF NOT EXISTS plaid_items (

@@ -1,5 +1,62 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { RealtimeChannel, PostgrestError } from "@supabase/supabase-js";
 import { QueryClient } from "@tanstack/react-query";
+
+type ListenerKey = keyof AppState | "*";
+type JsonRecord = Record<string, unknown>;
+
+export interface UserPreferences {
+  currency: string;
+  riskProfile: "conservative" | "moderate" | "aggressive";
+  theme: "light" | "dark" | "system";
+}
+
+export interface AppState {
+  user: {
+    profile: JsonRecord;
+    preferences: UserPreferences;
+  };
+  transactions: JsonRecord[];
+  investments: JsonRecord[];
+  goals: JsonRecord[];
+  aiInsights: JsonRecord[];
+  cache: {
+    lastSync: number;
+    version: string;
+  };
+}
+
+interface SupabasePreferencesRow {
+  preferences?: Partial<UserPreferences> | null;
+}
+
+const NETWORK_ERROR_PATTERNS = ["Failed to fetch", "ERR_NAME_NOT_RESOLVED"];
+
+const isNetworkError = (error: unknown): boolean => {
+  if (!error || typeof error !== "object") return false;
+  const message = "message" in error && typeof (error as { message?: unknown }).message === "string"
+    ? (error as { message: string }).message
+    : "";
+  const name = "name" in error && typeof (error as { name?: unknown }).name === "string"
+    ? (error as { name: string }).name
+    : "";
+  return NETWORK_ERROR_PATTERNS.some(pattern => message.includes(pattern)) || name === "NetworkError";
+};
+
+const getErrorMessage = (error: unknown): string | null => {
+  if (!error || typeof error !== "object") return null;
+  if ("message" in error && typeof (error as { message?: unknown }).message === "string") {
+    return (error as { message: string }).message;
+  }
+  return null;
+};
+
+const isAuthenticatedResponseError = (error: PostgrestError | null | undefined): error is PostgrestError => {
+  return Boolean(error && typeof error === "object");
+};
+
+const isFulfilled = <T>(result: PromiseSettledResult<T>): result is PromiseFulfilledResult<T> =>
+  result.status === "fulfilled";
 
 // Import queryClient - will be set from App.tsx
 let queryClientInstance: QueryClient | null = null;
@@ -8,31 +65,12 @@ export function setQueryClient(client: QueryClient) {
   queryClientInstance = client;
 }
 
-export interface AppState {
-  user: {
-    profile: Record<string, any>;
-    preferences: {
-      currency: string;
-      riskProfile: 'conservative' | 'moderate' | 'aggressive';
-      theme: 'light' | 'dark' | 'system';
-    };
-  };
-  transactions: any[];
-  investments: any[];
-  goals: any[];
-  aiInsights: any[];
-  cache: {
-    lastSync: number;
-    version: string;
-  };
-}
-
 class StateManager {
   private static instance: StateManager;
   private state: AppState;
-  private listeners: Map<string, Set<() => void>> = new Map();
-  private syncInterval: NodeJS.Timeout | null = null;
-  private supabaseChannel: any = null;
+  private listeners: Map<ListenerKey, Set<() => void>> = new Map();
+  private syncInterval: ReturnType<typeof setInterval> | null = null;
+  private supabaseChannel: RealtimeChannel | null = null;
 
   private constructor() {
     try {
@@ -61,13 +99,14 @@ class StateManager {
     const stored = localStorage.getItem('mymoney-state');
     if (stored) {
       try {
-        const parsed = JSON.parse(stored);
+        const parsed = JSON.parse(stored) as Partial<AppState>;
         // Merge con defaults per sicurezza
+        const defaultState = this.getDefaultState();
         return {
-          ...this.getDefaultState(),
+          ...defaultState,
           ...parsed,
           user: {
-            ...this.getDefaultState().user,
+            ...defaultState.user,
             ...(parsed.user || {})
           }
         };
@@ -110,7 +149,7 @@ class StateManager {
           const key = e.key.replace('mymoney-', '') as keyof AppState;
           if (e.newValue) {
             try {
-              const data = JSON.parse(e.newValue);
+              const data = JSON.parse(e.newValue) as AppState[typeof key];
               // Aggiorna solo se non siamo noi stessi che abbiamo fatto il cambio
               if (e.storageArea === localStorage) {
                 this.setState(key, data, false); // false = no localStorage write (già fatto)
@@ -150,11 +189,9 @@ class StateManager {
                 this.supabaseChannel = null;
               }
             }
-          } catch (error: any) {
+          } catch (error: unknown) {
             // Silently handle network errors in auth state change handler
-            if (!error?.message?.includes('Failed to fetch') && 
-                !error?.message?.includes('ERR_NAME_NOT_RESOLVED') &&
-                error?.name !== 'NetworkError') {
+            if (!isNetworkError(error)) {
               console.error('[StateManager] Error in auth state change handler:', error);
             }
           }
@@ -172,14 +209,15 @@ class StateManager {
         
         // Handle network/DNS errors silently
         if (userError) {
-          if (userError.message?.includes('Failed to fetch') || 
-              userError.message?.includes('ERR_NAME_NOT_RESOLVED') ||
-              userError.name === 'NetworkError') {
+          if (isNetworkError(userError)) {
             // Network error, fail silently
             return;
           }
           // Other auth errors - log once
-          console.log('[StateManager] Auth error on init:', userError.message);
+          const errorMessage = getErrorMessage(userError);
+          if (errorMessage) {
+            console.log('[StateManager] Auth error on init:', errorMessage);
+          }
           return;
         }
 
@@ -187,11 +225,9 @@ class StateManager {
           await this.syncFromSupabase();
           this.setupSupabaseRealtime();
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Handle network errors silently
-        if (error?.message?.includes('Failed to fetch') || 
-            error?.message?.includes('ERR_NAME_NOT_RESOLVED') ||
-            error?.name === 'NetworkError') {
+        if (isNetworkError(error)) {
           return; // Fail silently
         }
         console.error('[StateManager] Error getting user on init:', error);
@@ -199,11 +235,9 @@ class StateManager {
 
       // Store subscription for cleanup if needed
       // Note: Subscription cleanup handled by Supabase automatically
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Only log non-network errors
-      if (!error?.message?.includes('Failed to fetch') && 
-          !error?.message?.includes('ERR_NAME_NOT_RESOLVED') &&
-          error?.name !== 'NetworkError') {
+      if (!isNetworkError(error)) {
         console.error('[StateManager] Error in initSupabaseSync:', error);
       }
     }
@@ -258,16 +292,15 @@ class StateManager {
       
       // Handle network errors silently
       if (userError) {
-        if (userError.message?.includes('Failed to fetch') || 
-            userError.message?.includes('ERR_NAME_NOT_RESOLVED') ||
-            userError.name === 'NetworkError') {
+        if (isNetworkError(userError)) {
           // Network error, fail silently
           return;
         }
         // Other auth errors
-        if (!userError.message?.includes('session_not_found')) {
+        const errorMessage = getErrorMessage(userError);
+        if (errorMessage && !errorMessage.includes('session_not_found')) {
           // Only log non-session errors (session_not_found is expected when logged out)
-          console.log('[StateManager] Auth error, skipping sync:', userError.message);
+          console.log('[StateManager] Auth error, skipping sync:', errorMessage);
         }
         return;
       }
@@ -287,59 +320,36 @@ class StateManager {
       ]);
 
       // Gestisci expenses
-      if (expensesResult.status === 'fulfilled' && expensesResult.value.data && !expensesResult.value.error) {
-        this.setState('transactions', expensesResult.value.data, true);
-      } else if (expensesResult.status === 'rejected') {
-        const error = expensesResult.reason;
-        // Only log non-network errors
-        if (!error?.message?.includes('Failed to fetch') && 
-            !error?.message?.includes('ERR_NAME_NOT_RESOLVED') &&
-            error?.name !== 'NetworkError') {
-          console.error('[StateManager] Error loading expenses:', error);
+      if (isFulfilled(expensesResult)) {
+        if (expensesResult.value.data && !expensesResult.value.error) {
+          this.setState('transactions', expensesResult.value.data as JsonRecord[], true);
+        } else if (isAuthenticatedResponseError(expensesResult.value.error) && !isNetworkError(expensesResult.value.error)) {
+          console.error('[StateManager] Error loading expenses:', expensesResult.value.error);
         }
-      } else if (expensesResult.status === 'fulfilled' && expensesResult.value.error) {
-        // Supabase returned an error response
-        const error = expensesResult.value.error;
-        if (!error.message?.includes('Failed to fetch') && 
-            !error.message?.includes('ERR_NAME_NOT_RESOLVED')) {
-          console.error('[StateManager] Error loading expenses:', error);
-        }
+      } else if (!isNetworkError(expensesResult.reason)) {
+        console.error('[StateManager] Error loading expenses:', expensesResult.reason);
       }
 
       // Gestisci investments
-      if (investmentsResult.status === 'fulfilled' && investmentsResult.value.data && !investmentsResult.value.error) {
-        this.setState('investments', investmentsResult.value.data, true);
-      } else if (investmentsResult.status === 'rejected') {
-        const error = investmentsResult.reason;
-        if (!error?.message?.includes('Failed to fetch') && 
-            !error?.message?.includes('ERR_NAME_NOT_RESOLVED') &&
-            error?.name !== 'NetworkError') {
-          console.error('[StateManager] Error loading investments:', error);
+      if (isFulfilled(investmentsResult)) {
+        if (investmentsResult.value.data && !investmentsResult.value.error) {
+          this.setState('investments', investmentsResult.value.data as JsonRecord[], true);
+        } else if (isAuthenticatedResponseError(investmentsResult.value.error) && !isNetworkError(investmentsResult.value.error)) {
+          console.error('[StateManager] Error loading investments:', investmentsResult.value.error);
         }
-      } else if (investmentsResult.status === 'fulfilled' && investmentsResult.value.error) {
-        const error = investmentsResult.value.error;
-        if (!error.message?.includes('Failed to fetch') && 
-            !error.message?.includes('ERR_NAME_NOT_RESOLVED')) {
-          console.error('[StateManager] Error loading investments:', error);
-        }
+      } else if (!isNetworkError(investmentsResult.reason)) {
+        console.error('[StateManager] Error loading investments:', investmentsResult.reason);
       }
 
       // Gestisci goals
-      if (goalsResult.status === 'fulfilled' && goalsResult.value.data && !goalsResult.value.error) {
-        this.setState('goals', goalsResult.value.data, true);
-      } else if (goalsResult.status === 'rejected') {
-        const error = goalsResult.reason;
-        if (!error?.message?.includes('Failed to fetch') && 
-            !error?.message?.includes('ERR_NAME_NOT_RESOLVED') &&
-            error?.name !== 'NetworkError') {
-          console.error('[StateManager] Error loading goals:', error);
+      if (isFulfilled(goalsResult)) {
+        if (goalsResult.value.data && !goalsResult.value.error) {
+          this.setState('goals', goalsResult.value.data as JsonRecord[], true);
+        } else if (isAuthenticatedResponseError(goalsResult.value.error) && !isNetworkError(goalsResult.value.error)) {
+          console.error('[StateManager] Error loading goals:', goalsResult.value.error);
         }
-      } else if (goalsResult.status === 'fulfilled' && goalsResult.value.error) {
-        const error = goalsResult.value.error;
-        if (!error.message?.includes('Failed to fetch') && 
-            !error.message?.includes('ERR_NAME_NOT_RESOLVED')) {
-          console.error('[StateManager] Error loading goals:', error);
-        }
+      } else if (!isNetworkError(goalsResult.reason)) {
+        console.error('[StateManager] Error loading goals:', goalsResult.reason);
       }
 
       // User preferences are stored in user_profiles table
@@ -369,11 +379,9 @@ class StateManager {
       }, true);
 
       console.log('[StateManager] ✅ Sync completed successfully');
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Only log non-network errors
-      if (!error?.message?.includes('Failed to fetch') && 
-          !error?.message?.includes('ERR_NAME_NOT_RESOLVED') &&
-          error?.name !== 'NetworkError') {
+      if (!isNetworkError(error)) {
         console.error('[StateManager] ❌ Sync error:', error);
       }
       // Non bloccare l'app per errori di sync
@@ -392,9 +400,7 @@ class StateManager {
       
       // Handle network errors silently
       if (userError) {
-        if (userError.message?.includes('Failed to fetch') || 
-            userError.message?.includes('ERR_NAME_NOT_RESOLVED') ||
-            userError.name === 'NetworkError') {
+        if (isNetworkError(userError)) {
           return; // Fail silently
         }
       }
@@ -412,19 +418,15 @@ class StateManager {
         }, true);
 
         console.log('[StateManager] ✅ Preferences synced to Supabase');
-      } catch (e: any) {
-        // Table might not exist or network error, ignore silently
-        if (!e?.message?.includes('Failed to fetch') && 
-            !e?.message?.includes('ERR_NAME_NOT_RESOLVED') &&
-            e?.name !== 'NetworkError') {
-          console.log('[StateManager] Cannot sync preferences, table might not exist');
+      } catch (error: unknown) {
+        // Only log non-network errors
+        if (!isNetworkError(error)) {
+          console.error('[StateManager] ❌ Sync to Supabase error:', error);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle outer catch for getUser errors
-      if (!error?.message?.includes('Failed to fetch') &&
-          !error?.message?.includes('ERR_NAME_NOT_RESOLVED') &&
-          error?.name !== 'NetworkError') {
+      if (!isNetworkError(error)) {
         console.error('[StateManager] ❌ Sync to Supabase error:', error);
       }
     }
@@ -467,16 +469,17 @@ class StateManager {
         // Handle auth errors gracefully
         if (error) {
           // Network errors, DNS errors, etc. - fail silently
-          if (error.message?.includes('Failed to fetch') || 
-              error.message?.includes('ERR_NAME_NOT_RESOLVED') ||
-              error.name === 'NetworkError') {
+          if (isNetworkError(error)) {
             consecutiveFailures++;
             lastFailureTime = now;
             return; // Fail silently, don't spam console
           }
           // Other auth errors (invalid token, etc.) - log but don't spam
           if (consecutiveFailures === 0) {
-            console.log('[StateManager] Auth error, skipping sync:', error.message);
+            const message = getErrorMessage(error);
+            if (message) {
+              console.log('[StateManager] Auth error, skipping sync:', message);
+            }
           }
           consecutiveFailures++;
           lastFailureTime = now;
@@ -489,11 +492,9 @@ class StateManager {
             // Reset failure counter on success
             consecutiveFailures = 0;
             lastFailureTime = 0;
-          } catch (syncError: any) {
+          } catch (syncError: unknown) {
             // Handle sync errors
-            if (syncError?.message?.includes('Failed to fetch') || 
-                syncError?.message?.includes('ERR_NAME_NOT_RESOLVED') ||
-                syncError?.name === 'NetworkError') {
+            if (isNetworkError(syncError)) {
               consecutiveFailures++;
               lastFailureTime = now;
               return; // Fail silently
@@ -506,11 +507,9 @@ class StateManager {
             lastFailureTime = now;
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Catch all other errors (network, etc.)
-        if (error?.message?.includes('Failed to fetch') || 
-            error?.message?.includes('ERR_NAME_NOT_RESOLVED') ||
-            error?.name === 'NetworkError') {
+        if (isNetworkError(error)) {
           consecutiveFailures++;
           lastFailureTime = Date.now();
           return; // Fail silently
@@ -615,28 +614,7 @@ let stateManagerInstance: StateManager | null = null;
 
 export const stateManager = (() => {
   if (!stateManagerInstance) {
-    try {
-      stateManagerInstance = StateManager.getInstance();
-    } catch (error) {
-      console.error('[StateManager] Failed to initialize:', error);
-      // Return a minimal fallback instance
-      return {
-        getState: () => ({ 
-          user: { profile: {}, preferences: { currency: 'EUR', riskProfile: 'moderate', theme: 'system' } },
-          transactions: [],
-          investments: [],
-          goals: [],
-          aiInsights: [],
-          cache: { lastSync: Date.now(), version: '1.0.0' }
-        }),
-        getStateKey: () => ([]),
-        setState: () => {},
-        subscribe: () => () => {},
-        syncFromSupabase: async () => {},
-        syncToSupabase: async () => {},
-        reset: () => {},
-      } as any;
-    }
+    stateManagerInstance = StateManager.getInstance();
   }
   return stateManagerInstance;
 })();

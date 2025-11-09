@@ -1,10 +1,63 @@
 // Report Data Processor - Elabora e aggrega dati per i report
 import { supabase } from '@/integrations/supabase/client';
 
+export type ExpenseType = 'Income' | 'Expense';
+
+export interface ExpenseRecord {
+  id: string;
+  user_id: string;
+  date: string;
+  category: string | null;
+  description: string | null;
+  amount: number;
+  type: ExpenseType;
+  recurring?: boolean;
+  recurrence_type?: string | null;
+  [key: string]: unknown;
+}
+
+export interface InvestmentRecord {
+  id: string;
+  user_id: string;
+  type: 'ETF' | 'Crypto' | 'Stock' | 'Cash';
+  name: string;
+  quantity: number;
+  purchase_price: number;
+  current_price: number;
+  symbol?: string | null;
+  live_tracking?: boolean;
+  purchase_date?: string | null;
+  [key: string]: unknown;
+}
+
+export interface GoalRecord {
+  id: string;
+  user_id: string;
+  name: string | null;
+  title?: string | null;
+  target_amount?: number | null;
+  current_amount?: number | null;
+  created_at?: string | null;
+  [key: string]: unknown;
+}
+
+export interface PortfolioMetrics {
+  totalValue: number;
+  totalGain: number;
+  totalGainPercent: number;
+  assetCount: number;
+}
+
+export interface MonthlySpendingTrend {
+  month: string;
+  total: number;
+  categories: Record<string, number>;
+}
+
 export interface ReportData {
-  expenses: any[];
-  investments: any[];
-  goals: any[];
+  expenses: ExpenseRecord[];
+  investments: InvestmentRecord[];
+  goals: GoalRecord[];
   summary: {
     totalIncome: number;
     totalExpenses: number;
@@ -20,13 +73,9 @@ export interface ReportData {
 
 export interface ProcessedReportData extends ReportData {
   spendingByCategory: Record<string, number>;
-  spendingTrends: Array<{
-    month: string;
-    total: number;
-    categories: Record<string, number>;
-  }>;
+  spendingTrends: MonthlySpendingTrend[];
   savingsRate: number;
-  portfolioMetrics: any;
+  portfolioMetrics: PortfolioMetrics;
   goalProgress: Array<{
     id: string;
     name: string;
@@ -45,7 +94,7 @@ export class ReportDataProcessor {
     
     // Fetch expenses
     const { data: expenses, error: expensesError } = await supabase
-      .from('expenses')
+      .from<ExpenseRecord>('expenses')
       .select('*')
       .eq('user_id', userId)
       .gte('date', startDate)
@@ -58,7 +107,7 @@ export class ReportDataProcessor {
 
     // Fetch investments
     const { data: investments, error: investmentsError } = await supabase
-      .from('investments')
+      .from<InvestmentRecord>('investments')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
@@ -69,7 +118,7 @@ export class ReportDataProcessor {
 
     // Fetch goals
     const { data: goals, error: goalsError } = await supabase
-      .from('financial_goals')
+      .from<GoalRecord>('financial_goals')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
@@ -91,9 +140,9 @@ export class ReportDataProcessor {
       .reduce((sum, inv) => sum + (inv.current_price * inv.quantity), 0);
 
     return {
-      expenses: expenses || [],
-      investments: investments || [],
-      goals: goals || [],
+      expenses: expenses ?? [],
+      investments: investments ?? [],
+      goals: goals ?? [],
       summary: {
         totalIncome,
         totalExpenses,
@@ -156,11 +205,7 @@ export class ReportDataProcessor {
   /**
    * Calcola trend mensili di spesa
    */
-  private calculateMonthlyTrends(expenses: any[]): Array<{
-    month: string;
-    total: number;
-    categories: Record<string, number>;
-  }> {
+  private calculateMonthlyTrends(expenses: ExpenseRecord[]): MonthlySpendingTrend[] {
     const monthly = new Map<string, { total: number; categories: Record<string, number> }>();
 
     expenses
@@ -186,7 +231,7 @@ export class ReportDataProcessor {
   /**
    * Calcola metriche portafoglio semplificate
    */
-  private calculatePortfolioMetrics(investments: any[]): any {
+  private calculatePortfolioMetrics(investments: InvestmentRecord[]): PortfolioMetrics {
     if (investments.length === 0) {
       return {
         totalValue: 0,
