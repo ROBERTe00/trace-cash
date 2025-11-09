@@ -4,7 +4,7 @@
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { Configuration, PlaidApi, PlaidEnvironments, Products, CountryCode } from "npm:plaid@21.0.0";
+import { Configuration, PlaidApi, PlaidEnvironments, Products, CountryCode } from "npm:plaid@39.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
